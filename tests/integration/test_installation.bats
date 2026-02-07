@@ -58,12 +58,6 @@ EOF
 echo "Hank loop running"
 EOF
 
-    cat > "$MOCK_SOURCE_DIR/hank_monitor.sh" << 'EOF'
-#!/bin/bash
-# Mock hank_monitor.sh
-echo "Hank monitor running"
-EOF
-
     cat > "$MOCK_SOURCE_DIR/hank_import.sh" << 'EOF'
 #!/bin/bash
 # Mock hank_import.sh
@@ -198,16 +192,14 @@ run_install() {
 @test "install.sh creates ~/.local/bin commands" {
     run run_install
 
-    # Check all five wrapper commands exist
+    # Check all wrapper commands exist
     assert_file_exists "$TEST_INSTALL_DIR/hank"
-    assert_file_exists "$TEST_INSTALL_DIR/hank-monitor"
     assert_file_exists "$TEST_INSTALL_DIR/hank-setup"
     assert_file_exists "$TEST_INSTALL_DIR/hank-import"
     assert_file_exists "$TEST_INSTALL_DIR/hank-migrate"
 
     # Verify each command contains proper shebang
     grep -q "#!/bin/bash" "$TEST_INSTALL_DIR/hank"
-    grep -q "#!/bin/bash" "$TEST_INSTALL_DIR/hank-monitor"
     grep -q "#!/bin/bash" "$TEST_INSTALL_DIR/hank-setup"
     grep -q "#!/bin/bash" "$TEST_INSTALL_DIR/hank-import"
     grep -q "#!/bin/bash" "$TEST_INSTALL_DIR/hank-migrate"
@@ -218,14 +210,12 @@ run_install() {
 
     # Verify executable bit on all commands
     [[ -x "$TEST_INSTALL_DIR/hank" ]]
-    [[ -x "$TEST_INSTALL_DIR/hank-monitor" ]]
     [[ -x "$TEST_INSTALL_DIR/hank-setup" ]]
     [[ -x "$TEST_INSTALL_DIR/hank-import" ]]
     [[ -x "$TEST_INSTALL_DIR/hank-migrate" ]]
 
     # Verify executable bit on main scripts
     [[ -x "$TEST_HANK_HOME/hank_loop.sh" ]]
-    [[ -x "$TEST_HANK_HOME/hank_monitor.sh" ]]
     [[ -x "$TEST_HANK_HOME/setup.sh" ]]
     [[ -x "$TEST_HANK_HOME/hank_import.sh" ]]
     [[ -x "$TEST_HANK_HOME/migrate_to_hank_folder.sh" ]]
@@ -472,7 +462,6 @@ EOF
 
     # Verify files exist
     assert_file_exists "$TEST_INSTALL_DIR/hank"
-    assert_file_exists "$TEST_INSTALL_DIR/hank-monitor"
     assert_file_exists "$TEST_INSTALL_DIR/hank-setup"
     assert_file_exists "$TEST_INSTALL_DIR/hank-import"
     assert_file_exists "$TEST_INSTALL_DIR/hank-migrate"
@@ -483,7 +472,6 @@ EOF
 
     # Verify command files are removed
     assert_file_not_exists "$TEST_INSTALL_DIR/hank"
-    assert_file_not_exists "$TEST_INSTALL_DIR/hank-monitor"
     assert_file_not_exists "$TEST_INSTALL_DIR/hank-setup"
     assert_file_not_exists "$TEST_INSTALL_DIR/hank-import"
     assert_file_not_exists "$TEST_INSTALL_DIR/hank-migrate"
@@ -557,7 +545,6 @@ EOF
 
     # Verify all commands installed
     assert_file_exists "$TEST_INSTALL_DIR/hank"
-    assert_file_exists "$TEST_INSTALL_DIR/hank-monitor"
     assert_file_exists "$TEST_INSTALL_DIR/hank-setup"
     assert_file_exists "$TEST_INSTALL_DIR/hank-import"
     assert_file_exists "$TEST_INSTALL_DIR/hank-migrate"
@@ -574,7 +561,6 @@ EOF
 
     # Verify all scripts in hank home
     assert_file_exists "$TEST_HANK_HOME/hank_loop.sh"
-    assert_file_exists "$TEST_HANK_HOME/hank_monitor.sh"
     assert_file_exists "$TEST_HANK_HOME/setup.sh"
     assert_file_exists "$TEST_HANK_HOME/hank_import.sh"
     assert_file_exists "$TEST_HANK_HOME/migrate_to_hank_folder.sh"

@@ -126,16 +126,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 exec "$HANK_HOME/hank_loop.sh" "$@"
 EOF
 
-    # Create hank-monitor command
-    cat > "$INSTALL_DIR/hank-monitor" << 'EOF'
-#!/bin/bash
-# Hank Monitor - Global Command
-
-HANK_HOME="$HOME/.hank"
-
-exec "$HANK_HOME/hank_monitor.sh" "$@"
-EOF
-
     # Create hank-setup command
     cat > "$INSTALL_DIR/hank-setup" << 'EOF'
 #!/bin/bash
@@ -189,9 +179,6 @@ HANK_HOME="$HOME/.hank"
 exec "$HANK_HOME/hank_enable_ci.sh" "$@"
 EOF
 
-    # Copy actual script files to Hank home with modifications for global operation
-    cp "$SCRIPT_DIR/hank_monitor.sh" "$HANK_HOME/"
-
     # Copy PRD import script to Hank home
     cp "$SCRIPT_DIR/hank_import.sh" "$HANK_HOME/"
 
@@ -204,13 +191,11 @@ EOF
 
     # Make all commands executable
     chmod +x "$INSTALL_DIR/hank"
-    chmod +x "$INSTALL_DIR/hank-monitor"
     chmod +x "$INSTALL_DIR/hank-setup"
     chmod +x "$INSTALL_DIR/hank-import"
     chmod +x "$INSTALL_DIR/hank-migrate"
     chmod +x "$INSTALL_DIR/hank-enable"
     chmod +x "$INSTALL_DIR/hank-enable-ci"
-    chmod +x "$HANK_HOME/hank_monitor.sh"
     chmod +x "$HANK_HOME/hank_import.sh"
     chmod +x "$HANK_HOME/migrate_to_hank_folder.sh"
     chmod +x "$HANK_HOME/hank_enable.sh"
@@ -227,7 +212,6 @@ install_hank_loop() {
     # Create modified hank_loop.sh for global operation
     sed \
         -e "s|HANK_HOME=\"\$HOME/.hank\"|HANK_HOME=\"\$HOME/.hank\"|g" \
-        -e "s|\$script_dir/hank_monitor.sh|\$HANK_HOME/hank_monitor.sh|g" \
         -e "s|\$script_dir/hank_loop.sh|\$HANK_HOME/hank_loop.sh|g" \
         "$SCRIPT_DIR/hank_loop.sh" > "$HANK_HOME/hank_loop.sh"
     
@@ -291,7 +275,6 @@ main() {
     echo "  hank-enable-ci         # Enable Hank in existing project (non-interactive)"
     echo "  hank-import prd.md     # Convert PRD to Hank project"
     echo "  hank-migrate           # Migrate existing project to .hank/ structure"
-    echo "  hank-monitor           # Manual monitoring dashboard"
     echo ""
     echo "Quick start:"
     echo "  1. hank-setup my-awesome-project"
@@ -312,7 +295,7 @@ case "${1:-install}" in
         ;;
     uninstall)
         log "INFO" "Uninstalling Hank for Claude Code..."
-        rm -f "$INSTALL_DIR/hank" "$INSTALL_DIR/hank-monitor" "$INSTALL_DIR/hank-setup" "$INSTALL_DIR/hank-import" "$INSTALL_DIR/hank-migrate" "$INSTALL_DIR/hank-enable" "$INSTALL_DIR/hank-enable-ci"
+        rm -f "$INSTALL_DIR/hank" "$INSTALL_DIR/hank-setup" "$INSTALL_DIR/hank-import" "$INSTALL_DIR/hank-migrate" "$INSTALL_DIR/hank-enable" "$INSTALL_DIR/hank-enable-ci"
         rm -rf "$HANK_HOME"
         log "SUCCESS" "Hank for Claude Code uninstalled"
         ;;

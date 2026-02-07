@@ -215,18 +215,8 @@ setup_tmux_session() {
     # Split window vertically (right side)
     tmux split-window -h -t "$session_name" -c "$project_dir"
 
-    # Split right pane horizontally (top: Claude output, bottom: status)
-    tmux split-window -v -t "$session_name:${base_win}.1" -c "$project_dir"
-
-    # Right-top pane (pane 1): Live Claude Code output
-    tmux send-keys -t "$session_name:${base_win}.1" "tail -f '$project_dir/$LIVE_LOG_FILE'" Enter
-
-    # Right-bottom pane (pane 2): Hank status monitor
-    if command -v hank-monitor &> /dev/null; then
-        tmux send-keys -t "$session_name:${base_win}.2" "hank-monitor" Enter
-    else
-        tmux send-keys -t "$session_name:${base_win}.2" "'$hank_home/hank_monitor.sh'" Enter
-    fi
+    # Right pane (pane 1): Hank operational log (task syncs, circuit breaker, cost, exit detection)
+    tmux send-keys -t "$session_name:${base_win}.1" "tail -f '$project_dir/.hank/logs/hank.log'" Enter
 
     # Start hank loop in the left pane (exclude tmux flag to avoid recursion)
     # Forward all CLI parameters that were set by the user
@@ -272,6 +262,18 @@ setup_tmux_session() {
     if [[ "$CLAUDE_SESSION_EXPIRY_HOURS" != "24" ]]; then
         hank_cmd="$hank_cmd --session-expiry $CLAUDE_SESSION_EXPIRY_HOURS"
     fi
+    # Forward --source if non-default
+    if [[ "$HANK_TASK_SOURCE" != "plan" ]]; then
+        hank_cmd="$hank_cmd --source $HANK_TASK_SOURCE"
+    fi
+    # Forward --mode if non-default
+    if [[ "$HANK_MODE" != "build" ]]; then
+        hank_cmd="$hank_cmd --mode $HANK_MODE"
+    fi
+    # Forward --dry-run if enabled
+    if [[ "$HANK_DRY_RUN" == "true" ]]; then
+        hank_cmd="$hank_cmd --dry-run"
+    fi
 
     tmux send-keys -t "$session_name:${base_win}.0" "$hank_cmd" Enter
 
@@ -279,17 +281,15 @@ setup_tmux_session() {
     tmux select-pane -t "$session_name:${base_win}.0"
 
     # Set pane titles (requires tmux 2.6+)
-    tmux select-pane -t "$session_name:${base_win}.0" -T "Hank Loop"
-    tmux select-pane -t "$session_name:${base_win}.1" -T "Claude Output"
-    tmux select-pane -t "$session_name:${base_win}.2" -T "Status"
+    tmux select-pane -t "$session_name:${base_win}.0" -T "Hank Live"
+    tmux select-pane -t "$session_name:${base_win}.1" -T "Hank Log"
 
     # Set window title
-    tmux rename-window -t "$session_name:${base_win}" "Hank: Loop | Output | Status"
+    tmux rename-window -t "$session_name:${base_win}" "Hank: Live | Log"
 
-    log_status "SUCCESS" "Tmux session created with 3 panes:"
-    log_status "INFO" "  Left:         Hank loop"
-    log_status "INFO" "  Right-top:    Claude Code live output"
-    log_status "INFO" "  Right-bottom: Status monitor"
+    log_status "SUCCESS" "Tmux session created with 2 panes:"
+    log_status "INFO" "  Left:  Hank live output (Claude stream + hank messages)"
+    log_status "INFO" "  Right: Hank operational log (task syncs, circuit breaker, costs)"
     log_status "INFO" ""
     log_status "INFO" "Use Ctrl+B then D to detach from session"
     log_status "INFO" "Use 'tmux attach -t $session_name' to reattach"
@@ -1044,6 +1044,17 @@ build_claude_command() {
     # Array-based approach maintains shell injection safety
     local prompt_content
     prompt_content=$(cat "$prompt_file")
+
+    # Inline IMPLEMENTATION_PLAN.md content so Claude always sees fresh tasks
+    # This is critical for --source github where tasks sync each iteration
+    if [[ -f "$PLAN_FILE" ]]; then
+        local plan_content
+        plan_content=$(cat "$PLAN_FILE")
+        prompt_content="$prompt_content
+
+## Current Implementation Plan
+$plan_content"
+    fi
 
     # In dry-run mode, append instruction to analyze without modifying
     if [[ "$HANK_DRY_RUN" == "true" ]]; then

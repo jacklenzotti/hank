@@ -43,7 +43,7 @@ check_installation() {
     local installed=false
 
     # Check for any of the Hank commands
-    for cmd in hank hank-monitor hank-setup hank-import; do
+    for cmd in hank hank-setup hank-import; do
         if [ -f "$INSTALL_DIR/$cmd" ]; then
             installed=true
             break
@@ -58,7 +58,7 @@ check_installation() {
     if [ "$installed" = false ]; then
         log "WARN" "Hank does not appear to be installed"
         echo "Checked locations:"
-        echo "  - $INSTALL_DIR/{hank,hank-monitor,hank-setup,hank-import}"
+        echo "  - $INSTALL_DIR/{hank,hank-setup,hank-import}"
         echo "  - $HANK_HOME"
         exit 0
     fi
@@ -75,7 +75,7 @@ show_removal_plan() {
 
     # Commands
     echo "Commands in $INSTALL_DIR:"
-    for cmd in hank hank-monitor hank-setup hank-import; do
+    for cmd in hank hank-setup hank-import; do
         if [ -f "$INSTALL_DIR/$cmd" ]; then
             echo "  - $cmd"
         fi
@@ -111,14 +111,14 @@ confirm_uninstall() {
 }
 
 # Remove Hank commands from INSTALL_DIR
-# Removes: hank, hank-monitor, hank-setup, hank-import
+# Removes: hank, hank-setup, hank-import
 # Uses: INSTALL_DIR environment variable
 # Output: Logs success with count of removed commands, or info if none found
 remove_commands() {
     log "INFO" "Removing Hank commands..."
 
     local removed=0
-    for cmd in hank hank-monitor hank-setup hank-import; do
+    for cmd in hank hank-setup hank-import; do
         if [ -f "$INSTALL_DIR/$cmd" ]; then
             rm -f "$INSTALL_DIR/$cmd"
             removed=$((removed + 1))

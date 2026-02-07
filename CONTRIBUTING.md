@@ -65,7 +65,6 @@ npm test
 ```
 hank/
 ├── hank_loop.sh        # Main loop script
-├── hank_monitor.sh     # Live monitoring dashboard
 ├── setup.sh             # Project initialization
 ├── hank_import.sh      # PRD import tool
 ├── install.sh           # Global installation script

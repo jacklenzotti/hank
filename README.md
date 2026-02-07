@@ -59,7 +59,7 @@ cd hank
 ./install.sh
 ```
 
-This adds `hank`, `hank-monitor`, `hank-setup`, `hank-import`, `hank-enable`, and `hank-enable-ci` to your PATH.
+This adds `hank`, `hank-setup`, `hank-import`, `hank-enable`, and `hank-enable-ci` to your PATH.
 
 ### Enable in an Existing Project
 
@@ -211,7 +211,6 @@ hank [OPTIONS]
   --help                        # Show help
 
 # Monitoring
-hank-monitor                    # Live dashboard in separate terminal
 tmux list-sessions              # View active Hank sessions
 tmux attach -t <name>           # Reattach to session
 ```

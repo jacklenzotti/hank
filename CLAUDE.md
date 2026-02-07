@@ -15,7 +15,6 @@ Fork of [frankbria/ralph-claude-code](https://github.com/frankbria/ralph-claude-
 | Script              | Purpose                                                                                            |
 | ------------------- | -------------------------------------------------------------------------------------------------- |
 | `hank_loop.sh`      | Main autonomous loop — CLI parsing, task sync, Claude execution, response analysis, exit detection |
-| `hank_monitor.sh`   | Live tmux monitoring dashboard                                                                     |
 | `setup.sh`          | Project initialization for new Hank projects                                                       |
 | `hank_import.sh`    | PRD/spec import — converts documents to Hank format using Claude CLI JSON output                   |
 | `hank_enable.sh`    | Interactive wizard for enabling Hank in existing projects                                          |
@@ -172,8 +171,8 @@ When `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` is set:
 
 ## Global Installation Paths
 
-- **Commands**: `~/.local/bin/` (hank, hank-monitor, hank-setup, hank-import, hank-enable, hank-enable-ci)
-- **Scripts**: `~/.hank/` (hank_loop.sh, hank_monitor.sh, etc.)
+- **Commands**: `~/.local/bin/` (hank, hank-setup, hank-import, hank-enable, hank-enable-ci)
+- **Scripts**: `~/.hank/` (hank_loop.sh, etc.)
 - **Libraries**: `~/.hank/lib/`
 - **Templates**: `~/.hank/templates/`
 
