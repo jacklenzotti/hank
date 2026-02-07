@@ -169,6 +169,10 @@ When `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` is set:
 - **Build mode**: Uses teams for 2+ independent items touching different files/layers
 - Falls back to subagents when items overlap or work is sequential
 
+## Companion Dashboard
+
+[hank-dash](https://github.com/jacklenzotti/hank-dash) is a separate repo providing a live web dashboard that reads `.hank/` data files via file watchers and renders real-time charts, process monitoring, and stall detection in the browser. It is not part of this repository but consumes the same data files Hank writes.
+
 ## Global Installation Paths
 
 - **Commands**: `~/.local/bin/` (hank, hank-setup, hank-import, hank-enable, hank-enable-ci)

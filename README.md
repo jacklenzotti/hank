@@ -49,6 +49,28 @@ Hank tracks API costs and token usage for every loop iteration:
 - **Per-issue breakdown** — When using `--source github`, costs are attributed to individual issues
 - **Historical reports** — Run `hank --cost-summary` to see a full cost report across all sessions
 
+### Live Web Dashboard
+
+[**hank-dash**](https://github.com/jacklenzotti/hank-dash) is a companion web dashboard that visualizes Hank runs in real time. It watches the `.hank/` directory for changes and streams updates to a browser UI via Server-Sent Events.
+
+- **Cost & token charts** — Per-loop and cumulative cost, token breakdown, cache hit rates, cost velocity
+- **Circuit breaker monitor** — Live state gauge with transition history
+- **Stall detection** — Warns on no-progress loops, repeated errors, cost spikes
+- **Implementation plan progress** — Tracks task completion from `IMPLEMENTATION_PLAN.md`
+- **Process monitor** — Shows running tmux sessions, hank loops, Claude CLI instances, and flags orphaned processes
+- **Multi-project support** — Watch multiple Hank projects from a single dashboard
+- **Zero dependencies** — Pure Node.js, no npm packages required
+
+```bash
+# Install and run
+git clone https://github.com/jacklenzotti/hank-dash.git
+cd hank-dash
+node bin/hank-dash.js ~/my-project   # Opens dashboard at http://localhost:3274
+
+# Watch multiple projects
+node bin/hank-dash.js ~/project-a ~/project-b
+```
+
 ## Quick Start
 
 ### Install
