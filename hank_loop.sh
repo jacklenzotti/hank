@@ -1353,29 +1353,37 @@ EOF
 
         # Report back to GitHub Issues if --source github
         if [[ "$HANK_TASK_SOURCE" == "github" ]]; then
-            # Extract recommendation from output (contains issue number)
             local recommendation=""
-            local output_file="$HANK_DIR/logs/output_loop_${loop_count}.txt"
-            if [[ -f "$output_file" ]]; then
-                recommendation=$(grep "RECOMMENDATION:" "$output_file" 2>/dev/null | tail -1 | sed 's/.*RECOMMENDATION:[[:space:]]*//')
+            recommendation=$(jq -r '.analysis.work_summary // ""' "$RESPONSE_ANALYSIS_FILE" 2>/dev/null || echo "")
+
+            local analysis_status
+            analysis_status=$(jq -r '.analysis.exit_signal' "$RESPONSE_ANALYSIS_FILE" 2>/dev/null || echo "false")
+            local report_status="IN_PROGRESS"
+            if [[ "$analysis_status" == "true" ]]; then
+                report_status="COMPLETE"
             fi
-            # Extract issue number from recommendation or plan file
-            local issue_num=""
-            issue_num=$(extract_issue_number "$recommendation")
-            if [[ -z "$issue_num" && -f "$PLAN_FILE" ]]; then
-                # Fall back to first issue in plan
-                issue_num=$(grep -oE '#[0-9]+' "$PLAN_FILE" 2>/dev/null | head -1 | tr -d '#')
-            fi
-            if [[ -n "$issue_num" ]]; then
-                local analysis_status
-                analysis_status=$(jq -r '.analysis.exit_signal' "$RESPONSE_ANALYSIS_FILE" 2>/dev/null || echo "false")
-                local report_status="IN_PROGRESS"
-                if [[ "$analysis_status" == "true" ]]; then
-                    report_status="COMPLETE"
+            local summary="${recommendation:-Loop $loop_count completed}"
+
+            if [[ "$report_status" == "COMPLETE" && -f "$PLAN_FILE" ]]; then
+                # Close ALL issues when work is complete
+                local all_issues
+                all_issues=$(grep -oE '#[0-9]+' "$PLAN_FILE" 2>/dev/null | tr -d '#' | sort -u)
+                if [[ -n "$all_issues" ]]; then
+                    while IFS= read -r issue_num; do
+                        report_to_github "$issue_num" "$report_status" "$summary" "$loop_count"
+                        log_status "INFO" "Reported to GitHub Issue #$issue_num: $report_status"
+                    done <<< "$all_issues"
                 fi
-                local summary="${recommendation:-Loop $loop_count completed}"
-                report_to_github "$issue_num" "$report_status" "$summary" "$loop_count"
-                log_status "INFO" "Reported to GitHub Issue #$issue_num: $report_status"
+            else
+                # In progress: report on first (current) issue only
+                local issue_num=""
+                if [[ -f "$PLAN_FILE" ]]; then
+                    issue_num=$(grep -oE '#[0-9]+' "$PLAN_FILE" 2>/dev/null | head -1 | tr -d '#')
+                fi
+                if [[ -n "$issue_num" ]]; then
+                    report_to_github "$issue_num" "$report_status" "$summary" "$loop_count"
+                    log_status "INFO" "Reported to GitHub Issue #$issue_num: $report_status"
+                fi
             fi
         fi
 
