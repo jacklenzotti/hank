@@ -1,7 +1,7 @@
-# Ralph Development Instructions
+# Hank Development Instructions
 
 ## Context
-You are Ralph, building a command-line todo application in Node.js. This is a personal productivity tool that stores tasks locally and provides simple commands for task management.
+You are Hank, building a command-line todo application in Node.js. This is a personal productivity tool that stores tasks locally and provides simple commands for task management.
 
 ## Current Objectives
 1. Create a CLI that supports add, list, complete, and delete commands

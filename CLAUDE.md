@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is the Ralph for Claude Code repository - an autonomous AI development loop system that enables continuous development cycles with intelligent exit detection and rate limiting.
+This is the Hank for Claude Code repository - an autonomous AI development loop system that enables continuous development cycles with intelligent exit detection and rate limiting.
 
 See [README.md](README.md) for version info, changelog, and user documentation.
 
@@ -14,19 +14,19 @@ The system consists of four main bash scripts and a modular library system:
 
 ### Main Scripts
 
-1. **ralph_loop.sh** - The main autonomous loop that executes Claude Code repeatedly
-2. **ralph_monitor.sh** - Live monitoring dashboard for tracking loop status
-3. **setup.sh** - Project initialization script for new Ralph projects
-4. **create_files.sh** - Bootstrap script that creates the entire Ralph system
-5. **ralph_import.sh** - PRD/specification import tool that converts documents to Ralph format
+1. **hank_loop.sh** - The main autonomous loop that executes Claude Code repeatedly
+2. **hank_monitor.sh** - Live monitoring dashboard for tracking loop status
+3. **setup.sh** - Project initialization script for new Hank projects
+4. **create_files.sh** - Bootstrap script that creates the entire Hank system
+5. **hank_import.sh** - PRD/specification import tool that converts documents to Hank format
    - Uses modern Claude Code CLI with `--output-format json` for structured responses
    - Implements `detect_response_format()` and `parse_conversion_response()` for JSON parsing
    - Backward compatible with older CLI versions (automatic text fallback)
-6. **ralph_enable.sh** - Interactive wizard for enabling Ralph in existing projects
+6. **hank_enable.sh** - Interactive wizard for enabling Hank in existing projects
    - Multi-step wizard with environment detection, task source selection, configuration
    - Imports tasks from beads, GitHub Issues, or PRD documents
-   - Generates `.ralphrc` project configuration file
-7. **ralph_enable_ci.sh** - Non-interactive version for CI/automation
+   - Generates `.hankrc` project configuration file
+7. **hank_enable_ci.sh** - Non-interactive version for CI/automation
    - Same functionality as interactive version with CLI flags
    - JSON output mode for machine parsing
    - Exit codes: 0 (success), 1 (error), 2 (already enabled)
@@ -47,9 +47,9 @@ The system uses a modular architecture with reusable components in the `lib/` di
    - Supports both flat JSON format and Claude CLI format (`result`, `sessionId`, `metadata`)
    - Extracts structured fields: status, exit_signal, work_type, files_modified
    - **Session management**: `store_session_id()`, `get_last_session_id()`, `should_resume_session()`
-   - Automatic session persistence to `.ralph/.claude_session_id` file with 24-hour expiration
+   - Automatic session persistence to `.hank/.claude_session_id` file with 24-hour expiration
    - Session lifecycle: `get_session_id()`, `reset_session()`, `log_session_transition()`, `init_session_tracking()`
-   - Session history tracked in `.ralph/.ralph_session_history` (last 50 transitions)
+   - Session history tracked in `.hank/.hank_session_history` (last 50 transitions)
    - Session auto-reset on: circuit breaker open, manual interrupt, project completion
    - Detects test-only loops and stuck error patterns
    - Two-stage error filtering to eliminate false positives
@@ -67,11 +67,11 @@ The system uses a modular architecture with reusable components in the `lib/` di
    - `portable_timeout()` function for seamless cross-platform execution
    - Automatic detection with caching for performance
 
-5. **lib/enable_core.sh** - Shared logic for ralph enable commands
-   - Idempotency checks: `check_existing_ralph()`, `is_ralph_enabled()`
+5. **lib/enable_core.sh** - Shared logic for hank enable commands
+   - Idempotency checks: `check_existing_hank()`, `is_hank_enabled()`
    - Safe file operations: `safe_create_file()`, `safe_create_dir()`
    - Project detection: `detect_project_context()`, `detect_git_info()`, `detect_task_sources()`
-   - Template generation: `generate_prompt_md()`, `generate_agent_md()`, `generate_fix_plan_md()`, `generate_ralphrc()`
+   - Template generation: `generate_prompt_md()`, `generate_agent_md()`, `generate_fix_plan_md()`, `generate_hankrc()`
 
 6. **lib/wizard_utils.sh** - Interactive prompt utilities for enable wizard
    - User prompts: `confirm()`, `prompt_text()`, `prompt_number()`
@@ -88,77 +88,77 @@ The system uses a modular architecture with reusable components in the `lib/` di
 
 ### Installation
 ```bash
-# Install Ralph globally (run once)
+# Install Hank globally (run once)
 ./install.sh
 
-# Uninstall Ralph
+# Uninstall Hank
 ./install.sh uninstall
 ```
 
 ### Setting Up a New Project
 ```bash
-# Create a new Ralph-managed project (run from anywhere)
-ralph-setup my-project-name
+# Create a new Hank-managed project (run from anywhere)
+hank-setup my-project-name
 cd my-project-name
 ```
 
 ### Migrating Existing Projects
 ```bash
-# Migrate from flat structure to .ralph/ subfolder (v0.10.0+)
+# Migrate from flat structure to .hank/ subfolder (v0.10.0+)
 cd existing-project
-ralph-migrate
+hank-migrate
 ```
 
-### Enabling Ralph in Existing Projects
+### Enabling Hank in Existing Projects
 ```bash
 # Interactive wizard (recommended for humans)
 cd existing-project
-ralph-enable
+hank-enable
 
 # With specific task source
-ralph-enable --from beads
-ralph-enable --from github --label "sprint-1"
-ralph-enable --from prd ./docs/requirements.md
+hank-enable --from beads
+hank-enable --from github --label "sprint-1"
+hank-enable --from prd ./docs/requirements.md
 
-# Force overwrite existing .ralph/
-ralph-enable --force
+# Force overwrite existing .hank/
+hank-enable --force
 
 # Non-interactive for CI/scripts
-ralph-enable-ci                              # Sensible defaults
-ralph-enable-ci --from github               # With task source
-ralph-enable-ci --project-type typescript   # Override detection
-ralph-enable-ci --json                      # Machine-readable output
+hank-enable-ci                              # Sensible defaults
+hank-enable-ci --from github               # With task source
+hank-enable-ci --project-type typescript   # Override detection
+hank-enable-ci --json                      # Machine-readable output
 ```
 
-### Running the Ralph Loop
+### Running the Hank Loop
 ```bash
 # Start with integrated tmux monitoring (recommended)
-ralph --monitor
+hank --monitor
 
 # Start without monitoring
-ralph
+hank
 
 # With custom parameters and monitoring
-ralph --monitor --calls 50 --prompt my_custom_prompt.md
+hank --monitor --calls 50 --prompt my_custom_prompt.md
 
 # Check current status
-ralph --status
+hank --status
 
 # Circuit breaker management
-ralph --reset-circuit
-ralph --circuit-status
+hank --reset-circuit
+hank --circuit-status
 
 # Session management
-ralph --reset-session    # Reset session state manually
+hank --reset-session    # Reset session state manually
 ```
 
 ### Monitoring
 ```bash
 # Integrated tmux monitoring (recommended)
-ralph --monitor
+hank --monitor
 
 # Manual monitoring in separate terminal
-ralph-monitor
+hank-monitor
 
 # tmux session management
 tmux list-sessions
@@ -180,18 +180,18 @@ bats tests/unit/test_json_parsing.bats
 bats tests/unit/test_cli_modern.bats
 bats tests/unit/test_enable_core.bats
 bats tests/unit/test_task_sources.bats
-bats tests/unit/test_ralph_enable.bats
+bats tests/unit/test_hank_enable.bats
 ```
 
-## Ralph Loop Configuration
+## Hank Loop Configuration
 
-The loop is controlled by several key files and environment variables within the `.ralph/` subfolder:
+The loop is controlled by several key files and environment variables within the `.hank/` subfolder:
 
-- **.ralph/PROMPT.md** - Main prompt file that drives each loop iteration
-- **.ralph/fix_plan.md** - Prioritized task list that Ralph follows
-- **.ralph/AGENT.md** - Build and run instructions maintained by Ralph
-- **.ralph/status.json** - Real-time status tracking (JSON format)
-- **.ralph/logs/** - Execution logs for each loop iteration
+- **.hank/PROMPT.md** - Main prompt file that drives each loop iteration
+- **.hank/fix_plan.md** - Prioritized task list that Hank follows
+- **.hank/AGENT.md** - Build and run instructions maintained by Hank
+- **.hank/status.json** - Real-time status tracking (JSON format)
+- **.hank/logs/** - Execution logs for each loop iteration
 
 ### Rate Limiting
 - Default: 100 API calls per hour (configurable via `--calls` flag)
@@ -200,7 +200,7 @@ The loop is controlled by several key files and environment variables within the
 
 ### Modern CLI Configuration (Phase 1.1)
 
-Ralph uses modern Claude Code CLI flags for structured communication:
+Hank uses modern Claude Code CLI flags for structured communication:
 
 **Configuration Variables:**
 ```bash
@@ -223,7 +223,7 @@ Each loop iteration injects context via `build_loop_context()`:
 - Previous loop work summary
 
 **Session Continuity:**
-- Sessions are preserved in `.ralph/.claude_session_id`
+- Sessions are preserved in `.hank/.claude_session_id`
 - Use `--continue` flag to maintain context across loops
 - Disable with `--no-continue` for isolated iterations
 
@@ -232,14 +232,14 @@ The loop uses a dual-condition check to prevent premature exits during productiv
 
 **Exit requires BOTH conditions:**
 1. `recent_completion_indicators >= 2` (heuristic-based detection from natural language patterns)
-2. Claude's explicit `EXIT_SIGNAL: true` in the RALPH_STATUS block
+2. Claude's explicit `EXIT_SIGNAL: true` in the HANK_STATUS block
 
-The `EXIT_SIGNAL` value is read from `.ralph/.response_analysis` (at `.analysis.exit_signal`) which is populated by `response_analyzer.sh` from Claude's RALPH_STATUS output block.
+The `EXIT_SIGNAL` value is read from `.hank/.response_analysis` (at `.analysis.exit_signal`) which is populated by `response_analyzer.sh` from Claude's HANK_STATUS output block.
 
 **Other exit conditions (checked before completion indicators):**
 - Multiple consecutive "done" signals from Claude Code (`done_signals >= 2`)
 - Too many test-only loops indicating feature completeness (`test_loops >= 3`)
-- All items in .ralph/fix_plan.md marked as completed
+- All items in .hank/fix_plan.md marked as completed
 
 **Example behavior when EXIT_SIGNAL is false:**
 ```
@@ -254,11 +254,11 @@ Loop 8: Claude outputs "All tasks complete, project ready"
         → Result: EXIT with "project_complete"
 ```
 
-**Rationale:** Natural language patterns like "done" or "complete" can trigger false positives during productive work (e.g., "feature done, moving to tests"). By requiring Claude's explicit EXIT_SIGNAL confirmation, Ralph avoids exiting mid-iteration when Claude is still working.
+**Rationale:** Natural language patterns like "done" or "complete" can trigger false positives during productive work (e.g., "feature done, moving to tests"). By requiring Claude's explicit EXIT_SIGNAL confirmation, Hank avoids exiting mid-iteration when Claude is still working.
 
 ## CI/CD Pipeline
 
-Ralph uses GitHub Actions for continuous integration:
+Hank uses GitHub Actions for continuous integration:
 
 ### Workflows (`.github/workflows/`)
 
@@ -277,12 +277,12 @@ Ralph uses GitHub Actions for continuous integration:
 ### Coverage Note
 Bash code coverage measurement with kcov has fundamental limitations when tracing subprocess executions. The `COVERAGE_THRESHOLD` is set to 0 (disabled) because kcov cannot instrument subprocesses spawned by bats. **Test pass rate (100%) is the quality gate.** See [bats-core#15](https://github.com/bats-core/bats-core/issues/15) for details.
 
-## Project Structure for Ralph-Managed Projects
+## Project Structure for Hank-Managed Projects
 
-Each project created with `./setup.sh` follows this structure with a `.ralph/` subfolder:
+Each project created with `./setup.sh` follows this structure with a `.hank/` subfolder:
 ```
 project-name/
-├── .ralph/                # Ralph configuration and state (hidden folder)
+├── .hank/                # Hank configuration and state (hidden folder)
 │   ├── PROMPT.md          # Main development instructions
 │   ├── fix_plan.md       # Prioritized TODO list
 │   ├── AGENT.md          # Build/run instructions
@@ -293,43 +293,43 @@ project-name/
 └── src/                   # Source code (at project root)
 ```
 
-> **Migration**: Existing projects can be migrated with `ralph-migrate`.
+> **Migration**: Existing projects can be migrated with `hank-migrate`.
 
 ## Template System
 
 Templates in `templates/` provide starting points for new projects:
-- **PROMPT.md** - Instructions for Ralph's autonomous behavior
+- **PROMPT.md** - Instructions for Hank's autonomous behavior
 - **fix_plan.md** - Initial task structure
 - **AGENT.md** - Build system template
 
 ## File Naming Conventions
 
-- Ralph control files (`fix_plan.md`, `AGENT.md`, `PROMPT.md`) reside in the `.ralph/` directory
-- Hidden files within `.ralph/` (e.g., `.ralph/.call_count`, `.ralph/.exit_signals`) track loop state
-- `.ralph/logs/` contains timestamped execution logs
-- `.ralph/docs/generated/` for Ralph-created documentation
+- Hank control files (`fix_plan.md`, `AGENT.md`, `PROMPT.md`) reside in the `.hank/` directory
+- Hidden files within `.hank/` (e.g., `.hank/.call_count`, `.hank/.exit_signals`) track loop state
+- `.hank/logs/` contains timestamped execution logs
+- `.hank/docs/generated/` for Hank-created documentation
 - `docs/code-review/` for code review reports (at project root)
 
 ## Global Installation
 
-Ralph installs to:
-- **Commands**: `~/.local/bin/` (ralph, ralph-monitor, ralph-setup, ralph-import, ralph-migrate, ralph-enable, ralph-enable-ci)
-- **Templates**: `~/.ralph/templates/`
-- **Scripts**: `~/.ralph/` (ralph_loop.sh, ralph_monitor.sh, setup.sh, ralph_import.sh, migrate_to_ralph_folder.sh, ralph_enable.sh, ralph_enable_ci.sh)
-- **Libraries**: `~/.ralph/lib/` (circuit_breaker.sh, response_analyzer.sh, date_utils.sh, timeout_utils.sh, enable_core.sh, wizard_utils.sh, task_sources.sh)
+Hank installs to:
+- **Commands**: `~/.local/bin/` (hank, hank-monitor, hank-setup, hank-import, hank-migrate, hank-enable, hank-enable-ci)
+- **Templates**: `~/.hank/templates/`
+- **Scripts**: `~/.hank/` (hank_loop.sh, hank_monitor.sh, setup.sh, hank_import.sh, migrate_to_hank_folder.sh, hank_enable.sh, hank_enable_ci.sh)
+- **Libraries**: `~/.hank/lib/` (circuit_breaker.sh, response_analyzer.sh, date_utils.sh, timeout_utils.sh, enable_core.sh, wizard_utils.sh, task_sources.sh)
 
 After installation, the following global commands are available:
-- `ralph` - Start the autonomous development loop
-- `ralph-monitor` - Launch the monitoring dashboard
-- `ralph-setup` - Create a new Ralph-managed project
-- `ralph-import` - Import PRD/specification documents to Ralph format
-- `ralph-migrate` - Migrate existing projects from flat structure to `.ralph/` subfolder
-- `ralph-enable` - Interactive wizard to enable Ralph in existing projects
-- `ralph-enable-ci` - Non-interactive version for CI/automation
+- `hank` - Start the autonomous development loop
+- `hank-monitor` - Launch the monitoring dashboard
+- `hank-setup` - Create a new Hank-managed project
+- `hank-import` - Import PRD/specification documents to Hank format
+- `hank-migrate` - Migrate existing projects from flat structure to `.hank/` subfolder
+- `hank-enable` - Interactive wizard to enable Hank in existing projects
+- `hank-enable-ci` - Non-interactive version for CI/automation
 
 ## Integration Points
 
-Ralph integrates with:
+Hank integrates with:
 - **Claude Code CLI**: Uses `npx @anthropic/claude-code` as the execution engine
 - **tmux**: Terminal multiplexer for integrated monitoring sessions
 - **Git**: Expects projects to be git repositories
@@ -339,13 +339,13 @@ Ralph integrates with:
 
 ## Exit Conditions and Thresholds
 
-Ralph uses multiple mechanisms to detect when to exit:
+Hank uses multiple mechanisms to detect when to exit:
 
 ### Exit Detection Thresholds
 - `MAX_CONSECUTIVE_TEST_LOOPS=3` - Exit if too many test-only iterations
 - `MAX_CONSECUTIVE_DONE_SIGNALS=2` - Exit on repeated completion signals
 - `TEST_PERCENTAGE_THRESHOLD=30%` - Flag if testing dominates recent loops
-- Completion detection via .ralph/fix_plan.md checklist items
+- Completion detection via .hank/fix_plan.md checklist items
 
 ### Completion Indicators with EXIT_SIGNAL Gate
 
@@ -359,11 +359,11 @@ The `completion_indicators` exit condition requires dual verification:
 | >= 2 | N/A | malformed | **Continue** (defaults to false) |
 | < 2 | `true` | exists | **Continue** (threshold not met) |
 
-**Implementation** (`ralph_loop.sh:312-327`):
+**Implementation** (`hank_loop.sh:312-327`):
 ```bash
 local claude_exit_signal="false"
-if [[ -f "$RALPH_DIR/.response_analysis" ]]; then
-    claude_exit_signal=$(jq -r '.analysis.exit_signal // false' "$RALPH_DIR/.response_analysis" 2>/dev/null || echo "false")
+if [[ -f "$HANK_DIR/.response_analysis" ]]; then
+    claude_exit_signal=$(jq -r '.analysis.exit_signal // false' "$HANK_DIR/.response_analysis" 2>/dev/null || echo "false")
 fi
 
 if [[ $recent_completion_indicators -ge 2 ]] && [[ "$claude_exit_signal" == "true" ]]; then
@@ -372,7 +372,7 @@ if [[ $recent_completion_indicators -ge 2 ]] && [[ "$claude_exit_signal" == "tru
 fi
 ```
 
-**Conflict Resolution:** When `STATUS: COMPLETE` but `EXIT_SIGNAL: false` in RALPH_STATUS, the explicit EXIT_SIGNAL takes precedence. This allows Claude to mark a phase complete while indicating more phases remain.
+**Conflict Resolution:** When `STATUS: COMPLETE` but `EXIT_SIGNAL: false` in HANK_STATUS, the explicit EXIT_SIGNAL takes precedence. This allows Claude to mark a phase complete while indicating more phases remain.
 
 ### Circuit Breaker Thresholds
 - `CB_NO_PROGRESS_THRESHOLD=3` - Open circuit after 3 loops with no file changes
@@ -382,17 +382,17 @@ fi
 
 ### Permission Denial Detection (Issue #101)
 
-When Claude Code is denied permission to execute commands (e.g., `npm install`), Ralph detects this from the `permission_denials` array in the JSON output and halts the loop immediately:
+When Claude Code is denied permission to execute commands (e.g., `npm install`), Hank detects this from the `permission_denials` array in the JSON output and halts the loop immediately:
 
 1. **Detection**: The `parse_json_response()` function extracts `permission_denials` from Claude Code output
 2. **Fields tracked**:
    - `has_permission_denials` (boolean)
    - `permission_denial_count` (integer)
    - `denied_commands` (array of command strings)
-3. **Exit behavior**: When `has_permission_denials=true`, Ralph exits with reason "permission_denied"
-4. **User guidance**: Ralph displays instructions to update `ALLOWED_TOOLS` in `.ralphrc`
+3. **Exit behavior**: When `has_permission_denials=true`, Hank exits with reason "permission_denied"
+4. **User guidance**: Hank displays instructions to update `ALLOWED_TOOLS` in `.hankrc`
 
-**Example `.ralphrc` tool patterns:**
+**Example `.hankrc` tool patterns:**
 ```bash
 # Broad patterns (recommended for development)
 ALLOWED_TOOLS="Write,Read,Edit,Bash(git *),Bash(npm *),Bash(pytest)"
@@ -403,7 +403,7 @@ ALLOWED_TOOLS="Write,Read,Edit,Bash(git commit),Bash(npm install)"
 
 ### Error Detection
 
-Ralph uses advanced error detection with two-stage filtering to eliminate false positives:
+Hank uses advanced error detection with two-stage filtering to eliminate false positives:
 
 **Stage 1: JSON Field Filtering**
 - Filters out JSON field patterns like `"is_error": false` that contain the word "error" but aren't actual errors
@@ -438,10 +438,10 @@ Ralph uses advanced error detection with two-stage filtering to eliminate false 
 | `test_edge_cases.bats` | 20 | Edge case handling |
 | `test_installation.bats` | 14 | Global installation/uninstall workflows |
 | `test_project_setup.bats` | 36 | Project setup (setup.sh) validation |
-| `test_prd_import.bats` | 33 | PRD import (ralph_import.sh) workflows + modern CLI tests |
+| `test_prd_import.bats` | 33 | PRD import (hank_import.sh) workflows + modern CLI tests |
 | `test_enable_core.bats` | 30 | Enable core library (idempotency, project detection, template generation) |
 | `test_task_sources.bats` | 23 | Task sources (beads, GitHub, PRD extraction, normalization) |
-| `test_ralph_enable.bats` | 22 | Ralph enable integration tests (wizard, CI version, JSON output) |
+| `test_hank_enable.bats` | 22 | Hank enable integration tests (wizard, CI version, JSON output) |
 | `test_wizard_utils.bats` | 20 | Wizard utility functions (stdout/stderr separation, prompt functions) |
 
 ### Running Tests
@@ -465,7 +465,7 @@ bats tests/unit/test_cli_parsing.bats
 - **Test Pass Rate**: 100% - all tests must pass, no exceptions
 - **Test Types Required**:
   - Unit tests for bash script functions (if applicable)
-  - Integration tests for Ralph loop behavior
+  - Integration tests for Hank loop behavior
   - End-to-end tests for full development cycles
 - **Test Quality**: Tests must validate behavior, not just achieve coverage metrics
 - **Test Documentation**: Complex test scenarios must include comments explaining the test strategy
@@ -498,11 +498,11 @@ Before moving to the next feature, ALL changes must be:
    - Branch naming convention: `feature/<feature-name>`, `fix/<issue-name>`, `docs/<doc-update>`
    - Create pull requests for all significant changes
 
-4. **Ralph Integration**:
-   - Update .ralph/fix_plan.md with new tasks before starting work
-   - Mark items complete in .ralph/fix_plan.md upon completion
-   - Update .ralph/PROMPT.md if Ralph's behavior needs modification
-   - Test Ralph loop with new features before completion
+4. **Hank Integration**:
+   - Update .hank/fix_plan.md with new tasks before starting work
+   - Mark items complete in .hank/fix_plan.md upon completion
+   - Update .hank/PROMPT.md if Hank's behavior needs modification
+   - Test Hank loop with new features before completion
 
 ### Documentation Requirements
 
@@ -529,13 +529,13 @@ Before moving to the next feature, ALL changes must be:
    - Update template files when new patterns are introduced
    - Keep PROMPT.md template current with best practices
    - Update AGENT.md template with new build patterns
-   - Document new Ralph configuration options
+   - Document new Hank configuration options
 
 5. **CLAUDE.md Maintenance**:
    - Add new commands to "Key Commands" section
    - Update "Exit Conditions and Thresholds" when logic changes
    - Keep installation instructions accurate and tested
-   - Document new Ralph loop behaviors or quality gates
+   - Document new Hank loop behaviors or quality gates
 
 ### Feature Completion Checklist
 
@@ -546,23 +546,23 @@ Before marking ANY feature as complete, verify:
 - [ ] All changes committed with conventional commit messages
 - [ ] All commits pushed to remote repository
 - [ ] CI/CD pipeline passes
-- [ ] .ralph/fix_plan.md task marked as complete
+- [ ] .hank/fix_plan.md task marked as complete
 - [ ] Implementation documentation updated
 - [ ] Inline code comments updated or added
 - [ ] CLAUDE.md updated (if new patterns introduced)
 - [ ] Template files updated (if applicable)
 - [ ] Breaking changes documented
-- [ ] Ralph loop tested with new features
+- [ ] Hank loop tested with new features
 - [ ] Installation process verified (if applicable)
 
 ### Rationale
 
 These standards ensure:
-- **Quality**: Thorough testing prevents regressions in Ralph's autonomous behavior
+- **Quality**: Thorough testing prevents regressions in Hank's autonomous behavior
 - **Traceability**: Git commits and fix_plan.md provide clear history of changes
 - **Maintainability**: Current documentation reduces onboarding time and prevents knowledge loss
 - **Collaboration**: Pushed changes enable team visibility and code review
-- **Reliability**: Consistent quality gates maintain Ralph loop stability
-- **Automation**: Ralph integration ensures continuous development practices
+- **Reliability**: Consistent quality gates maintain Hank loop stability
+- **Automation**: Hank integration ensures continuous development practices
 
 **Enforcement**: AI agents should automatically apply these standards to all feature development tasks without requiring explicit instruction for each task.

@@ -1,6 +1,6 @@
-# Testing Guide for Ralph
+# Testing Guide for Hank
 
-This guide provides comprehensive documentation for the Ralph test suite, helping contributors understand how to run, write, and maintain tests.
+This guide provides comprehensive documentation for the Hank test suite, helping contributors understand how to run, write, and maintain tests.
 
 **Current Status**: 276 tests | 100% pass rate | CI/CD via GitHub Actions
 
@@ -211,7 +211,7 @@ setup() {
 
     export MAX_CALLS_PER_HOUR=100
     export CALL_COUNT_FILE=".call_count"
-    export TEST_TEMP_DIR="$(mktemp -d /tmp/ralph-test.XXXXXX)"
+    export TEST_TEMP_DIR="$(mktemp -d /tmp/hank-test.XXXXXX)"
     cd "$TEST_TEMP_DIR"
 
     echo "0" > "$CALL_COUNT_FILE"
@@ -259,10 +259,10 @@ SETUP_SCRIPT="${BATS_TEST_DIRNAME}/../../setup.sh"
 setup() {
     export TEST_TEMP_DIR="$(mktemp -d)"
     export HOME="$TEST_TEMP_DIR/home"
-    mkdir -p "$HOME/.ralph/templates"
+    mkdir -p "$HOME/.hank/templates"
 
     # Copy real templates for integration testing
-    cp -r "${BATS_TEST_DIRNAME}/../../templates/"* "$HOME/.ralph/templates/"
+    cp -r "${BATS_TEST_DIRNAME}/../../templates/"* "$HOME/.hank/templates/"
 
     cd "$TEST_TEMP_DIR"
 }
@@ -511,7 +511,7 @@ create_sample_prd_json "output.json" # JSON PRD
 #### Project Fixtures
 
 ```bash
-# Create sample Ralph project files
+# Create sample Hank project files
 create_sample_prompt "PROMPT.md"
 create_sample_fix_plan "fix_plan.md" 10 3  # 10 tasks, 3 completed
 create_sample_agent_md "AGENT.md"
@@ -569,7 +569,7 @@ cmake .. && make && sudo make install
 
 # Run tests with coverage
 mkdir -p coverage
-kcov --include-path="$(pwd)/ralph_loop.sh,$(pwd)/lib" \
+kcov --include-path="$(pwd)/hank_loop.sh,$(pwd)/lib" \
      coverage/ \
      bats tests/unit/
 
@@ -839,7 +839,7 @@ setup() {
 
 ```bash
 # Use system temp location
-export BATS_TEST_TMPDIR="${TMPDIR:-/tmp}/bats-ralph-$$"
+export BATS_TEST_TMPDIR="${TMPDIR:-/tmp}/bats-hank-$$"
 ```
 
 ### CI/CD Failures
@@ -856,7 +856,7 @@ export BATS_TEST_TMPDIR="${TMPDIR:-/tmp}/bats-ralph-$$"
 2. **Check for hardcoded paths**:
    ```bash
    # Bad: hardcoded path
-   source "/home/user/ralph/lib/utils.sh"
+   source "/home/user/hank/lib/utils.sh"
 
    # Good: relative path
    source "$(dirname "$BATS_TEST_FILENAME")/../../lib/utils.sh"
@@ -882,7 +882,7 @@ grep COVERAGE_THRESHOLD .github/workflows/test.yml
 
 1. **Check existing tests**: Look at similar tests in the suite for patterns
 2. **BATS documentation**: https://bats-core.readthedocs.io/
-3. **GitHub Issues**: Report test infrastructure issues at https://github.com/frankbria/ralph-claude-code/issues
+3. **GitHub Issues**: Report test infrastructure issues at https://github.com/frankbria/hank/issues
 
 ---
 

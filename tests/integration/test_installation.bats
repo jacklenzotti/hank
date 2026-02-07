@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Integration tests for Ralph install.sh - Global Installation Script
+# Integration tests for Hank install.sh - Global Installation Script
 
 load '../helpers/test_helper'
 load '../helpers/mocks'
@@ -17,7 +17,7 @@ setup() {
     # Create unique temp directories for isolated testing
     export TEST_HOME="$(mktemp -d)"
     export TEST_INSTALL_DIR="$TEST_HOME/.local/bin"
-    export TEST_RALPH_HOME="$TEST_HOME/.ralph"
+    export TEST_HANK_HOME="$TEST_HOME/.hank"
 
     # Override HOME to isolate tests
     export HOME="$TEST_HOME"
@@ -52,22 +52,22 @@ get_iso_timestamp() { date -Iseconds; }
 EOF
 
     # Create mock main scripts
-    cat > "$MOCK_SOURCE_DIR/ralph_loop.sh" << 'EOF'
+    cat > "$MOCK_SOURCE_DIR/hank_loop.sh" << 'EOF'
 #!/bin/bash
-# Mock ralph_loop.sh
-echo "Ralph loop running"
+# Mock hank_loop.sh
+echo "Hank loop running"
 EOF
 
-    cat > "$MOCK_SOURCE_DIR/ralph_monitor.sh" << 'EOF'
+    cat > "$MOCK_SOURCE_DIR/hank_monitor.sh" << 'EOF'
 #!/bin/bash
-# Mock ralph_monitor.sh
-echo "Ralph monitor running"
+# Mock hank_monitor.sh
+echo "Hank monitor running"
 EOF
 
-    cat > "$MOCK_SOURCE_DIR/ralph_import.sh" << 'EOF'
+    cat > "$MOCK_SOURCE_DIR/hank_import.sh" << 'EOF'
 #!/bin/bash
-# Mock ralph_import.sh
-echo "Ralph import running"
+# Mock hank_import.sh
+echo "Hank import running"
 EOF
 
     cat > "$MOCK_SOURCE_DIR/setup.sh" << 'EOF'
@@ -76,29 +76,29 @@ EOF
 echo "Setup running"
 EOF
 
-    cat > "$MOCK_SOURCE_DIR/migrate_to_ralph_folder.sh" << 'EOF'
+    cat > "$MOCK_SOURCE_DIR/migrate_to_hank_folder.sh" << 'EOF'
 #!/bin/bash
-# Mock migrate_to_ralph_folder.sh
+# Mock migrate_to_hank_folder.sh
 echo "Migration running"
 EOF
 
-    cat > "$MOCK_SOURCE_DIR/ralph_enable.sh" << 'EOF'
+    cat > "$MOCK_SOURCE_DIR/hank_enable.sh" << 'EOF'
 #!/bin/bash
-# Mock ralph_enable.sh
-echo "Ralph enable running"
+# Mock hank_enable.sh
+echo "Hank enable running"
 EOF
 
-    cat > "$MOCK_SOURCE_DIR/ralph_enable_ci.sh" << 'EOF'
+    cat > "$MOCK_SOURCE_DIR/hank_enable_ci.sh" << 'EOF'
 #!/bin/bash
-# Mock ralph_enable_ci.sh
-echo "Ralph enable CI running"
+# Mock hank_enable_ci.sh
+echo "Hank enable CI running"
 EOF
 
     # Create mock lib files for new enable functionality
     cat > "$MOCK_SOURCE_DIR/lib/enable_core.sh" << 'EOF'
 #!/bin/bash
 # Mock enable_core.sh
-check_existing_ralph() { :; }
+check_existing_hank() { :; }
 EOF
 
     cat > "$MOCK_SOURCE_DIR/lib/wizard_utils.sh" << 'EOF'
@@ -148,7 +148,7 @@ run_install() {
     # Create a modified install.sh that uses our mock paths
     local temp_install="$(mktemp)"
     sed -e "s|INSTALL_DIR=\"\$HOME/.local/bin\"|INSTALL_DIR=\"$TEST_INSTALL_DIR\"|g" \
-        -e "s|RALPH_HOME=\"\$HOME/.ralph\"|RALPH_HOME=\"$TEST_RALPH_HOME\"|g" \
+        -e "s|HANK_HOME=\"\$HOME/.hank\"|HANK_HOME=\"$TEST_HANK_HOME\"|g" \
         -e "s|SCRIPT_DIR=\"\$(cd \"\$(dirname \"\${BASH_SOURCE\[0\]}\")\" && pwd)\"|SCRIPT_DIR=\"$MOCK_SOURCE_DIR\"|g" \
         "$PROJECT_ROOT/install.sh" > "$temp_install"
 
@@ -170,15 +170,15 @@ run_install() {
 # Test 1-2: Directory Creation Tests
 # =============================================================================
 
-@test "install.sh creates ~/.ralph directory" {
+@test "install.sh creates ~/.hank directory" {
     run run_install
 
-    # Check main ralph directory was created
-    assert_dir_exists "$TEST_RALPH_HOME"
+    # Check main hank directory was created
+    assert_dir_exists "$TEST_HANK_HOME"
 
     # Check subdirectories
-    assert_dir_exists "$TEST_RALPH_HOME/templates"
-    assert_dir_exists "$TEST_RALPH_HOME/lib"
+    assert_dir_exists "$TEST_HANK_HOME/templates"
+    assert_dir_exists "$TEST_HANK_HOME/lib"
 }
 
 @test "install.sh creates ~/.local/bin directory" {
@@ -199,41 +199,41 @@ run_install() {
     run run_install
 
     # Check all five wrapper commands exist
-    assert_file_exists "$TEST_INSTALL_DIR/ralph"
-    assert_file_exists "$TEST_INSTALL_DIR/ralph-monitor"
-    assert_file_exists "$TEST_INSTALL_DIR/ralph-setup"
-    assert_file_exists "$TEST_INSTALL_DIR/ralph-import"
-    assert_file_exists "$TEST_INSTALL_DIR/ralph-migrate"
+    assert_file_exists "$TEST_INSTALL_DIR/hank"
+    assert_file_exists "$TEST_INSTALL_DIR/hank-monitor"
+    assert_file_exists "$TEST_INSTALL_DIR/hank-setup"
+    assert_file_exists "$TEST_INSTALL_DIR/hank-import"
+    assert_file_exists "$TEST_INSTALL_DIR/hank-migrate"
 
     # Verify each command contains proper shebang
-    grep -q "#!/bin/bash" "$TEST_INSTALL_DIR/ralph"
-    grep -q "#!/bin/bash" "$TEST_INSTALL_DIR/ralph-monitor"
-    grep -q "#!/bin/bash" "$TEST_INSTALL_DIR/ralph-setup"
-    grep -q "#!/bin/bash" "$TEST_INSTALL_DIR/ralph-import"
-    grep -q "#!/bin/bash" "$TEST_INSTALL_DIR/ralph-migrate"
+    grep -q "#!/bin/bash" "$TEST_INSTALL_DIR/hank"
+    grep -q "#!/bin/bash" "$TEST_INSTALL_DIR/hank-monitor"
+    grep -q "#!/bin/bash" "$TEST_INSTALL_DIR/hank-setup"
+    grep -q "#!/bin/bash" "$TEST_INSTALL_DIR/hank-import"
+    grep -q "#!/bin/bash" "$TEST_INSTALL_DIR/hank-migrate"
 }
 
 @test "install.sh sets executable permissions" {
     run run_install
 
     # Verify executable bit on all commands
-    [[ -x "$TEST_INSTALL_DIR/ralph" ]]
-    [[ -x "$TEST_INSTALL_DIR/ralph-monitor" ]]
-    [[ -x "$TEST_INSTALL_DIR/ralph-setup" ]]
-    [[ -x "$TEST_INSTALL_DIR/ralph-import" ]]
-    [[ -x "$TEST_INSTALL_DIR/ralph-migrate" ]]
+    [[ -x "$TEST_INSTALL_DIR/hank" ]]
+    [[ -x "$TEST_INSTALL_DIR/hank-monitor" ]]
+    [[ -x "$TEST_INSTALL_DIR/hank-setup" ]]
+    [[ -x "$TEST_INSTALL_DIR/hank-import" ]]
+    [[ -x "$TEST_INSTALL_DIR/hank-migrate" ]]
 
     # Verify executable bit on main scripts
-    [[ -x "$TEST_RALPH_HOME/ralph_loop.sh" ]]
-    [[ -x "$TEST_RALPH_HOME/ralph_monitor.sh" ]]
-    [[ -x "$TEST_RALPH_HOME/setup.sh" ]]
-    [[ -x "$TEST_RALPH_HOME/ralph_import.sh" ]]
-    [[ -x "$TEST_RALPH_HOME/migrate_to_ralph_folder.sh" ]]
+    [[ -x "$TEST_HANK_HOME/hank_loop.sh" ]]
+    [[ -x "$TEST_HANK_HOME/hank_monitor.sh" ]]
+    [[ -x "$TEST_HANK_HOME/setup.sh" ]]
+    [[ -x "$TEST_HANK_HOME/hank_import.sh" ]]
+    [[ -x "$TEST_HANK_HOME/migrate_to_hank_folder.sh" ]]
 
     # Verify lib scripts are executable
-    [[ -x "$TEST_RALPH_HOME/lib/circuit_breaker.sh" ]]
-    [[ -x "$TEST_RALPH_HOME/lib/response_analyzer.sh" ]]
-    [[ -x "$TEST_RALPH_HOME/lib/date_utils.sh" ]]
+    [[ -x "$TEST_HANK_HOME/lib/circuit_breaker.sh" ]]
+    [[ -x "$TEST_HANK_HOME/lib/response_analyzer.sh" ]]
+    [[ -x "$TEST_HANK_HOME/lib/date_utils.sh" ]]
 }
 
 # =============================================================================
@@ -244,28 +244,28 @@ run_install() {
     run run_install
 
     # Check template files were copied
-    assert_file_exists "$TEST_RALPH_HOME/templates/PROMPT.md"
-    assert_file_exists "$TEST_RALPH_HOME/templates/fix_plan.md"
-    assert_file_exists "$TEST_RALPH_HOME/templates/AGENT.md"
+    assert_file_exists "$TEST_HANK_HOME/templates/PROMPT.md"
+    assert_file_exists "$TEST_HANK_HOME/templates/fix_plan.md"
+    assert_file_exists "$TEST_HANK_HOME/templates/AGENT.md"
 
     # Verify content matches source
-    diff -q "$MOCK_SOURCE_DIR/templates/PROMPT.md" "$TEST_RALPH_HOME/templates/PROMPT.md"
-    diff -q "$MOCK_SOURCE_DIR/templates/fix_plan.md" "$TEST_RALPH_HOME/templates/fix_plan.md"
-    diff -q "$MOCK_SOURCE_DIR/templates/AGENT.md" "$TEST_RALPH_HOME/templates/AGENT.md"
+    diff -q "$MOCK_SOURCE_DIR/templates/PROMPT.md" "$TEST_HANK_HOME/templates/PROMPT.md"
+    diff -q "$MOCK_SOURCE_DIR/templates/fix_plan.md" "$TEST_HANK_HOME/templates/fix_plan.md"
+    diff -q "$MOCK_SOURCE_DIR/templates/AGENT.md" "$TEST_HANK_HOME/templates/AGENT.md"
 }
 
 @test "install.sh copies lib/ directory" {
     run run_install
 
     # Check lib files were copied
-    assert_file_exists "$TEST_RALPH_HOME/lib/circuit_breaker.sh"
-    assert_file_exists "$TEST_RALPH_HOME/lib/response_analyzer.sh"
-    assert_file_exists "$TEST_RALPH_HOME/lib/date_utils.sh"
+    assert_file_exists "$TEST_HANK_HOME/lib/circuit_breaker.sh"
+    assert_file_exists "$TEST_HANK_HOME/lib/response_analyzer.sh"
+    assert_file_exists "$TEST_HANK_HOME/lib/date_utils.sh"
 
     # Verify files are executable
-    [[ -x "$TEST_RALPH_HOME/lib/circuit_breaker.sh" ]]
-    [[ -x "$TEST_RALPH_HOME/lib/response_analyzer.sh" ]]
-    [[ -x "$TEST_RALPH_HOME/lib/date_utils.sh" ]]
+    [[ -x "$TEST_HANK_HOME/lib/circuit_breaker.sh" ]]
+    [[ -x "$TEST_HANK_HOME/lib/response_analyzer.sh" ]]
+    [[ -x "$TEST_HANK_HOME/lib/date_utils.sh" ]]
 }
 
 # =============================================================================
@@ -471,22 +471,22 @@ EOF
     assert_success
 
     # Verify files exist
-    assert_file_exists "$TEST_INSTALL_DIR/ralph"
-    assert_file_exists "$TEST_INSTALL_DIR/ralph-monitor"
-    assert_file_exists "$TEST_INSTALL_DIR/ralph-setup"
-    assert_file_exists "$TEST_INSTALL_DIR/ralph-import"
-    assert_file_exists "$TEST_INSTALL_DIR/ralph-migrate"
+    assert_file_exists "$TEST_INSTALL_DIR/hank"
+    assert_file_exists "$TEST_INSTALL_DIR/hank-monitor"
+    assert_file_exists "$TEST_INSTALL_DIR/hank-setup"
+    assert_file_exists "$TEST_INSTALL_DIR/hank-import"
+    assert_file_exists "$TEST_INSTALL_DIR/hank-migrate"
 
     # Run uninstall
     run run_install uninstall
     assert_success
 
     # Verify command files are removed
-    assert_file_not_exists "$TEST_INSTALL_DIR/ralph"
-    assert_file_not_exists "$TEST_INSTALL_DIR/ralph-monitor"
-    assert_file_not_exists "$TEST_INSTALL_DIR/ralph-setup"
-    assert_file_not_exists "$TEST_INSTALL_DIR/ralph-import"
-    assert_file_not_exists "$TEST_INSTALL_DIR/ralph-migrate"
+    assert_file_not_exists "$TEST_INSTALL_DIR/hank"
+    assert_file_not_exists "$TEST_INSTALL_DIR/hank-monitor"
+    assert_file_not_exists "$TEST_INSTALL_DIR/hank-setup"
+    assert_file_not_exists "$TEST_INSTALL_DIR/hank-import"
+    assert_file_not_exists "$TEST_INSTALL_DIR/hank-migrate"
 }
 
 @test "install.sh uninstall cleans up directories" {
@@ -494,15 +494,15 @@ EOF
     run run_install install
     assert_success
 
-    # Verify ralph home exists
-    assert_dir_exists "$TEST_RALPH_HOME"
+    # Verify hank home exists
+    assert_dir_exists "$TEST_HANK_HOME"
 
     # Run uninstall
     run run_install uninstall
     assert_success
 
-    # Verify ralph home is removed
-    [[ ! -d "$TEST_RALPH_HOME" ]]
+    # Verify hank home is removed
+    [[ ! -d "$TEST_HANK_HOME" ]]
 }
 
 # =============================================================================
@@ -515,25 +515,25 @@ EOF
     assert_success
 
     # Capture file counts after first install
-    local ralph_count_1=$(ls "$TEST_INSTALL_DIR" | wc -l)
-    local template_count_1=$(ls "$TEST_RALPH_HOME/templates" | wc -l)
+    local hank_count_1=$(ls "$TEST_INSTALL_DIR" | wc -l)
+    local template_count_1=$(ls "$TEST_HANK_HOME/templates" | wc -l)
 
     # Second installation (should overwrite cleanly)
     run run_install install
     assert_success
 
     # Capture file counts after second install
-    local ralph_count_2=$(ls "$TEST_INSTALL_DIR" | wc -l)
-    local template_count_2=$(ls "$TEST_RALPH_HOME/templates" | wc -l)
+    local hank_count_2=$(ls "$TEST_INSTALL_DIR" | wc -l)
+    local template_count_2=$(ls "$TEST_HANK_HOME/templates" | wc -l)
 
     # Counts should be the same (no duplicates or missing files)
-    assert_equal "$ralph_count_1" "$ralph_count_2"
+    assert_equal "$hank_count_1" "$hank_count_2"
     assert_equal "$template_count_1" "$template_count_2"
 
     # All files should still exist and be valid
-    assert_file_exists "$TEST_INSTALL_DIR/ralph"
-    assert_file_exists "$TEST_RALPH_HOME/templates/PROMPT.md"
-    assert_file_exists "$TEST_RALPH_HOME/lib/circuit_breaker.sh"
+    assert_file_exists "$TEST_INSTALL_DIR/hank"
+    assert_file_exists "$TEST_HANK_HOME/templates/PROMPT.md"
+    assert_file_exists "$TEST_HANK_HOME/lib/circuit_breaker.sh"
 }
 
 @test "complete installation workflow end-to-end" {
@@ -551,38 +551,38 @@ EOF
 
     # Verify all directories created
     assert_dir_exists "$TEST_INSTALL_DIR"
-    assert_dir_exists "$TEST_RALPH_HOME"
-    assert_dir_exists "$TEST_RALPH_HOME/templates"
-    assert_dir_exists "$TEST_RALPH_HOME/lib"
+    assert_dir_exists "$TEST_HANK_HOME"
+    assert_dir_exists "$TEST_HANK_HOME/templates"
+    assert_dir_exists "$TEST_HANK_HOME/lib"
 
     # Verify all commands installed
-    assert_file_exists "$TEST_INSTALL_DIR/ralph"
-    assert_file_exists "$TEST_INSTALL_DIR/ralph-monitor"
-    assert_file_exists "$TEST_INSTALL_DIR/ralph-setup"
-    assert_file_exists "$TEST_INSTALL_DIR/ralph-import"
-    assert_file_exists "$TEST_INSTALL_DIR/ralph-migrate"
+    assert_file_exists "$TEST_INSTALL_DIR/hank"
+    assert_file_exists "$TEST_INSTALL_DIR/hank-monitor"
+    assert_file_exists "$TEST_INSTALL_DIR/hank-setup"
+    assert_file_exists "$TEST_INSTALL_DIR/hank-import"
+    assert_file_exists "$TEST_INSTALL_DIR/hank-migrate"
 
     # Verify all templates copied
-    assert_file_exists "$TEST_RALPH_HOME/templates/PROMPT.md"
-    assert_file_exists "$TEST_RALPH_HOME/templates/fix_plan.md"
-    assert_file_exists "$TEST_RALPH_HOME/templates/AGENT.md"
+    assert_file_exists "$TEST_HANK_HOME/templates/PROMPT.md"
+    assert_file_exists "$TEST_HANK_HOME/templates/fix_plan.md"
+    assert_file_exists "$TEST_HANK_HOME/templates/AGENT.md"
 
     # Verify all lib files copied
-    assert_file_exists "$TEST_RALPH_HOME/lib/circuit_breaker.sh"
-    assert_file_exists "$TEST_RALPH_HOME/lib/response_analyzer.sh"
-    assert_file_exists "$TEST_RALPH_HOME/lib/date_utils.sh"
+    assert_file_exists "$TEST_HANK_HOME/lib/circuit_breaker.sh"
+    assert_file_exists "$TEST_HANK_HOME/lib/response_analyzer.sh"
+    assert_file_exists "$TEST_HANK_HOME/lib/date_utils.sh"
 
-    # Verify all scripts in ralph home
-    assert_file_exists "$TEST_RALPH_HOME/ralph_loop.sh"
-    assert_file_exists "$TEST_RALPH_HOME/ralph_monitor.sh"
-    assert_file_exists "$TEST_RALPH_HOME/setup.sh"
-    assert_file_exists "$TEST_RALPH_HOME/ralph_import.sh"
-    assert_file_exists "$TEST_RALPH_HOME/migrate_to_ralph_folder.sh"
+    # Verify all scripts in hank home
+    assert_file_exists "$TEST_HANK_HOME/hank_loop.sh"
+    assert_file_exists "$TEST_HANK_HOME/hank_monitor.sh"
+    assert_file_exists "$TEST_HANK_HOME/setup.sh"
+    assert_file_exists "$TEST_HANK_HOME/hank_import.sh"
+    assert_file_exists "$TEST_HANK_HOME/migrate_to_hank_folder.sh"
 
     # Verify all permissions correct
-    [[ -x "$TEST_INSTALL_DIR/ralph" ]]
-    [[ -x "$TEST_RALPH_HOME/ralph_loop.sh" ]]
-    [[ -x "$TEST_RALPH_HOME/lib/circuit_breaker.sh" ]]
+    [[ -x "$TEST_INSTALL_DIR/hank" ]]
+    [[ -x "$TEST_HANK_HOME/hank_loop.sh" ]]
+    [[ -x "$TEST_HANK_HOME/lib/circuit_breaker.sh" ]]
 
     # Verify output contains success message
     [[ "$output" =~ "installed" ]] || [[ "$output" =~ "SUCCESS" ]] || [[ "$output" =~ "success" ]]

@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-Successfully implemented all Phase 2 recommendations from the expert panel review focusing on requirements clarity, use case documentation, and comprehensive testing. Ralph now has:
+Successfully implemented all Phase 2 recommendations from the expert panel review focusing on requirements clarity, use case documentation, and comprehensive testing. Hank now has:
 - **Crystal-clear requirements** with Given/When/Then scenarios
 - **Complete use case documentation** following Alistair Cockburn's methodology
 - **Comprehensive edge case testing** covering boundary conditions and error scenarios
@@ -32,32 +32,32 @@ Six concrete scenarios using Given/When/Then format:
 **Scenario 1: Successful Project Completion**
 - **Given**: All fix_plan.md items marked [x], tests passing, no errors
 - **Then**: OUTPUT EXIT_SIGNAL=true with COMPLETE status
-- **Ralph's Action**: Gracefully exits loop with success message
+- **Hank's Action**: Gracefully exits loop with success message
 
 **Scenario 2: Test-Only Loop Detected**
 - **Given**: Last 3 loops only ran tests, no implementation
 - **Then**: OUTPUT WORK_TYPE=TESTING with FILES_MODIFIED=0
-- **Ralph's Action**: Increments test_only_loops, exits after threshold
+- **Hank's Action**: Increments test_only_loops, exits after threshold
 
 **Scenario 3: Stuck on Recurring Error**
 - **Given**: Same error in last 5 loops, no progress
 - **Then**: OUTPUT STATUS=BLOCKED with error description
-- **Ralph's Action**: Circuit breaker opens after 5 loops
+- **Hank's Action**: Circuit breaker opens after 5 loops
 
 **Scenario 4: No Work Remaining**
 - **Given**: All tasks complete, nothing in specs/ to implement
 - **Then**: OUTPUT EXIT_SIGNAL=true with COMPLETE status
-- **Ralph's Action**: Immediate graceful exit
+- **Hank's Action**: Immediate graceful exit
 
 **Scenario 5: Making Progress**
 - **Given**: Tasks remain, files being modified, tests passing
 - **Then**: OUTPUT STATUS=IN_PROGRESS with progress metrics
-- **Ralph's Action**: Continues loop, circuit stays CLOSED
+- **Hank's Action**: Continues loop, circuit stays CLOSED
 
 **Scenario 6: Blocked on External Dependency**
 - **Given**: Requires external API/library/human decision
 - **Then**: OUTPUT STATUS=BLOCKED with specific blocker
-- **Ralph's Action**: Logs blocker, may exit after multiple blocks
+- **Hank's Action**: Logs blocker, may exit after multiple blocks
 
 **SMART Criteria Compliance**:
 - ✅ **Specific**: Each scenario has precise conditions
@@ -69,7 +69,7 @@ Six concrete scenarios using Given/When/Then format:
 **Impact**:
 - Eliminates ambiguity in completion detection
 - Provides Claude with concrete examples to follow
-- Enables Ralph to parse and validate expected outputs
+- Enables Hank to parse and validate expected outputs
 
 ---
 
@@ -80,7 +80,7 @@ Six concrete scenarios using Given/When/Then format:
 **Contents**:
 
 #### Actor Catalog
-- **Ralph** (Primary Actor): Autonomous agent orchestrating development loops
+- **Hank** (Primary Actor): Autonomous agent orchestrating development loops
 - **Claude Code** (Supporting Actor): AI development engine
 - **Human Developer** (Supporting Actor): Initiator and reviewer
 
@@ -121,15 +121,15 @@ Six concrete scenarios using Given/When/Then format:
   - Limit reached → countdown wait
   - API error → retry with user prompt
 
-**UC-5: Provide Loop Monitoring** (ralph-monitor)
+**UC-5: Provide Loop Monitoring** (hank-monitor)
 - **Success**: Real-time status visible, <2s latency
 - **9-step continuous monitoring** with extensions for:
   - No status.json → waiting message
   - Circuit OPEN → red alert display
-  - Ralph exited → completion summary
+  - Hank exited → completion summary
 
 **UC-6: Reset Circuit Breaker** (Manual intervention)
-- **Success**: Circuit reset, Ralph can resume
+- **Success**: Circuit reset, Hank can resume
 - **11-step manual recovery** with extensions for:
   - Cannot determine cause → status commands
   - PROMPT.md issue → edit and clarify
@@ -176,7 +176,7 @@ SYSTEM GOAL: Complete project with minimal token waste
 5. ✅ Negative file count (treat as 0)
 
 **Error Conditions**:
-6. ✅ Malformed RALPH_STATUS block
+6. ✅ Malformed HANK_STATUS block
 7. ✅ Corrupted circuit breaker state file (JSON recovery)
 8. ✅ Corrupted circuit breaker history file
 9. ✅ Missing git repository (graceful fallback)
@@ -185,7 +185,7 @@ SYSTEM GOAL: Complete project with minimal token waste
 **Data Handling**:
 11. ✅ Unicode characters in output (emoji support)
 12. ✅ Binary-like content with control characters
-13. ✅ Multiple RALPH_STATUS blocks (malformed)
+13. ✅ Multiple HANK_STATUS blocks (malformed)
 14. ✅ Status block with unknown/extra fields
 
 **Complex Scenarios**:
@@ -357,10 +357,10 @@ All Phase 2 high-priority recommendations fully addressed.
 - Token consumption tracking
 - Progress velocity calculation
 - Efficiency trend analysis
-- Enhanced ralph-monitor dashboard
+- Enhanced hank-monitor dashboard
 
 ### Health Checks (Michael Nygard)
-- `ralph --health` command with JSON output
+- `hank --health` command with JSON output
 - CI/CD integration capabilities
 - Status endpoints for monitoring tools
 - Alerting system integration
@@ -392,7 +392,7 @@ All Phase 2 high-priority recommendations fully addressed.
 
 ## Conclusion
 
-Phase 2 implementation is **complete and validated**. Ralph now has:
+Phase 2 implementation is **complete and validated**. Hank now has:
 
 **Requirements Excellence**:
 - SMART criteria with measurable conditions

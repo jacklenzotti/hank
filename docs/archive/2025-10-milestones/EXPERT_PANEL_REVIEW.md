@@ -1,4 +1,4 @@
-# 🎯 Expert Panel Review: Ralph Efficiency & Loop Prevention
+# 🎯 Expert Panel Review: Hank Efficiency & Loop Prevention
 
 **Review Date**: 2025-09-30
 **Panel Mode**: Critique & Discussion
@@ -67,12 +67,12 @@ IMPACT: Fixes root cause of infinite loops
 ❌ CRITICAL: No Circuit Breaker for Unproductive Loops
 
 In "Release It!", I describe the Circuit Breaker pattern for preventing
-cascading failures. Ralph needs this for preventing runaway token consumption.
+cascading failures. Hank needs this for preventing runaway token consumption.
 
 Current state: No failure detection → infinite retry
 Required state: Detect stagnation → open circuit → halt execution
 
-Ralph is missing ALL three states:
+Hank is missing ALL three states:
 - CLOSED: Normal operation with progress tracking
 - OPEN: Detected stagnation, stop execution, alert user
 - HALF-OPEN: Test if progress has resumed after intervention
@@ -104,13 +104,13 @@ IMPACT: Saves thousands of wasted tokens, provides clear failure signal
 
 **SAM NEWMAN** - Service Integration:
 ```
-❌ MISSING: Contract Definition Between Ralph and Claude
+❌ MISSING: Contract Definition Between Hank and Claude
 
-In microservices, we define explicit contracts between services. Ralph and
+In microservices, we define explicit contracts between services. Hank and
 Claude Code are two services that need a well-defined interface contract.
 
 Current state: Implicit, undefined contract
-- Ralph sends: PROMPT.md (unstructured)
+- Hank sends: PROMPT.md (unstructured)
 - Claude returns: Free-form text (unparseable)
 - No schema, no validation, no structured data
 
@@ -118,7 +118,7 @@ Required state: Explicit contract with structured I/O
 
 Proposed Contract:
 ┌─────────────────────────────────────────────────┐
-│ RALPH → CLAUDE (Request)                        │
+│ HANK → CLAUDE (Request)                        │
 ├─────────────────────────────────────────────────┤
 │ - task_description: string                      │
 │ - loop_number: integer                          │
@@ -127,7 +127,7 @@ Proposed Contract:
 └─────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────┐
-│ CLAUDE → RALPH (Response)                       │
+│ CLAUDE → HANK (Response)                       │
 ├─────────────────────────────────────────────────┤
 │ - work_performed: string                        │
 │ - files_modified: array[string]                 │
@@ -137,7 +137,7 @@ Proposed Contract:
 │ - exit_signal: boolean                          │
 └─────────────────────────────────────────────────┘
 
-With structured output, Ralph can PARSE the response:
+With structured output, Hank can PARSE the response:
 ```bash
 response=$(parse_claude_response "$output_file")
 completion=$(echo "$response" | jq -r '.completion_status')
@@ -158,7 +158,7 @@ RECOMMENDATION:
 
 PRIORITY: 🔴 CRITICAL - Enables all other improvements
 EFFORT: Medium (schema design + parser implementation)
-IMPACT: Makes Ralph's outputs parseable and actionable
+IMPACT: Makes Hank's outputs parseable and actionable
 ```
 
 ---
@@ -206,14 +206,14 @@ Rewrite completion requirements with:
 Example structured output requirement:
 ```
 When ready to exit, output this exact format:
----RALPH_STATUS---
+---HANK_STATUS---
 STATUS: COMPLETE
 TASKS_COMPLETED: 15/15
 TESTS_PASSING: 100%
 FILES_CHANGED_THIS_LOOP: 0
 RECOMMENDATION: Exit loop, project complete
 EXIT_SIGNAL: true
----END_RALPH_STATUS---
+---END_HANK_STATUS---
 ```
 
 PRIORITY: 🟡 HIGH - Required for automated exit detection
@@ -238,7 +238,7 @@ Given: All fix_plan.md items are checked [x]
 When: Claude evaluates project status
 Then: Claude outputs EXIT_SIGNAL=true
   And: Provides completion summary
-  And: Ralph detects signal and exits loop
+  And: Hank detects signal and exits loop
 
 Example 2: Detected Test-Only Loop
 Given: Last 3 loops only executed tests
@@ -246,8 +246,8 @@ Given: Last 3 loops only executed tests
   And: No new test files were created
 When: Claude starts loop iteration
 Then: Claude outputs TEST_ONLY=true
-  And: Ralph increments test_only_loops counter
-  And: After 3 consecutive, Ralph exits with "test_saturation"
+  And: Hank increments test_only_loops counter
+  And: After 3 consecutive, Hank exits with "test_saturation"
 
 Example 3: Stuck on Error
 Given: Same error appears in last 5 loops
@@ -256,7 +256,7 @@ When: Claude attempts same fix repeatedly
 Then: Claude outputs STUCK=true
   And: Provides error description
   And: Recommends human intervention
-  And: Ralph exits with "needs_human_help"
+  And: Hank exits with "needs_human_help"
 
 RECOMMENDATION:
 Add "## Exit Scenarios" section to PROMPT.md with 5-10 concrete examples.
@@ -264,22 +264,22 @@ Each example should show:
 - Initial state
 - Expected detection
 - Required output format
-- Ralph's expected action
+- Hank's expected action
 
 This makes the contract explicit and testable.
 
 PRIORITY: 🟡 HIGH - Clarity prevents misunderstandings
 EFFORT: Low (documentation)
-IMPACT: Claude understands exactly what Ralph needs
+IMPACT: Claude understands exactly what Hank needs
 ```
 
 **ALISTAIR COCKBURN** - Use Case Analysis:
 ```
 ⚠️ MISSING: Primary Actor and Goal Definition
 
-Who is the primary actor in Ralph's system?
-- The human developer? (initiated Ralph but isn't actively involved)
-- Ralph script? (executor but not decision maker)
+Who is the primary actor in Hank's system?
+- The human developer? (initiated Hank but isn't actively involved)
+- Hank script? (executor but not decision maker)
 - Claude Code? (does the work but doesn't control the loop)
 
 This ambiguity causes the infinite loop problem!
@@ -301,37 +301,37 @@ SUB-GOAL 3: Minimize token consumption
   FAILURE: Continue executing when nothing to do (CURRENT STATE)
 
 Primary Use Case: Autonomous Development
-Primary Actor: Ralph (autonomous agent)
+Primary Actor: Hank (autonomous agent)
 Goal: Complete project implementation and exit when done
 Precondition: PROMPT.md exists, Claude Code is available
 Success: All tasks complete, exit loop with summary
 Failure: Infinite loop, token waste, manual interruption required
 
 Main Success Scenario:
-1. Ralph loads PROMPT.md
-2. Ralph executes Claude Code
+1. Hank loads PROMPT.md
+2. Hank executes Claude Code
 3. Claude performs work and reports status
-4. Ralph analyzes response and updates signals
-5. Ralph checks exit conditions
+4. Hank analyzes response and updates signals
+5. Hank checks exit conditions
 6. If complete: exit with summary (SUCCESS)
 7. If not complete: go to step 2
 
 Extensions (Error Handling):
 3a. Claude reports completion
-    1. Ralph verifies all tasks complete
-    2. Ralph exits (avoid unnecessary loops)
+    1. Hank verifies all tasks complete
+    2. Hank exits (avoid unnecessary loops)
 
 3b. Claude reports stuck on error
-    1. Ralph increments stuck_counter
+    1. Hank increments stuck_counter
     2. If stuck_counter > 3: exit with "needs_help"
 
 4a. Response analysis fails (unparseable output)
-    1. Ralph logs warning
-    2. Ralph continues (graceful degradation)
+    1. Hank logs warning
+    2. Hank continues (graceful degradation)
 
 5a. No progress detected for 3 loops
-    1. Ralph opens circuit breaker
-    2. Ralph exits with "no_progress" signal
+    1. Hank opens circuit breaker
+    2. Hank exits with "no_progress" signal
 
 RECOMMENDATION:
 Document use cases in AGENT.md or new USE_CASES.md file.
@@ -365,7 +365,7 @@ The CRITICAL gap: No tests for the main loop execution path!
 Required test scenarios:
 1. Loop with successful completion
    - Mock Claude output with EXIT_SIGNAL=true
-   - Verify Ralph detects signal and exits
+   - Verify Hank detects signal and exits
    - Verify exit_reason="completion_signals"
 
 2. Loop with test saturation
@@ -475,8 +475,8 @@ Required observability:
      "efficiency": "high"
    }
 
-2. Dashboard (ralph-monitor enhancement):
-   ┌─ Ralph Efficiency Dashboard ──────────────┐
+2. Dashboard (hank-monitor enhancement):
+   ┌─ Hank Efficiency Dashboard ──────────────┐
    │ Loop: #42                                  │
    │ Avg tokens/loop: 3,200                     │
    │ Progress velocity: 2.5 tasks/hour          │
@@ -498,7 +498,7 @@ Add metrics collection to execute_claude_code():
 - Calculate progress score
 - Write to metrics.jsonl
 
-Enhance ralph-monitor to show:
+Enhance hank-monitor to show:
 - Current efficiency trend
 - Token consumption rate
 - Progress velocity
@@ -513,9 +513,9 @@ IMPACT: Better visibility, optimization opportunities
 ```
 💡 ENHANCEMENT: Add Health Checks and Status Endpoints
 
-Production systems need health checks. Ralph should too.
+Production systems need health checks. Hank should too.
 
-Proposed health check (ralph --health):
+Proposed health check (hank --health):
 {
   "status": "healthy",
   "loop_count": 42,
@@ -548,8 +548,8 @@ This enables:
 - Status dashboards
 
 RECOMMENDATION:
-Add ralph --health command that outputs JSON health status.
-Include in ralph-monitor dashboard.
+Add hank --health command that outputs JSON health status.
+Include in hank-monitor dashboard.
 Document for CI/CD integration.
 
 PRIORITY: 🟢 LOW - Operational improvement
@@ -582,7 +582,7 @@ IMPACT: Better monitoring and integration
    - Parse and validate responses
    - **Enables automated detection**
 
-**Success Criteria**: Ralph can detect and exit on completion signals
+**Success Criteria**: Hank can detect and exit on completion signals
 
 ---
 
@@ -702,4 +702,4 @@ IMPACT: Better monitoring and integration
 
 **Review Completed**: 2025-09-30
 **Next Action**: Prioritize Phase 1 implementation
-**Expected Impact**: Transform Ralph from "unreliable prototype" to "production-ready tool"
+**Expected Impact**: Transform Hank from "unreliable prototype" to "production-ready tool"

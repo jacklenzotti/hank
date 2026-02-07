@@ -1,23 +1,23 @@
-# Ralph Use Cases
+# Hank Use Cases
 
 **Author**: Based on Alistair Cockburn's use case methodology
 **Date**: 2025-10-01
-**Purpose**: Define actors, goals, and scenarios for Ralph autonomous development system
+**Purpose**: Define actors, goals, and scenarios for Hank autonomous development system
 
 ---
 
 ## System Overview
 
-**System Name**: Ralph - Autonomous AI Development Loop
+**System Name**: Hank - Autonomous AI Development Loop
 **System Goal**: Complete software project implementation with minimal human intervention and token waste
-**Primary Actor**: Ralph (bash script orchestrating Claude Code)
+**Primary Actor**: Hank (bash script orchestrating Claude Code)
 **Supporting Actors**: Claude Code (AI development engine), Human Developer (initiator and reviewer)
 
 ---
 
 ## Actor Catalog
 
-### Primary Actor: Ralph (Autonomous Agent)
+### Primary Actor: Hank (Autonomous Agent)
 **Type**: System
 **Goal**: Execute development loops until project completion or circuit breaker opens
 **Capabilities**:
@@ -56,17 +56,17 @@
 
 ### Supporting Actor: Human Developer
 **Type**: Human
-**Goal**: Initiate Ralph, review results, intervene when needed
+**Goal**: Initiate Hank, review results, intervene when needed
 **Capabilities**:
 - Create PROMPT.md and fix_plan.md
-- Start/stop Ralph execution
+- Start/stop Hank execution
 - Reset circuit breaker
 - Review code changes
 - Provide clarifications when blocked
 
 **Constraints**:
 - Not present during autonomous loop execution
-- Cannot modify files while Ralph is running
+- Cannot modify files while Hank is running
 - Must review changes before merging
 
 ---
@@ -85,7 +85,7 @@
 
 ## UC-1: Execute Development Loop
 
-**Primary Actor**: Ralph
+**Primary Actor**: Hank
 **Stakeholders**: Human Developer (wants progress), Claude Code (executor)
 **Preconditions**:
 - PROMPT.md exists and is valid
@@ -101,61 +101,61 @@
 - Exit signals analyzed and recorded
 
 **Main Success Scenario**:
-1. Ralph reads PROMPT.md
-2. Ralph checks circuit breaker state (must be CLOSED or HALF_OPEN)
-3. Ralph verifies rate limit allows execution
-4. Ralph executes Claude Code with PROMPT.md
+1. Hank reads PROMPT.md
+2. Hank checks circuit breaker state (must be CLOSED or HALF_OPEN)
+3. Hank verifies rate limit allows execution
+4. Hank executes Claude Code with PROMPT.md
 5. Claude Code reads fix_plan.md and selects task
 6. Claude Code implements task (files modified)
 7. Claude Code runs relevant tests
-8. Claude Code outputs RALPH_STATUS block
-9. Ralph analyzes Claude's response (analyze_response)
-10. Ralph updates .exit_signals file (update_exit_signals)
-11. Ralph records loop result in circuit breaker (record_loop_result)
-12. Ralph increments call counter
-13. Ralph logs completion to status.json and logs/
-14. Ralph continues to next loop (if no exit condition)
+8. Claude Code outputs HANK_STATUS block
+9. Hank analyzes Claude's response (analyze_response)
+10. Hank updates .exit_signals file (update_exit_signals)
+11. Hank records loop result in circuit breaker (record_loop_result)
+12. Hank increments call counter
+13. Hank logs completion to status.json and logs/
+14. Hank continues to next loop (if no exit condition)
 
 **Extensions** (Alternative Flows):
 
 **2a. Circuit breaker is OPEN**:
-- 2a1. Ralph displays circuit breaker status
-- 2a2. Ralph shows user guidance (check logs, reset, etc.)
-- 2a3. Ralph exits with exit code 1
+- 2a1. Hank displays circuit breaker status
+- 2a2. Hank shows user guidance (check logs, reset, etc.)
+- 2a3. Hank exits with exit code 1
 - USE CASE ENDS
 
 **3a. Rate limit exceeded**:
-- 3a1. Ralph calculates time until next hour reset
-- 3a2. Ralph displays countdown timer
-- 3a3. Ralph waits for reset
-- 3a4. Ralph continues at step 4
+- 3a1. Hank calculates time until next hour reset
+- 3a2. Hank displays countdown timer
+- 3a3. Hank waits for reset
+- 3a4. Hank continues at step 4
 
 **3b. API 5-hour limit reached**:
-- 3b1. Ralph detects "rate limit" error in Claude output
-- 3b2. Ralph prompts user: retry or exit?
+- 3b1. Hank detects "rate limit" error in Claude output
+- 3b2. Hank prompts user: retry or exit?
 - 3b3a. User chooses retry: wait 5 minutes, go to step 4
-- 3b3b. User chooses exit: Ralph exits gracefully
+- 3b3b. User chooses exit: Hank exits gracefully
 - USE CASE ENDS
 
 **4a. Claude Code execution fails**:
-- 4a1. Ralph logs error to logs/ralph_error.log
-- 4a2. Ralph updates status.json with "failed" status
-- 4a3. Ralph continues to next loop (retry)
+- 4a1. Hank logs error to logs/hank_error.log
+- 4a2. Hank updates status.json with "failed" status
+- 4a3. Hank continues to next loop (retry)
 - 4a4. If 5 consecutive failures: circuit breaker opens
 - Continue at step 2
 
 **9a. Response analysis detects EXIT_SIGNAL=true**:
-- 9a1. Ralph logs successful completion
-- 9a2. Ralph updates status.json with "complete" status
-- 9a3. Ralph displays completion summary
-- 9a4. Ralph exits with exit code 0
+- 9a1. Hank logs successful completion
+- 9a2. Hank updates status.json with "complete" status
+- 9a3. Hank displays completion summary
+- 9a4. Hank exits with exit code 0
 - USE CASE ENDS
 
 **11a. Circuit breaker opens (no progress detected)**:
-- 11a1. Ralph logs circuit breaker opening
-- 11a2. Ralph updates status.json with "circuit_open" status
-- 11a3. Ralph displays guidance to user
-- 11a4. Ralph exits with exit code 1
+- 11a1. Hank logs circuit breaker opening
+- 11a2. Hank updates status.json with "circuit_open" status
+- 11a3. Hank displays guidance to user
+- 11a4. Hank exits with exit code 1
 - USE CASE ENDS
 
 **Frequency**: Occurs in loop until completion or exit condition
@@ -165,7 +165,7 @@
 
 ## UC-2: Detect Project Completion
 
-**Primary Actor**: Ralph (via response_analyzer.sh)
+**Primary Actor**: Hank (via response_analyzer.sh)
 **Stakeholders**: Human Developer (wants reliable exit), Claude Code (signals completion)
 **Preconditions**:
 - Development loop has executed (UC-1)
@@ -178,32 +178,32 @@
 - EXIT_SIGNAL set correctly (true/false)
 
 **Main Success Scenario**:
-1. Ralph reads Claude Code output file
-2. Ralph checks for structured RALPH_STATUS block
-3. Ralph finds STATUS: COMPLETE and EXIT_SIGNAL: true
-4. Ralph sets confidence score to 100
-5. Ralph sets exit_signal to true in .response_analysis
-6. Ralph updates .exit_signals with done_signals array
-7. Ralph triggers graceful exit in next loop check
+1. Hank reads Claude Code output file
+2. Hank checks for structured HANK_STATUS block
+3. Hank finds STATUS: COMPLETE and EXIT_SIGNAL: true
+4. Hank sets confidence score to 100
+5. Hank sets exit_signal to true in .response_analysis
+6. Hank updates .exit_signals with done_signals array
+7. Hank triggers graceful exit in next loop check
 
 **Extensions**:
 
 **2a. No structured output found**:
-- 2a1. Ralph searches for natural language completion keywords
+- 2a1. Hank searches for natural language completion keywords
 - 2a2. If found: add +10 to confidence score
-- 2a3. Ralph checks for "nothing to do" patterns
+- 2a3. Hank checks for "nothing to do" patterns
 - 2a4. If found: add +15 to confidence score, set exit_signal=true
 - Continue at step 6
 
 **3a. STATUS shows IN_PROGRESS**:
-- 3a1. Ralph checks WORK_TYPE field
+- 3a1. Hank checks WORK_TYPE field
 - 3a2. If WORK_TYPE=TESTING for 3rd consecutive loop: mark as test_only
 - 3a3. If FILES_MODIFIED=0 for 3rd consecutive loop: circuit breaker opens
 - 3a4. Set exit_signal to false
 - Continue at step 6
 
 **3b. STATUS shows BLOCKED**:
-- 3b1. Ralph increments blocked_loops counter
+- 3b1. Hank increments blocked_loops counter
 - 3b2. If blocked_loops >= 3: recommend human intervention
 - 3b3. Set exit_signal to false
 - Continue at step 6
@@ -220,7 +220,7 @@
 
 ## UC-3: Prevent Resource Waste (Circuit Breaker)
 
-**Primary Actor**: Ralph (via circuit_breaker.sh)
+**Primary Actor**: Hank (via circuit_breaker.sh)
 **Stakeholders**: Human Developer (wants to avoid token waste)
 **Preconditions**:
 - Development loops are executing
@@ -233,15 +233,15 @@
 - Circuit breaker state persisted across restarts
 
 **Main Success Scenario**:
-1. Ralph initializes circuit breaker to CLOSED state
-2. After each loop, Ralph calls record_loop_result()
-3. Ralph counts files_changed from git diff
-4. Ralph detects has_errors from Claude output
-5. Ralph calculates output_length
+1. Hank initializes circuit breaker to CLOSED state
+2. After each loop, Hank calls record_loop_result()
+3. Hank counts files_changed from git diff
+4. Hank detects has_errors from Claude output
+5. Hank calculates output_length
 6. Circuit breaker updates consecutive_no_progress counter
 7. consecutive_no_progress is 0 (progress detected)
 8. Circuit breaker stays CLOSED
-9. Ralph continues to next loop
+9. Hank continues to next loop
 
 **Extensions**:
 
@@ -253,14 +253,14 @@
 **6b. No files changed for 2nd consecutive loop**:
 - 6b1. consecutive_no_progress = 2
 - 6b2. Circuit breaker transitions to HALF_OPEN
-- 6b3. Ralph logs "monitoring mode" warning
+- 6b3. Hank logs "monitoring mode" warning
 - Continue at step 9
 
 **6c. No files changed for 3rd consecutive loop**:
 - 6c1. consecutive_no_progress = 3
 - 6c2. Circuit breaker transitions to OPEN
-- 6c3. Ralph displays halt message with guidance
-- 6c4. Ralph exits with exit code 1
+- 6c3. Hank displays halt message with guidance
+- 6c4. Hank exits with exit code 1
 - USE CASE ENDS
 
 **6d. Same error detected for 5th consecutive loop**:
@@ -272,7 +272,7 @@
 **7a. Files changed detected (recovery)**:
 - 7a1. consecutive_no_progress resets to 0
 - 7a2. If circuit was HALF_OPEN: transition to CLOSED
-- 7a3. Ralph logs "circuit recovered"
+- 7a3. Hank logs "circuit recovered"
 - Continue at step 9
 
 **Frequency**: After every development loop
@@ -282,10 +282,10 @@
 
 ## UC-4: Handle API Rate Limits
 
-**Primary Actor**: Ralph
+**Primary Actor**: Hank
 **Stakeholders**: Human Developer (wants uninterrupted execution)
 **Preconditions**:
-- Ralph is executing development loops
+- Hank is executing development loops
 - Call tracking is initialized
 
 **Success Guarantee**:
@@ -295,36 +295,36 @@
 - User informed of wait times
 
 **Main Success Scenario**:
-1. Ralph checks current hour (YYYYMMDDHH format)
-2. Ralph reads .last_reset timestamp
+1. Hank checks current hour (YYYYMMDDHH format)
+2. Hank reads .last_reset timestamp
 3. Current hour matches last_reset (same hour)
-4. Ralph reads .call_count
+4. Hank reads .call_count
 5. call_count is 45 (< 100 limit)
-6. Ralph allows execution
-7. Ralph increments call_count to 46
-8. Ralph writes updated count to .call_count
+6. Hank allows execution
+7. Hank increments call_count to 46
+8. Hank writes updated count to .call_count
 9. Execution proceeds
 
 **Extensions**:
 
 **3a. New hour detected (hour changed)**:
-- 3a1. Ralph resets call_count to 0
-- 3a2. Ralph writes current hour to .last_reset
-- 3a3. Ralph logs "call counter reset for new hour"
+- 3a1. Hank resets call_count to 0
+- 3a2. Hank writes current hour to .last_reset
+- 3a3. Hank logs "call counter reset for new hour"
 - Continue at step 5
 
 **5a. call_count equals or exceeds limit (100)**:
-- 5a1. Ralph calculates seconds until next hour
-- 5a2. Ralph displays countdown: "Rate limit reached. Waiting HH:MM:SS..."
-- 5a3. Ralph sleeps for calculated duration
-- 5a4. Ralph resets counter (go to step 3a1)
+- 5a1. Hank calculates seconds until next hour
+- 5a2. Hank displays countdown: "Rate limit reached. Waiting HH:MM:SS..."
+- 5a3. Hank sleeps for calculated duration
+- 5a4. Hank resets counter (go to step 3a1)
 - Continue at step 6
 
 **5b. Claude returns API rate limit error**:
-- 5b1. Ralph detects "rate_limit_error" in output
-- 5b2. Ralph prompts: "API 5-hour limit reached. Retry? (y/n)"
-- 5b3a. User enters 'y': Ralph waits 5 minutes, retries
-- 5b3b. User enters 'n': Ralph exits gracefully
+- 5b1. Hank detects "rate_limit_error" in output
+- 5b2. Hank prompts: "API 5-hour limit reached. Retry? (y/n)"
+- 5b3a. User enters 'y': Hank waits 5 minutes, retries
+- 5b3b. User enters 'n': Hank exits gracefully
 - USE CASE ENDS
 
 **Frequency**: Before every Claude Code execution
@@ -334,11 +334,11 @@
 
 ## UC-5: Provide Loop Monitoring
 
-**Primary Actor**: ralph-monitor.sh
+**Primary Actor**: hank-monitor.sh
 **Stakeholders**: Human Developer (wants real-time visibility)
 **Preconditions**:
-- Ralph is running (ralph_loop.sh)
-- ralph-monitor started in separate terminal
+- Hank is running (hank_loop.sh)
+- hank-monitor started in separate terminal
 
 **Success Guarantee**:
 - Real-time status displayed and updated
@@ -347,7 +347,7 @@
 - Exit signals tracked
 
 **Main Success Scenario**:
-1. User starts ralph-monitor.sh in separate terminal
+1. User starts hank-monitor.sh in separate terminal
 2. Monitor reads status.json every 2 seconds
 3. Monitor displays loop count, status, timestamp
 4. Monitor reads .call_count and shows "Calls: 45/100"
@@ -360,7 +360,7 @@
 **Extensions**:
 
 **3a. status.json doesn't exist yet**:
-- 3a1. Monitor displays "Waiting for Ralph to start..."
+- 3a1. Monitor displays "Waiting for Hank to start..."
 - 3a2. Monitor sleeps 2 seconds
 - Continue at step 2
 
@@ -370,14 +370,14 @@
 - 5a3. Monitor displays "Execution halted" message
 - Continue at step 7
 
-**7a. Ralph has exited**:
+**7a. Hank has exited**:
 - 7a1. Monitor detects final status
 - 7a2. Monitor displays completion summary
 - 7a3. Monitor shows total loops, duration, exit reason
 - 7a4. Monitor exits
 - USE CASE ENDS
 
-**Frequency**: Continuous until Ralph exits
+**Frequency**: Continuous until Hank exits
 **Performance**: Update latency < 2 seconds
 
 ---
@@ -385,35 +385,35 @@
 ## UC-6: Reset Circuit Breaker (Manual Intervention)
 
 **Primary Actor**: Human Developer
-**Stakeholders**: Ralph (needs manual reset to continue)
+**Stakeholders**: Hank (needs manual reset to continue)
 **Preconditions**:
 - Circuit breaker is OPEN
-- Ralph has halted execution
+- Hank has halted execution
 - User has reviewed logs and identified issue
 
 **Success Guarantee**:
 - Circuit breaker reset to CLOSED state
 - Counters reset to 0
-- Ralph can resume execution
+- Hank can resume execution
 - Reset reason logged
 
 **Main Success Scenario**:
-1. User identifies circuit breaker opened (from ralph-monitor or logs)
-2. User reviews logs/ralph.log to understand cause
+1. User identifies circuit breaker opened (from hank-monitor or logs)
+2. User reviews logs/hank.log to understand cause
 3. User fixes underlying issue (updates fix_plan.md, fixes error, etc.)
-4. User runs: `ralph --reset-circuit`
-5. Ralph loads circuit_breaker.sh functions
-6. Ralph calls reset_circuit_breaker("Manual reset by user")
-7. Ralph sets state to CLOSED in .circuit_breaker_state
-8. Ralph resets all counters to 0
-9. Ralph logs "Circuit breaker reset to CLOSED state"
-10. Ralph displays success message
-11. User can now restart Ralph execution
+4. User runs: `hank --reset-circuit`
+5. Hank loads circuit_breaker.sh functions
+6. Hank calls reset_circuit_breaker("Manual reset by user")
+7. Hank sets state to CLOSED in .circuit_breaker_state
+8. Hank resets all counters to 0
+9. Hank logs "Circuit breaker reset to CLOSED state"
+10. Hank displays success message
+11. User can now restart Hank execution
 
 **Extensions**:
 
 **2a. User cannot determine cause from logs**:
-- 2a1. User runs: `ralph --status` for additional info
+- 2a1. User runs: `hank --status` for additional info
 - 2a2. User checks .circuit_breaker_history for state transitions
 - 2a3. User reviews recent Claude output files
 - Continue at step 3
@@ -509,7 +509,7 @@ SYSTEM GOAL: Complete project implementation with minimal token waste
 |------|------------|
 | **Circuit Breaker** | Pattern that prevents runaway loops by detecting stagnation |
 | **Exit Signal** | Indicator that Claude has completed all work |
-| **Loop** | One iteration of Ralph executing Claude Code |
+| **Loop** | One iteration of Hank executing Claude Code |
 | **Rate Limit** | Maximum API calls allowed per hour (100) |
 | **Response Analyzer** | Component that parses Claude output for signals |
 | **Stagnation** | Condition where no progress is being made (no file changes) |

@@ -30,47 +30,47 @@ teardown() {
 # IDEMPOTENCY CHECKS (5 tests)
 # =============================================================================
 
-@test "check_existing_ralph returns 'none' when no .ralph directory exists" {
-    check_existing_ralph || true
+@test "check_existing_hank returns 'none' when no .hank directory exists" {
+    check_existing_hank || true
 
-    assert_equal "$RALPH_STATE" "none"
+    assert_equal "$HANK_STATE" "none"
 }
 
-@test "check_existing_ralph returns 'complete' when all required files exist" {
-    mkdir -p .ralph
-    echo "# PROMPT" > .ralph/PROMPT.md
-    echo "# Fix Plan" > .ralph/fix_plan.md
-    echo "# Agent" > .ralph/AGENT.md
+@test "check_existing_hank returns 'complete' when all required files exist" {
+    mkdir -p .hank
+    echo "# PROMPT" > .hank/PROMPT.md
+    echo "# Fix Plan" > .hank/fix_plan.md
+    echo "# Agent" > .hank/AGENT.md
 
-    check_existing_ralph || true
+    check_existing_hank || true
 
-    assert_equal "$RALPH_STATE" "complete"
+    assert_equal "$HANK_STATE" "complete"
 }
 
-@test "check_existing_ralph returns 'partial' when some files are missing" {
-    mkdir -p .ralph
-    echo "# PROMPT" > .ralph/PROMPT.md
+@test "check_existing_hank returns 'partial' when some files are missing" {
+    mkdir -p .hank
+    echo "# PROMPT" > .hank/PROMPT.md
     # Missing fix_plan.md and AGENT.md
 
-    check_existing_ralph || true
+    check_existing_hank || true
 
-    assert_equal "$RALPH_STATE" "partial"
-    [[ " ${RALPH_MISSING_FILES[*]} " =~ ".ralph/fix_plan.md" ]]
-    [[ " ${RALPH_MISSING_FILES[*]} " =~ ".ralph/AGENT.md" ]]
+    assert_equal "$HANK_STATE" "partial"
+    [[ " ${HANK_MISSING_FILES[*]} " =~ ".hank/fix_plan.md" ]]
+    [[ " ${HANK_MISSING_FILES[*]} " =~ ".hank/AGENT.md" ]]
 }
 
-@test "is_ralph_enabled returns 0 when fully enabled" {
-    mkdir -p .ralph
-    echo "# PROMPT" > .ralph/PROMPT.md
-    echo "# Fix Plan" > .ralph/fix_plan.md
-    echo "# Agent" > .ralph/AGENT.md
+@test "is_hank_enabled returns 0 when fully enabled" {
+    mkdir -p .hank
+    echo "# PROMPT" > .hank/PROMPT.md
+    echo "# Fix Plan" > .hank/fix_plan.md
+    echo "# Agent" > .hank/AGENT.md
 
-    run is_ralph_enabled
+    run is_hank_enabled
     assert_success
 }
 
-@test "is_ralph_enabled returns 1 when not enabled" {
-    run is_ralph_enabled
+@test "is_hank_enabled returns 1 when not enabled" {
+    run is_hank_enabled
     assert_failure
 }
 
@@ -124,25 +124,25 @@ teardown() {
 # DIRECTORY STRUCTURE (2 tests)
 # =============================================================================
 
-@test "create_ralph_structure creates all required directories" {
-    run create_ralph_structure
+@test "create_hank_structure creates all required directories" {
+    run create_hank_structure
 
     assert_success
-    [[ -d ".ralph" ]]
-    [[ -d ".ralph/specs" ]]
-    [[ -d ".ralph/examples" ]]
-    [[ -d ".ralph/logs" ]]
-    [[ -d ".ralph/docs/generated" ]]
+    [[ -d ".hank" ]]
+    [[ -d ".hank/specs" ]]
+    [[ -d ".hank/examples" ]]
+    [[ -d ".hank/logs" ]]
+    [[ -d ".hank/docs/generated" ]]
 }
 
-@test "create_ralph_structure is idempotent" {
-    create_ralph_structure
-    echo "test" > .ralph/specs/test.txt
+@test "create_hank_structure is idempotent" {
+    create_hank_structure
+    echo "test" > .hank/specs/test.txt
 
-    run create_ralph_structure
+    run create_hank_structure
 
     assert_success
-    [[ -f ".ralph/specs/test.txt" ]]
+    [[ -f ".hank/specs/test.txt" ]]
 }
 
 # =============================================================================
@@ -278,7 +278,7 @@ EOF
     output=$(generate_prompt_md "my-project" "typescript")
 
     [[ "$output" =~ "IMPLEMENTATION_PLAN.md" ]]
-    [[ "$output" =~ "RALPH_STATUS" ]]
+    [[ "$output" =~ "HANK_STATUS" ]]
 }
 
 @test "generate_prompt_md includes subagent instructions" {
@@ -295,8 +295,8 @@ EOF
     [[ "$output" =~ "npm test" ]]
 }
 
-@test "generate_ralphrc includes project configuration" {
-    output=$(generate_ralphrc "my-project" "typescript" "local,beads")
+@test "generate_hankrc includes project configuration" {
+    output=$(generate_hankrc "my-project" "typescript" "local,beads")
 
     [[ "$output" =~ "PROJECT_NAME=\"my-project\"" ]]
     [[ "$output" =~ "PROJECT_TYPE=\"typescript\"" ]]
@@ -307,49 +307,49 @@ EOF
 # FULL ENABLE FLOW (3 tests)
 # =============================================================================
 
-@test "enable_ralph_in_directory creates all required files" {
+@test "enable_hank_in_directory creates all required files" {
     export ENABLE_FORCE="false"
     export ENABLE_SKIP_TASKS="true"
     export ENABLE_PROJECT_NAME="test-project"
 
-    run enable_ralph_in_directory
+    run enable_hank_in_directory
 
     assert_success
-    [[ -f ".ralph/PROMPT.md" ]]
-    [[ -f ".ralph/fix_plan.md" ]]
-    [[ -f ".ralph/AGENT.md" ]]
-    [[ -f ".ralphrc" ]]
+    [[ -f ".hank/PROMPT.md" ]]
+    [[ -f ".hank/fix_plan.md" ]]
+    [[ -f ".hank/AGENT.md" ]]
+    [[ -f ".hankrc" ]]
 }
 
-@test "enable_ralph_in_directory returns ALREADY_ENABLED when complete and no force" {
-    mkdir -p .ralph
-    echo "# PROMPT" > .ralph/PROMPT.md
-    echo "# Fix Plan" > .ralph/fix_plan.md
-    echo "# Agent" > .ralph/AGENT.md
+@test "enable_hank_in_directory returns ALREADY_ENABLED when complete and no force" {
+    mkdir -p .hank
+    echo "# PROMPT" > .hank/PROMPT.md
+    echo "# Fix Plan" > .hank/fix_plan.md
+    echo "# Agent" > .hank/AGENT.md
 
     export ENABLE_FORCE="false"
 
-    run enable_ralph_in_directory
+    run enable_hank_in_directory
 
     assert_equal "$status" "$ENABLE_ALREADY_ENABLED"
 }
 
-@test "enable_ralph_in_directory overwrites with force flag" {
-    mkdir -p .ralph
-    echo "old content" > .ralph/PROMPT.md
-    echo "old fix plan" > .ralph/fix_plan.md
-    echo "old agent" > .ralph/AGENT.md
+@test "enable_hank_in_directory overwrites with force flag" {
+    mkdir -p .hank
+    echo "old content" > .hank/PROMPT.md
+    echo "old fix plan" > .hank/fix_plan.md
+    echo "old agent" > .hank/AGENT.md
 
     export ENABLE_FORCE="true"
     export ENABLE_PROJECT_NAME="new-project"
 
-    run enable_ralph_in_directory
+    run enable_hank_in_directory
 
     assert_success
 
     # Verify files were actually overwritten, not just skipped
     local prompt_content
-    prompt_content=$(cat .ralph/PROMPT.md)
+    prompt_content=$(cat .hank/PROMPT.md)
 
     # Should contain Playbook prompt content, not "old content"
     [[ "$prompt_content" != "old content" ]]

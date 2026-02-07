@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Mock Functions for Ralph Test Suite
+# Mock Functions for Hank Test Suite
 
 # Mock Claude Code CLI
 export MOCK_CLAUDE_SUCCESS=true

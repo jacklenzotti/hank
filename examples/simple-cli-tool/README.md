@@ -1,6 +1,6 @@
 # Example: Simple CLI Tool
 
-This example shows a minimal Ralph configuration for a command-line todo application built with Node.js.
+This example shows a minimal Hank configuration for a command-line todo application built with Node.js.
 
 ## What This Example Demonstrates
 
@@ -12,10 +12,10 @@ This example shows a minimal Ralph configuration for a command-line todo applica
 
 ```
 simple-cli-tool/
-├── .ralph/
+├── .hank/
 │   ├── PROMPT.md        # Project goals and principles
 │   └── fix_plan.md      # Task list
-├── .ralphrc             # Configuration (auto-generated)
+├── .hankrc             # Configuration (auto-generated)
 └── README.md            # This file
 ```
 
@@ -33,9 +33,9 @@ simple-cli-tool/
    npm init -y
    ```
 
-3. Run Ralph:
+3. Run Hank:
    ```bash
-   ralph --monitor
+   hank --monitor
    ```
 
 ## Key Points

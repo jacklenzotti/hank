@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-The CLI parsing test file is well-structured and provides comprehensive coverage of all 12 CLI flags in `ralph_loop.sh`. The tests follow BATS best practices with proper isolation, setup/teardown, and clear organization. One minor enhancement opportunity identified.
+The CLI parsing test file is well-structured and provides comprehensive coverage of all 12 CLI flags in `hank_loop.sh`. The tests follow BATS best practices with proper isolation, setup/teardown, and clear organization. One minor enhancement opportunity identified.
 
 **Critical Issues:** 0
 **Major Issues:** 0
@@ -56,7 +56,7 @@ The review focused on the following areas based on context analysis:
 **Category:** Test Coverage
 
 **Problem:**
-The `--allowed-tools` flag is tested in the "All flags combined" test (line 276) but lacks a dedicated test for its validation behavior. The implementation in `ralph_loop.sh:976-981` calls `validate_allowed_tools()` which should be tested independently.
+The `--allowed-tools` flag is tested in the "All flags combined" test (line 276) but lacks a dedicated test for its validation behavior. The implementation in `hank_loop.sh:976-981` calls `validate_allowed_tools()` which should be tested independently.
 
 **Recommendation:**
 Add a dedicated test for `--allowed-tools` validation to match the pattern used for other validated flags like `--timeout` and `--output-format`.
@@ -64,7 +64,7 @@ Add a dedicated test for `--allowed-tools` validation to match the pattern used 
 **Suggested Approach:**
 ```bash
 @test "--allowed-tools flag accepts valid tool list" {
-    run bash "$RALPH_SCRIPT" --allowed-tools "Write,Read,Bash" --help
+    run bash "$HANK_SCRIPT" --allowed-tools "Write,Read,Bash" --help
 
     assert_success
     [[ "$output" == *"Usage:"* ]]

@@ -1,10 +1,10 @@
-# Quick Start: Your First Ralph Project
+# Quick Start: Your First Hank Project
 
-This tutorial walks you through enabling Ralph on an existing project and running your first autonomous development loop. By the end, you'll have Ralph building a simple CLI todo app.
+This tutorial walks you through enabling Hank on an existing project and running your first autonomous development loop. By the end, you'll have Hank building a simple CLI todo app.
 
 ## Prerequisites
 
-- Ralph installed globally (`./install.sh` from the ralph-claude-code repo)
+- Hank installed globally (`./install.sh` from the hank repo)
 - Claude Code CLI installed (`npm install -g @anthropic-ai/claude-code`)
 - A project directory (we'll create one)
 
@@ -19,23 +19,23 @@ npm init -y
 git init
 ```
 
-## Step 2: Enable Ralph
+## Step 2: Enable Hank
 
 Run the interactive wizard:
 
 ```bash
-ralph-enable
+hank-enable
 ```
 
 The wizard will:
 1. Detect your project type (Node.js/TypeScript)
 2. Ask about task sources (you can skip for now)
-3. Create the `.ralph/` directory with starter files
+3. Create the `.hank/` directory with starter files
 
 You'll see output like:
 
 ```
-Ralph Enable Wizard
+Hank Enable Wizard
 ==================
 
 Phase 1: Environment Detection
@@ -50,27 +50,27 @@ No task sources selected. You can add tasks manually.
 
 Phase 3: Configuration
 ------------------------------
-Creating .ralph/ directory structure...
+Creating .hank/ directory structure...
 
 Phase 4: File Generation
 ------------------------------
-Created: .ralph/PROMPT.md
-Created: .ralph/fix_plan.md
-Created: .ralph/AGENT.md
-Created: .ralphrc
+Created: .hank/PROMPT.md
+Created: .hank/fix_plan.md
+Created: .hank/AGENT.md
+Created: .hankrc
 
-Ralph is now enabled for this project.
+Hank is now enabled for this project.
 ```
 
 ## Step 3: Customize Your Requirements
 
-After `ralph-enable`, you have starter files that need customization. Open `.ralph/PROMPT.md` and replace the placeholder content:
+After `hank-enable`, you have starter files that need customization. Open `.hank/PROMPT.md` and replace the placeholder content:
 
 ```markdown
-# Ralph Development Instructions
+# Hank Development Instructions
 
 ## Context
-You are Ralph, an autonomous AI development agent building a CLI todo application in Node.js.
+You are Hank, an autonomous AI development agent building a CLI todo application in Node.js.
 
 ## Current Objectives
 1. Create a command-line todo app with add, list, complete, and delete commands
@@ -88,7 +88,7 @@ You are Ralph, an autonomous AI development agent building a CLI todo applicatio
 
 ## Step 4: Define Your Tasks
 
-Edit `.ralph/fix_plan.md` to list specific tasks:
+Edit `.hank/fix_plan.md` to list specific tasks:
 
 ```markdown
 # Fix Plan - Todo CLI
@@ -110,21 +110,21 @@ Edit `.ralph/fix_plan.md` to list specific tasks:
 - [ ] Write unit tests for storage module
 ```
 
-## Step 5: Start Ralph
+## Step 5: Start Hank
 
-Now let Ralph build your project:
+Now let Hank build your project:
 
 ```bash
-ralph --monitor
+hank --monitor
 ```
 
 This opens a tmux session with:
-- **Left pane**: Ralph loop output (what Claude is doing)
+- **Left pane**: Hank loop output (what Claude is doing)
 - **Right pane**: Live monitoring dashboard
 
 ### What You'll See
 
-Ralph will:
+Hank will:
 1. Read your PROMPT.md and fix_plan.md
 2. Start implementing tasks in priority order
 3. Create files, run tests, update fix_plan.md
@@ -132,22 +132,22 @@ Ralph will:
 
 ### Monitoring Tips
 
-- **Ctrl+B, then D** - Detach from tmux (Ralph keeps running)
+- **Ctrl+B, then D** - Detach from tmux (Hank keeps running)
 - **tmux attach -t todo-cli** - Reattach to watch progress
-- **ralph --status** - Check current loop status
+- **hank --status** - Check current loop status
 
 ## Step 6: Review the Results
 
-When Ralph finishes (or you want to check progress), look at:
+When Hank finishes (or you want to check progress), look at:
 
 ```bash
 # See what files were created
 ls -la src/
 
 # Check the updated fix_plan.md
-cat .ralph/fix_plan.md
+cat .hank/fix_plan.md
 
-# Run the tests Ralph wrote
+# Run the tests Hank wrote
 npm test
 
 # Try your new CLI
@@ -157,7 +157,7 @@ node src/index.js list
 
 ## What Just Happened?
 
-Ralph followed this cycle:
+Hank followed this cycle:
 1. **Read** - Loaded PROMPT.md for context and fix_plan.md for tasks
 2. **Implement** - Wrote code for the highest priority unchecked task
 3. **Test** - Ran any tests and fixed failures
@@ -166,20 +166,20 @@ Ralph followed this cycle:
 
 ## Next Steps
 
-- Read [Understanding Ralph Files](02-understanding-ralph-files.md) to learn what each file does
+- Read [Understanding Hank Files](02-understanding-hank-files.md) to learn what each file does
 - Check [Writing Effective Requirements](03-writing-requirements.md) for best practices
 - Explore the [examples/](../../examples/) directory for more complex projects
 
 ## Common Questions
 
-### Ralph stopped early - why?
+### Hank stopped early - why?
 
-Check `.ralph/logs/` for the latest log. Common reasons:
+Check `.hank/logs/` for the latest log. Common reasons:
 - Rate limit reached (waits for reset)
 - Circuit breaker opened (detected stuck loop)
 - All tasks marked complete
 
-### Ralph keeps running tests without implementing anything
+### Hank keeps running tests without implementing anything
 
 Your fix_plan.md might be too vague. Make tasks specific and actionable:
 - Bad: "Improve the code"
@@ -187,4 +187,4 @@ Your fix_plan.md might be too vague. Make tasks specific and actionable:
 
 ### How do I add more features later?
 
-Just add new tasks to `.ralph/fix_plan.md` and run `ralph --monitor` again. Ralph will pick up where it left off.
+Just add new tasks to `.hank/fix_plan.md` and run `hank --monitor` again. Hank will pick up where it left off.

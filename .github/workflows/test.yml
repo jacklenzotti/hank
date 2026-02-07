@@ -104,13 +104,13 @@ jobs:
         BATS_CMD="$(pwd)/node_modules/.bin/bats"
 
         # Run CLI parsing tests under kcov
-        kcov --include-path="$(pwd)/ralph_loop.sh,$(pwd)/lib" \
+        kcov --include-path="$(pwd)/hank_loop.sh,$(pwd)/lib" \
              --exclude-pattern=tests/,node_modules/ \
              coverage/cli-parsing \
              bash -c "$BATS_CMD tests/unit/test_cli_parsing.bats" || true
 
         # Run all unit tests under kcov for comprehensive coverage
-        kcov --include-path="$(pwd)/ralph_loop.sh,$(pwd)/lib" \
+        kcov --include-path="$(pwd)/hank_loop.sh,$(pwd)/lib" \
              --exclude-pattern=tests/,node_modules/ \
              coverage/all-unit \
              bash -c "$BATS_CMD tests/unit/" || true

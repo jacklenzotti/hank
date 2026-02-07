@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# Ralph Enable - Interactive Wizard for Existing Projects
-# Adds Ralph configuration to an existing codebase
+# Hank Enable - Interactive Wizard for Existing Projects
+# Adds Hank configuration to an existing codebase
 #
 # Usage:
-#   ralph enable              # Interactive wizard
-#   ralph enable --from beads # With specific task source
-#   ralph enable --force      # Overwrite existing .ralph/
-#   ralph enable --skip-tasks # Skip task import
+#   hank enable              # Interactive wizard
+#   hank enable --from beads # With specific task source
+#   hank enable --force      # Overwrite existing .hank/
+#   hank enable --skip-tasks # Skip task import
 #
 # Version: 0.11.0
 
@@ -17,14 +17,14 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Try to load libraries from global installation first, then local
-RALPH_HOME="${RALPH_HOME:-$HOME/.ralph}"
-if [[ -f "$RALPH_HOME/lib/enable_core.sh" ]]; then
-    LIB_DIR="$RALPH_HOME/lib"
+HANK_HOME="${HANK_HOME:-$HOME/.hank}"
+if [[ -f "$HANK_HOME/lib/enable_core.sh" ]]; then
+    LIB_DIR="$HANK_HOME/lib"
 elif [[ -f "$SCRIPT_DIR/lib/enable_core.sh" ]]; then
     LIB_DIR="$SCRIPT_DIR/lib"
 else
-    echo "Error: Cannot find Ralph libraries"
-    echo "Please run ./install.sh first or ensure RALPH_HOME is set correctly"
+    echo "Error: Cannot find Hank libraries"
+    echo "Please run ./install.sh first or ensure HANK_HOME is set correctly"
     exit 1
 fi
 
@@ -55,15 +55,15 @@ VERSION="0.11.0"
 
 show_help() {
     cat << EOF
-Ralph Enable - Add Ralph to Existing Projects
+Hank Enable - Add Hank to Existing Projects
 
-Usage: ralph enable [OPTIONS]
+Usage: hank enable [OPTIONS]
 
 Options:
     --from <source>     Import tasks from: beads, github, prd
     --prd <file>        PRD file to convert (when --from prd)
     --label <label>     GitHub label filter (when --from github)
-    --force             Overwrite existing .ralph/ configuration
+    --force             Overwrite existing .hank/ configuration
     --skip-tasks        Skip task import, use default templates
     --non-interactive   Run with defaults (no prompts)
     -h, --help          Show this help message
@@ -72,38 +72,38 @@ Options:
 Examples:
     # Interactive wizard (recommended)
     cd my-existing-project
-    ralph enable
+    hank enable
 
     # Import tasks from beads
-    ralph enable --from beads
+    hank enable --from beads
 
     # Import from GitHub issues with label
-    ralph enable --from github --label "ralph-task"
+    hank enable --from github --label "hank-task"
 
     # Convert a PRD document
-    ralph enable --from prd --prd ./docs/requirements.md
+    hank enable --from prd --prd ./docs/requirements.md
 
     # Skip task import
-    ralph enable --skip-tasks
+    hank enable --skip-tasks
 
     # Force overwrite existing configuration
-    ralph enable --force
+    hank enable --force
 
 What this command does:
     1. Detects your project type (TypeScript, Python, etc.)
     2. Identifies available task sources (beads, GitHub, PRDs)
     3. Imports tasks from selected sources
-    4. Creates .ralph/ configuration directory
+    4. Creates .hank/ configuration directory
     5. Generates PROMPT.md, fix_plan.md, AGENT.md
-    6. Creates .ralphrc for project-specific settings
+    6. Creates .hankrc for project-specific settings
 
 This command is:
     - Idempotent: Safe to run multiple times
     - Non-destructive: Never overwrites existing files (unless --force)
     - Project-aware: Detects your language, framework, and build tools
 
-For new projects, use: ralph-setup <project-name>
-For migrating old structure, use: ralph-migrate
+For new projects, use: hank-setup <project-name>
+For migrating old structure, use: hank-migrate
 
 EOF
 }
@@ -159,7 +159,7 @@ parse_arguments() {
                 shift
                 ;;
             -v|--version)
-                echo "ralph enable version $VERSION"
+                echo "hank enable version $VERSION"
                 exit 0
                 ;;
             *)
@@ -181,14 +181,14 @@ phase_environment_detection() {
     echo "Analyzing your project..."
     echo ""
 
-    # Check for existing Ralph setup (use || true to prevent set -e from exiting)
-    check_existing_ralph || true
-    case "$RALPH_STATE" in
+    # Check for existing Hank setup (use || true to prevent set -e from exiting)
+    check_existing_hank || true
+    case "$HANK_STATE" in
         "complete")
-            print_detection_result "Ralph status" "Already enabled" "true"
+            print_detection_result "Hank status" "Already enabled" "true"
             if [[ "$FORCE_OVERWRITE" != "true" ]]; then
                 echo ""
-                print_warning "Ralph is already enabled in this project."
+                print_warning "Hank is already enabled in this project."
                 echo ""
                 if [[ "$NON_INTERACTIVE" != "true" ]]; then
                     if ! confirm "Do you want to continue anyway?" "n"; then
@@ -202,13 +202,13 @@ phase_environment_detection() {
             fi
             ;;
         "partial")
-            print_detection_result "Ralph status" "Partially configured" "false"
+            print_detection_result "Hank status" "Partially configured" "false"
             echo ""
-            print_info "Missing files: ${RALPH_MISSING_FILES[*]}"
+            print_info "Missing files: ${HANK_MISSING_FILES[*]}"
             echo ""
             ;;
         "none")
-            print_detection_result "Ralph status" "Not configured" "false"
+            print_detection_result "Hank status" "Not configured" "false"
             ;;
     esac
 
@@ -361,9 +361,9 @@ phase_configuration() {
         if [[ -n "$GITHUB_LABEL" ]]; then
             CONFIG_GITHUB_LABEL="$GITHUB_LABEL"
         elif [[ "$NON_INTERACTIVE" != "true" ]]; then
-            CONFIG_GITHUB_LABEL=$(prompt_text "GitHub issue label filter" "ralph-task")
+            CONFIG_GITHUB_LABEL=$(prompt_text "GitHub issue label filter" "hank-task")
         else
-            CONFIG_GITHUB_LABEL="ralph-task"
+            CONFIG_GITHUB_LABEL="hank-task"
         fi
     fi
 
@@ -440,23 +440,23 @@ phase_file_generation() {
     export ENABLE_TASK_CONTENT="$imported_tasks"
 
     # Run core enable logic
-    echo "Creating Ralph configuration..."
+    echo "Creating Hank configuration..."
     echo ""
 
-    if ! enable_ralph_in_directory; then
-        print_error "Failed to enable Ralph"
+    if ! enable_hank_in_directory; then
+        print_error "Failed to enable Hank"
         exit $ENABLE_ERROR
     fi
 
-    # Update .ralphrc with specific settings
+    # Update .hankrc with specific settings
     # Using awk instead of sed to avoid command injection from user input
-    if [[ -f ".ralphrc" ]]; then
+    if [[ -f ".hankrc" ]]; then
         # Update max calls (awk safely handles the value without shell interpretation)
-        awk -v val="$CONFIG_MAX_CALLS" '/^MAX_CALLS_PER_HOUR=/{$0="MAX_CALLS_PER_HOUR="val}1' .ralphrc > .ralphrc.tmp && mv .ralphrc.tmp .ralphrc
+        awk -v val="$CONFIG_MAX_CALLS" '/^MAX_CALLS_PER_HOUR=/{$0="MAX_CALLS_PER_HOUR="val}1' .hankrc > .hankrc.tmp && mv .hankrc.tmp .hankrc
 
         # Update GitHub label if set
         if [[ -n "$CONFIG_GITHUB_LABEL" ]]; then
-            awk -v val="$CONFIG_GITHUB_LABEL" '/^GITHUB_TASK_LABEL=/{$0="GITHUB_TASK_LABEL=\""val"\""}1' .ralphrc > .ralphrc.tmp && mv .ralphrc.tmp .ralphrc
+            awk -v val="$CONFIG_GITHUB_LABEL" '/^GITHUB_TASK_LABEL=/{$0="GITHUB_TASK_LABEL=\""val"\""}1' .hankrc > .hankrc.tmp && mv .hankrc.tmp .hankrc
         fi
     fi
 
@@ -476,58 +476,58 @@ phase_verification() {
     # Verify required files
     local all_good=true
 
-    if [[ -f ".ralph/PROMPT.md" ]]; then
-        print_success ".ralph/PROMPT.md"
+    if [[ -f ".hank/PROMPT.md" ]]; then
+        print_success ".hank/PROMPT.md"
     else
-        print_error ".ralph/PROMPT.md - MISSING"
+        print_error ".hank/PROMPT.md - MISSING"
         all_good=false
     fi
 
-    if [[ -f ".ralph/fix_plan.md" ]]; then
-        print_success ".ralph/fix_plan.md"
+    if [[ -f ".hank/fix_plan.md" ]]; then
+        print_success ".hank/fix_plan.md"
     else
-        print_error ".ralph/fix_plan.md - MISSING"
+        print_error ".hank/fix_plan.md - MISSING"
         all_good=false
     fi
 
-    if [[ -f ".ralph/AGENT.md" ]]; then
-        print_success ".ralph/AGENT.md"
+    if [[ -f ".hank/AGENT.md" ]]; then
+        print_success ".hank/AGENT.md"
     else
-        print_error ".ralph/AGENT.md - MISSING"
+        print_error ".hank/AGENT.md - MISSING"
         all_good=false
     fi
 
-    if [[ -f ".ralphrc" ]]; then
-        print_success ".ralphrc"
+    if [[ -f ".hankrc" ]]; then
+        print_success ".hankrc"
     else
-        print_warning ".ralphrc - MISSING (optional)"
+        print_warning ".hankrc - MISSING (optional)"
     fi
 
-    if [[ -d ".ralph/specs" ]]; then
-        print_success ".ralph/specs/"
+    if [[ -d ".hank/specs" ]]; then
+        print_success ".hank/specs/"
     fi
 
-    if [[ -d ".ralph/logs" ]]; then
-        print_success ".ralph/logs/"
+    if [[ -d ".hank/logs" ]]; then
+        print_success ".hank/logs/"
     fi
 
     echo ""
 
     if [[ "$all_good" == "true" ]]; then
-        print_success "Ralph enabled successfully!"
+        print_success "Hank enabled successfully!"
         echo ""
         echo "Next steps:"
         echo ""
-        print_bullet "Review and customize .ralph/PROMPT.md" "1."
-        print_bullet "Edit tasks in .ralph/fix_plan.md" "2."
-        print_bullet "Update build commands in .ralph/AGENT.md" "3."
-        print_bullet "Start Ralph: ralph --monitor" "4."
+        print_bullet "Review and customize .hank/PROMPT.md" "1."
+        print_bullet "Edit tasks in .hank/fix_plan.md" "2."
+        print_bullet "Update build commands in .hank/AGENT.md" "3."
+        print_bullet "Start Hank: hank --monitor" "4."
         echo ""
 
         if [[ "$NON_INTERACTIVE" != "true" ]]; then
             if confirm "Show current status?" "y"; then
                 echo ""
-                ralph --status 2>/dev/null || echo "(ralph --status not available)"
+                hank --status 2>/dev/null || echo "(hank --status not available)"
             fi
         fi
     else
@@ -553,7 +553,7 @@ main() {
     # Welcome banner
     echo ""
     echo -e "\033[1m╔════════════════════════════════════════════════════════════╗\033[0m"
-    echo -e "\033[1m║          Ralph Enable - Existing Project Wizard            ║\033[0m"
+    echo -e "\033[1m║          Hank Enable - Existing Project Wizard            ║\033[0m"
     echo -e "\033[1m╚════════════════════════════════════════════════════════════╝\033[0m"
     echo ""
 

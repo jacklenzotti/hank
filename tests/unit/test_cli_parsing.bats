@@ -1,13 +1,13 @@
 #!/usr/bin/env bats
-# Unit tests for CLI argument parsing in ralph_loop.sh
+# Unit tests for CLI argument parsing in hank_loop.sh
 # Linked to GitHub Issue #10
 # TDD: Tests written to cover all CLI flag combinations
 
 load '../helpers/test_helper'
 load '../helpers/fixtures'
 
-# Path to ralph_loop.sh
-RALPH_SCRIPT="${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+# Path to hank_loop.sh
+HANK_SCRIPT="${BATS_TEST_DIRNAME}/../../hank_loop.sh"
 
 setup() {
     # Create temporary test directory
@@ -19,14 +19,14 @@ setup() {
     git config user.email "test@example.com"
     git config user.name "Test User"
 
-    # Set up required environment with .ralph/ subfolder structure
-    export RALPH_DIR=".ralph"
-    export PROMPT_FILE="$RALPH_DIR/PROMPT.md"
-    export LOG_DIR="$RALPH_DIR/logs"
-    export STATUS_FILE="$RALPH_DIR/status.json"
-    export EXIT_SIGNALS_FILE="$RALPH_DIR/.exit_signals"
-    export CALL_COUNT_FILE="$RALPH_DIR/.call_count"
-    export TIMESTAMP_FILE="$RALPH_DIR/.last_reset"
+    # Set up required environment with .hank/ subfolder structure
+    export HANK_DIR=".hank"
+    export PROMPT_FILE="$HANK_DIR/PROMPT.md"
+    export LOG_DIR="$HANK_DIR/logs"
+    export STATUS_FILE="$HANK_DIR/status.json"
+    export EXIT_SIGNALS_FILE="$HANK_DIR/.exit_signals"
+    export CALL_COUNT_FILE="$HANK_DIR/.call_count"
+    export TIMESTAMP_FILE="$HANK_DIR/.last_reset"
 
     mkdir -p "$LOG_DIR"
 
@@ -39,7 +39,7 @@ setup() {
     # Create lib directory with circuit breaker stub
     mkdir -p lib
     cat > lib/circuit_breaker.sh << 'EOF'
-RALPH_DIR="${RALPH_DIR:-.ralph}"
+HANK_DIR="${HANK_DIR:-.hank}"
 reset_circuit_breaker() { echo "Circuit breaker reset: $1"; }
 show_circuit_status() { echo "Circuit breaker status: CLOSED"; }
 init_circuit_breaker() { :; }
@@ -47,7 +47,7 @@ record_loop_result() { :; }
 EOF
 
     cat > lib/response_analyzer.sh << 'EOF'
-RALPH_DIR="${RALPH_DIR:-.ralph}"
+HANK_DIR="${HANK_DIR:-.hank}"
 analyze_response() { :; }
 detect_output_format() { echo "text"; }
 EOF
@@ -70,7 +70,7 @@ teardown() {
 # =============================================================================
 
 @test "--help flag displays help message with all options" {
-    run bash "$RALPH_SCRIPT" --help
+    run bash "$HANK_SCRIPT" --help
 
     assert_success
 
@@ -93,7 +93,7 @@ teardown() {
 }
 
 @test "-h short flag displays help message" {
-    run bash "$RALPH_SCRIPT" -h
+    run bash "$HANK_SCRIPT" -h
 
     assert_success
 
@@ -109,7 +109,7 @@ teardown() {
 
 @test "--calls NUM sets MAX_CALLS_PER_HOUR correctly" {
     # Use --help after --calls to capture the parsed value without running main loop
-    run bash "$RALPH_SCRIPT" --calls 50 --help
+    run bash "$HANK_SCRIPT" --calls 50 --help
 
     assert_success
     # The help output shows default values, but the script would have parsed --calls 50
@@ -121,7 +121,7 @@ teardown() {
     # Create custom prompt file
     echo "# Custom Prompt" > custom_prompt.md
 
-    run bash "$RALPH_SCRIPT" --prompt custom_prompt.md --help
+    run bash "$HANK_SCRIPT" --prompt custom_prompt.md --help
 
     assert_success
     [[ "$output" == *"Usage:"* ]]
@@ -129,21 +129,21 @@ teardown() {
 
 @test "--monitor flag is accepted without error" {
     # Monitor flag combined with help to verify parsing
-    run bash "$RALPH_SCRIPT" --monitor --help
+    run bash "$HANK_SCRIPT" --monitor --help
 
     assert_success
     [[ "$output" == *"Usage:"* ]]
 }
 
 @test "--verbose flag is accepted without error" {
-    run bash "$RALPH_SCRIPT" --verbose --help
+    run bash "$HANK_SCRIPT" --verbose --help
 
     assert_success
     [[ "$output" == *"Usage:"* ]]
 }
 
 @test "--timeout NUM sets timeout with valid value" {
-    run bash "$RALPH_SCRIPT" --timeout 30 --help
+    run bash "$HANK_SCRIPT" --timeout 30 --help
 
     assert_success
     [[ "$output" == *"Usage:"* ]]
@@ -151,26 +151,26 @@ teardown() {
 
 @test "--timeout validates range (1-120)" {
     # Test invalid: 0
-    run bash "$RALPH_SCRIPT" --timeout 0
+    run bash "$HANK_SCRIPT" --timeout 0
     assert_failure
     [[ "$output" == *"must be a positive integer between 1 and 120"* ]]
 
     # Test invalid: 121
-    run bash "$RALPH_SCRIPT" --timeout 121
+    run bash "$HANK_SCRIPT" --timeout 121
     assert_failure
     [[ "$output" == *"must be a positive integer between 1 and 120"* ]]
 
     # Test invalid: negative
-    run bash "$RALPH_SCRIPT" --timeout -5
+    run bash "$HANK_SCRIPT" --timeout -5
     assert_failure
     [[ "$output" == *"must be a positive integer between 1 and 120"* ]]
 
     # Test boundary: 1 (valid)
-    run bash "$RALPH_SCRIPT" --timeout 1 --help
+    run bash "$HANK_SCRIPT" --timeout 1 --help
     assert_success
 
     # Test boundary: 120 (valid)
-    run bash "$RALPH_SCRIPT" --timeout 120 --help
+    run bash "$HANK_SCRIPT" --timeout 120 --help
     assert_success
 }
 
@@ -191,7 +191,7 @@ teardown() {
 }
 EOF
 
-    run bash "$RALPH_SCRIPT" --status
+    run bash "$HANK_SCRIPT" --status
 
     assert_success
     [[ "$output" == *"Current Status:"* ]] || [[ "$output" == *"loop_count"* ]]
@@ -201,7 +201,7 @@ EOF
 @test "--status handles missing status file gracefully" {
     rm -f "$STATUS_FILE"
 
-    run bash "$RALPH_SCRIPT" --status
+    run bash "$HANK_SCRIPT" --status
 
     assert_success
     [[ "$output" == *"No status file found"* ]]
@@ -212,14 +212,14 @@ EOF
 # =============================================================================
 
 @test "--reset-circuit flag executes circuit breaker reset" {
-    run bash "$RALPH_SCRIPT" --reset-circuit
+    run bash "$HANK_SCRIPT" --reset-circuit
 
     assert_success
     [[ "$output" == *"Circuit breaker reset"* ]] || [[ "$output" == *"reset"* ]]
 }
 
 @test "--circuit-status flag shows circuit breaker status" {
-    run bash "$RALPH_SCRIPT" --circuit-status
+    run bash "$HANK_SCRIPT" --circuit-status
 
     assert_success
     [[ "$output" == *"Circuit breaker status"* ]] || [[ "$output" == *"CLOSED"* ]] || [[ "$output" == *"status"* ]]
@@ -230,7 +230,7 @@ EOF
 # =============================================================================
 
 @test "Invalid flag shows error and help" {
-    run bash "$RALPH_SCRIPT" --invalid-flag
+    run bash "$HANK_SCRIPT" --invalid-flag
 
     assert_failure
     [[ "$output" == *"Unknown option: --invalid-flag"* ]]
@@ -238,21 +238,21 @@ EOF
 }
 
 @test "Invalid timeout format shows error" {
-    run bash "$RALPH_SCRIPT" --timeout abc
+    run bash "$HANK_SCRIPT" --timeout abc
 
     assert_failure
     [[ "$output" == *"must be a positive integer"* ]] || [[ "$output" == *"Error"* ]]
 }
 
 @test "--output-format rejects invalid format values" {
-    run bash "$RALPH_SCRIPT" --output-format invalid
+    run bash "$HANK_SCRIPT" --output-format invalid
 
     assert_failure
     [[ "$output" == *"must be 'json' or 'text'"* ]]
 }
 
 @test "--allowed-tools flag accepts valid tool list" {
-    run bash "$RALPH_SCRIPT" --allowed-tools "Write,Read,Bash" --help
+    run bash "$HANK_SCRIPT" --allowed-tools "Write,Read,Bash" --help
 
     assert_success
     [[ "$output" == *"Usage:"* ]]
@@ -265,7 +265,7 @@ EOF
 @test "Multiple flags combined (--calls --prompt --verbose)" {
     echo "# Custom Prompt" > custom_prompt.md
 
-    run bash "$RALPH_SCRIPT" --calls 50 --prompt custom_prompt.md --verbose --help
+    run bash "$HANK_SCRIPT" --calls 50 --prompt custom_prompt.md --verbose --help
 
     assert_success
     [[ "$output" == *"Usage:"* ]]
@@ -274,7 +274,7 @@ EOF
 @test "All flags combined works correctly" {
     echo "# Custom Prompt" > custom_prompt.md
 
-    run bash "$RALPH_SCRIPT" \
+    run bash "$HANK_SCRIPT" \
         --calls 25 \
         --prompt custom_prompt.md \
         --verbose \
@@ -288,7 +288,7 @@ EOF
 }
 
 @test "Help flag with other flags shows help (early exit)" {
-    run bash "$RALPH_SCRIPT" --calls 50 --verbose --help
+    run bash "$HANK_SCRIPT" --calls 50 --verbose --help
 
     assert_success
     [[ "$output" == *"Usage:"* ]]
@@ -302,7 +302,7 @@ EOF
 @test "Flag order doesn't matter (order A: calls-prompt-verbose)" {
     echo "# Custom Prompt" > custom_prompt.md
 
-    run bash "$RALPH_SCRIPT" --calls 50 --prompt custom_prompt.md --verbose --help
+    run bash "$HANK_SCRIPT" --calls 50 --prompt custom_prompt.md --verbose --help
 
     assert_success
     [[ "$output" == *"Usage:"* ]]
@@ -311,7 +311,7 @@ EOF
 @test "Flag order doesn't matter (order B: verbose-prompt-calls)" {
     echo "# Custom Prompt" > custom_prompt.md
 
-    run bash "$RALPH_SCRIPT" --verbose --prompt custom_prompt.md --calls 50 --help
+    run bash "$HANK_SCRIPT" --verbose --prompt custom_prompt.md --calls 50 --help
 
     assert_success
     [[ "$output" == *"Usage:"* ]]
@@ -322,7 +322,7 @@ EOF
 # =============================================================================
 
 @test "-c short flag works like --calls" {
-    run bash "$RALPH_SCRIPT" -c 50 --help
+    run bash "$HANK_SCRIPT" -c 50 --help
 
     assert_success
     [[ "$output" == *"Usage:"* ]]
@@ -331,7 +331,7 @@ EOF
 @test "-p short flag works like --prompt" {
     echo "# Custom Prompt" > custom_prompt.md
 
-    run bash "$RALPH_SCRIPT" -p custom_prompt.md --help
+    run bash "$HANK_SCRIPT" -p custom_prompt.md --help
 
     assert_success
 }
@@ -339,26 +339,26 @@ EOF
 @test "-s short flag works like --status" {
     rm -f "$STATUS_FILE"
 
-    run bash "$RALPH_SCRIPT" -s
+    run bash "$HANK_SCRIPT" -s
 
     assert_success
     [[ "$output" == *"No status file found"* ]]
 }
 
 @test "-m short flag works like --monitor" {
-    run bash "$RALPH_SCRIPT" -m --help
+    run bash "$HANK_SCRIPT" -m --help
 
     assert_success
 }
 
 @test "-v short flag works like --verbose" {
-    run bash "$RALPH_SCRIPT" -v --help
+    run bash "$HANK_SCRIPT" -v --help
 
     assert_success
 }
 
 @test "-t short flag works like --timeout" {
-    run bash "$RALPH_SCRIPT" -t 30 --help
+    run bash "$HANK_SCRIPT" -t 30 --help
 
     assert_success
 }
@@ -368,88 +368,88 @@ EOF
 # Tests that --monitor correctly forwards all CLI parameters to the inner loop
 # =============================================================================
 
-# Helper function to extract the ralph_cmd that would be built in setup_tmux_session
-# This sources ralph_loop.sh and simulates the parameter forwarding logic
-build_ralph_cmd_for_test() {
-    local ralph_cmd="ralph"
+# Helper function to extract the hank_cmd that would be built in setup_tmux_session
+# This sources hank_loop.sh and simulates the parameter forwarding logic
+build_hank_cmd_for_test() {
+    local hank_cmd="hank"
     local MAX_CALLS_PER_HOUR="${1:-100}"
-    local PROMPT_FILE="${2:-.ralph/PROMPT.md}"
+    local PROMPT_FILE="${2:-.hank/PROMPT.md}"
     local CLAUDE_OUTPUT_FORMAT="${3:-json}"
     local VERBOSE_PROGRESS="${4:-false}"
     local CLAUDE_TIMEOUT_MINUTES="${5:-15}"
     local CLAUDE_ALLOWED_TOOLS="${6:-Write,Read,Edit,Bash(git *),Bash(npm *),Bash(pytest)}"
     local CLAUDE_USE_CONTINUE="${7:-true}"
     local CLAUDE_SESSION_EXPIRY_HOURS="${8:-24}"
-    local RALPH_DIR=".ralph"
+    local HANK_DIR=".hank"
 
     # Forward --calls if non-default
     if [[ "$MAX_CALLS_PER_HOUR" != "100" ]]; then
-        ralph_cmd="$ralph_cmd --calls $MAX_CALLS_PER_HOUR"
+        hank_cmd="$hank_cmd --calls $MAX_CALLS_PER_HOUR"
     fi
     # Forward --prompt if non-default
-    if [[ "$PROMPT_FILE" != "$RALPH_DIR/PROMPT.md" ]]; then
-        ralph_cmd="$ralph_cmd --prompt '$PROMPT_FILE'"
+    if [[ "$PROMPT_FILE" != "$HANK_DIR/PROMPT.md" ]]; then
+        hank_cmd="$hank_cmd --prompt '$PROMPT_FILE'"
     fi
     # Forward --output-format if non-default (default is json)
     if [[ "$CLAUDE_OUTPUT_FORMAT" != "json" ]]; then
-        ralph_cmd="$ralph_cmd --output-format $CLAUDE_OUTPUT_FORMAT"
+        hank_cmd="$hank_cmd --output-format $CLAUDE_OUTPUT_FORMAT"
     fi
     # Forward --verbose if enabled
     if [[ "$VERBOSE_PROGRESS" == "true" ]]; then
-        ralph_cmd="$ralph_cmd --verbose"
+        hank_cmd="$hank_cmd --verbose"
     fi
     # Forward --timeout if non-default (default is 15)
     if [[ "$CLAUDE_TIMEOUT_MINUTES" != "15" ]]; then
-        ralph_cmd="$ralph_cmd --timeout $CLAUDE_TIMEOUT_MINUTES"
+        hank_cmd="$hank_cmd --timeout $CLAUDE_TIMEOUT_MINUTES"
     fi
     # Forward --allowed-tools if non-default
     if [[ "$CLAUDE_ALLOWED_TOOLS" != "Write,Read,Edit,Bash(git *),Bash(npm *),Bash(pytest)" ]]; then
-        ralph_cmd="$ralph_cmd --allowed-tools '$CLAUDE_ALLOWED_TOOLS'"
+        hank_cmd="$hank_cmd --allowed-tools '$CLAUDE_ALLOWED_TOOLS'"
     fi
     # Forward --no-continue if session continuity disabled
     if [[ "$CLAUDE_USE_CONTINUE" == "false" ]]; then
-        ralph_cmd="$ralph_cmd --no-continue"
+        hank_cmd="$hank_cmd --no-continue"
     fi
     # Forward --session-expiry if non-default (default is 24)
     if [[ "$CLAUDE_SESSION_EXPIRY_HOURS" != "24" ]]; then
-        ralph_cmd="$ralph_cmd --session-expiry $CLAUDE_SESSION_EXPIRY_HOURS"
+        hank_cmd="$hank_cmd --session-expiry $CLAUDE_SESSION_EXPIRY_HOURS"
     fi
 
-    echo "$ralph_cmd"
+    echo "$hank_cmd"
 }
 
 @test "monitor forwards --output-format text parameter" {
-    local result=$(build_ralph_cmd_for_test 100 ".ralph/PROMPT.md" "text")
+    local result=$(build_hank_cmd_for_test 100 ".hank/PROMPT.md" "text")
     [[ "$result" == *"--output-format text"* ]]
 }
 
 @test "monitor forwards --verbose parameter" {
-    local result=$(build_ralph_cmd_for_test 100 ".ralph/PROMPT.md" "json" "true")
+    local result=$(build_hank_cmd_for_test 100 ".hank/PROMPT.md" "json" "true")
     [[ "$result" == *"--verbose"* ]]
 }
 
 @test "monitor forwards --timeout parameter" {
-    local result=$(build_ralph_cmd_for_test 100 ".ralph/PROMPT.md" "json" "false" "30")
+    local result=$(build_hank_cmd_for_test 100 ".hank/PROMPT.md" "json" "false" "30")
     [[ "$result" == *"--timeout 30"* ]]
 }
 
 @test "monitor forwards --allowed-tools parameter" {
-    local result=$(build_ralph_cmd_for_test 100 ".ralph/PROMPT.md" "json" "false" "15" "Read,Write")
+    local result=$(build_hank_cmd_for_test 100 ".hank/PROMPT.md" "json" "false" "15" "Read,Write")
     [[ "$result" == *"--allowed-tools 'Read,Write'"* ]]
 }
 
 @test "monitor forwards --no-continue parameter" {
-    local result=$(build_ralph_cmd_for_test 100 ".ralph/PROMPT.md" "json" "false" "15" "Write,Bash(git *),Read" "false")
+    local result=$(build_hank_cmd_for_test 100 ".hank/PROMPT.md" "json" "false" "15" "Write,Bash(git *),Read" "false")
     [[ "$result" == *"--no-continue"* ]]
 }
 
 @test "monitor forwards --session-expiry parameter" {
-    local result=$(build_ralph_cmd_for_test 100 ".ralph/PROMPT.md" "json" "false" "15" "Write,Bash(git *),Read" "true" "48")
+    local result=$(build_hank_cmd_for_test 100 ".hank/PROMPT.md" "json" "false" "15" "Write,Bash(git *),Read" "true" "48")
     [[ "$result" == *"--session-expiry 48"* ]]
 }
 
 @test "monitor forwards multiple parameters together" {
-    local result=$(build_ralph_cmd_for_test 50 ".ralph/PROMPT.md" "text" "true" "30" "Read,Write" "false" "12")
+    local result=$(build_hank_cmd_for_test 50 ".hank/PROMPT.md" "text" "true" "30" "Read,Write" "false" "12")
     [[ "$result" == *"--calls 50"* ]]
     [[ "$result" == *"--output-format text"* ]]
     [[ "$result" == *"--verbose"* ]]
@@ -460,7 +460,7 @@ build_ralph_cmd_for_test() {
 }
 
 @test "monitor does not forward default parameters" {
-    local result=$(build_ralph_cmd_for_test 100 ".ralph/PROMPT.md" "json" "false" "15" "Write,Read,Edit,Bash(git *),Bash(npm *),Bash(pytest)" "true" "24")
-    # Should only be "ralph" with no extra flags
-    [[ "$result" == "ralph" ]]
+    local result=$(build_hank_cmd_for_test 100 ".hank/PROMPT.md" "json" "false" "15" "Write,Read,Edit,Bash(git *),Bash(npm *),Bash(pytest)" "true" "24")
+    # Should only be "hank" with no extra flags
+    [[ "$result" == "hank" ]]
 }

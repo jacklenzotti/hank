@@ -7,17 +7,17 @@ setup() {
     # Source helper functions
     source "$(dirname "$BATS_TEST_FILENAME")/../helpers/test_helper.bash"
 
-    # Set up environment with .ralph/ subfolder structure
-    export RALPH_DIR=".ralph"
-    export EXIT_SIGNALS_FILE="$RALPH_DIR/.exit_signals"
-    export RESPONSE_ANALYSIS_FILE="$RALPH_DIR/.response_analysis"
+    # Set up environment with .hank/ subfolder structure
+    export HANK_DIR=".hank"
+    export EXIT_SIGNALS_FILE="$HANK_DIR/.exit_signals"
+    export RESPONSE_ANALYSIS_FILE="$HANK_DIR/.response_analysis"
     export MAX_CONSECUTIVE_TEST_LOOPS=3
     export MAX_CONSECUTIVE_DONE_SIGNALS=2
 
     # Create temp test directory
-    export TEST_TEMP_DIR="$(mktemp -d /tmp/ralph-test.XXXXXX)"
+    export TEST_TEMP_DIR="$(mktemp -d /tmp/hank-test.XXXXXX)"
     cd "$TEST_TEMP_DIR"
-    mkdir -p "$RALPH_DIR"
+    mkdir -p "$HANK_DIR"
 
     # Initialize exit signals file
     echo '{"test_only_loops": [], "done_signals": [], "completion_indicators": []}' > "$EXIT_SIGNALS_FILE"
@@ -28,7 +28,7 @@ teardown() {
     rm -rf "$TEST_TEMP_DIR"
 }
 
-# Helper function: should_exit_gracefully (extracted from ralph_loop.sh)
+# Helper function: should_exit_gracefully (extracted from hank_loop.sh)
 # Updated to respect EXIT_SIGNAL from .response_analysis for completion indicators
 should_exit_gracefully() {
     if [[ ! -f "$EXIT_SIGNALS_FILE" ]]; then
@@ -76,12 +76,12 @@ should_exit_gracefully() {
 
     # 4. Check fix_plan.md for completion
     # Fix #144: Only match valid markdown checkboxes, not date entries like [2026-01-29]
-    if [[ -f "$RALPH_DIR/fix_plan.md" ]]; then
+    if [[ -f "$HANK_DIR/fix_plan.md" ]]; then
         local uncompleted_items
         local completed_items
-        uncompleted_items=$(grep -cE "^[[:space:]]*- \[ \]" "$RALPH_DIR/fix_plan.md" 2>/dev/null || echo "0")
+        uncompleted_items=$(grep -cE "^[[:space:]]*- \[ \]" "$HANK_DIR/fix_plan.md" 2>/dev/null || echo "0")
         uncompleted_items=$(echo "$uncompleted_items" | tr -d '[:space:]')
-        completed_items=$(grep -cE "^[[:space:]]*- \[[xX]\]" "$RALPH_DIR/fix_plan.md" 2>/dev/null || echo "0")
+        completed_items=$(grep -cE "^[[:space:]]*- \[[xX]\]" "$HANK_DIR/fix_plan.md" 2>/dev/null || echo "0")
         completed_items=$(echo "$completed_items" | tr -d '[:space:]')
         local total_items=$((uncompleted_items + completed_items))
 
@@ -180,7 +180,7 @@ EOF
 
 # Test 10: Exit when fix_plan.md all items complete
 @test "should_exit_gracefully exits when all fix_plan items complete" {
-    cat > "$RALPH_DIR/fix_plan.md" << 'EOF'
+    cat > "$HANK_DIR/fix_plan.md" << 'EOF'
 # Fix Plan
 - [x] Task 1
 - [x] Task 2
@@ -193,7 +193,7 @@ EOF
 
 # Test 11: No exit when fix_plan.md partially complete
 @test "should_exit_gracefully continues when fix_plan partially complete" {
-    cat > "$RALPH_DIR/fix_plan.md" << 'EOF'
+    cat > "$HANK_DIR/fix_plan.md" << 'EOF'
 # Fix Plan
 - [x] Task 1
 - [ ] Task 2
@@ -240,7 +240,7 @@ EOF
 
 # Test 16: fix_plan.md with no checkboxes
 @test "should_exit_gracefully handles fix_plan with no checkboxes" {
-    cat > "$RALPH_DIR/fix_plan.md" << 'EOF'
+    cat > "$HANK_DIR/fix_plan.md" << 'EOF'
 # Fix Plan
 This is just text, no tasks yet.
 EOF
@@ -251,7 +251,7 @@ EOF
 
 # Test 17: fix_plan.md with mixed checkbox formats
 @test "should_exit_gracefully handles mixed checkbox formats" {
-    cat > "$RALPH_DIR/fix_plan.md" << 'EOF'
+    cat > "$HANK_DIR/fix_plan.md" << 'EOF'
 # Fix Plan
 - [x] Task 1 completed
 - [ ] Task 2 pending
@@ -705,7 +705,7 @@ EOF
 # =============================================================================
 # PERMISSION DENIAL EXIT TESTS (Issue #101)
 # =============================================================================
-# When Claude Code is denied permission to run commands, Ralph should detect
+# When Claude Code is denied permission to run commands, Hank should detect
 # this from the permission_denials field and halt the loop to allow user intervention.
 
 # Helper function with permission denial support
@@ -890,7 +890,7 @@ EOF
 
 # Test 41: Date entries should NOT be counted as checkboxes
 @test "fix_plan.md date entries are not counted as checkboxes" {
-    cat > "$RALPH_DIR/fix_plan.md" << 'EOF'
+    cat > "$HANK_DIR/fix_plan.md" << 'EOF'
 # Fix Plan
 
 ## Changelog
@@ -910,7 +910,7 @@ EOF
 
 # Test 42: Date entries mixed with completed tasks should not cause false exit
 @test "fix_plan.md with dates and completed tasks counts correctly" {
-    cat > "$RALPH_DIR/fix_plan.md" << 'EOF'
+    cat > "$HANK_DIR/fix_plan.md" << 'EOF'
 # Fix Plan
 
 ## Changelog
@@ -928,7 +928,7 @@ EOF
 
 # Test 43: Non-checkbox bracket patterns (NOTE, TODO, FIXME) should be excluded
 @test "fix_plan.md bracket patterns like [NOTE] are not checkboxes" {
-    cat > "$RALPH_DIR/fix_plan.md" << 'EOF'
+    cat > "$HANK_DIR/fix_plan.md" << 'EOF'
 # Fix Plan
 
 ## Notes
@@ -948,7 +948,7 @@ EOF
 
 # Test 44: Case-insensitive completed checkboxes ([x] and [X])
 @test "fix_plan.md counts both [x] and [X] as completed" {
-    cat > "$RALPH_DIR/fix_plan.md" << 'EOF'
+    cat > "$HANK_DIR/fix_plan.md" << 'EOF'
 # Fix Plan
 - [x] Task 1 with lowercase x
 - [X] Task 2 with uppercase X
@@ -962,7 +962,7 @@ EOF
 
 # Test 45: Indented date entries should not be counted
 @test "fix_plan.md indented date entries are not checkboxes" {
-    cat > "$RALPH_DIR/fix_plan.md" << 'EOF'
+    cat > "$HANK_DIR/fix_plan.md" << 'EOF'
 # Fix Plan
 
 ## Releases
@@ -980,7 +980,7 @@ EOF
 
 # Test 46: Empty checkbox [ ] with spaces should be counted as uncompleted
 @test "fix_plan.md empty checkboxes with extra spaces" {
-    cat > "$RALPH_DIR/fix_plan.md" << 'EOF'
+    cat > "$HANK_DIR/fix_plan.md" << 'EOF'
 # Fix Plan
 - [ ] Task with single space (valid)
 - [  ] Task with double space (invalid format, not counted)
@@ -994,7 +994,7 @@ EOF
 
 # Test 47: Version numbers in brackets should not be counted
 @test "fix_plan.md version numbers like [v1.0] are not checkboxes" {
-    cat > "$RALPH_DIR/fix_plan.md" << 'EOF'
+    cat > "$HANK_DIR/fix_plan.md" << 'EOF'
 # Fix Plan
 
 ## Version History
@@ -1013,7 +1013,7 @@ EOF
 
 # Test 48: Issue/PR references should not be counted
 @test "fix_plan.md issue references like [#123] are not checkboxes" {
-    cat > "$RALPH_DIR/fix_plan.md" << 'EOF'
+    cat > "$HANK_DIR/fix_plan.md" << 'EOF'
 # Fix Plan
 
 ## Related Issues

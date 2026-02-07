@@ -1,22 +1,22 @@
-# Ralph generated files (inside .ralph/ subfolder)
-.ralph/.call_count
-.ralph/.last_reset
-.ralph/.exit_signals
-.ralph/status.json
-.ralph/.ralph_session
-.ralph/.ralph_session_history
-.ralph/.claude_session_id
-.ralph/.response_analysis
-.ralph/.circuit_breaker_state
-.ralph/.circuit_breaker_history
-.ralph/.json_parse_result
-.ralph/.last_output_length
+# Hank generated files (inside .hank/ subfolder)
+.hank/.call_count
+.hank/.last_reset
+.hank/.exit_signals
+.hank/status.json
+.hank/.hank_session
+.hank/.hank_session_history
+.hank/.claude_session_id
+.hank/.response_analysis
+.hank/.circuit_breaker_state
+.hank/.circuit_breaker_history
+.hank/.json_parse_result
+.hank/.last_output_length
 
-# Ralph logs and generated docs
-.ralph/logs/*
-!.ralph/logs/.gitkeep
-.ralph/docs/generated/*
-!.ralph/docs/generated/.gitkeep
+# Hank logs and generated docs
+.hank/logs/*
+!.hank/logs/.gitkeep
+.hank/docs/generated/*
+!.hank/docs/generated/.gitkeep
 
 # General logs
 *.log
@@ -48,5 +48,5 @@ target/
 # Claude Code local settings
 .claude/settings.local.json
 
-# Ralph backup directories (created by migration)
-.ralph_backup_*
+# Hank backup directories (created by migration)
+.hank_backup_*

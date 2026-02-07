@@ -1,12 +1,12 @@
 #!/usr/bin/env bats
-# Integration tests for ralph-import command functionality
-# Tests PRD to Ralph format conversion with mocked Claude Code CLI
+# Integration tests for hank-import command functionality
+# Tests PRD to Hank format conversion with mocked Claude Code CLI
 
 load '../helpers/test_helper'
 load '../helpers/mocks'
 load '../helpers/fixtures'
 
-# Root directory of the project (for accessing ralph_import.sh)
+# Root directory of the project (for accessing hank_import.sh)
 PROJECT_ROOT="${BATS_TEST_DIRNAME}/../.."
 
 setup() {
@@ -15,7 +15,7 @@ setup() {
     ORIGINAL_DIR="$(pwd)"
     cd "$TEST_DIR"
 
-    # Initialize git repo (required by ralph_import.sh)
+    # Initialize git repo (required by hank_import.sh)
     git init > /dev/null 2>&1
     git config user.email "test@example.com"
     git config user.name "Test User"
@@ -25,23 +25,23 @@ setup() {
     mkdir -p "$MOCK_BIN_DIR"
     export PATH="$MOCK_BIN_DIR:$PATH"
 
-    # Create mock ralph-setup command (with .ralph/ subfolder structure)
-    cat > "$MOCK_BIN_DIR/ralph-setup" << 'MOCK_SETUP_EOF'
+    # Create mock hank-setup command (with .hank/ subfolder structure)
+    cat > "$MOCK_BIN_DIR/hank-setup" << 'MOCK_SETUP_EOF'
 #!/bin/bash
-# Mock ralph-setup that creates project structure with .ralph/ subfolder
+# Mock hank-setup that creates project structure with .hank/ subfolder
 project_name="${1:-test-project}"
 mkdir -p "$project_name"/src
-mkdir -p "$project_name"/.ralph/{specs/stdlib,examples,logs,docs/generated}
+mkdir -p "$project_name"/.hank/{specs/stdlib,examples,logs,docs/generated}
 cd "$project_name"
 git init > /dev/null 2>&1
 git config user.email "test@example.com"
 git config user.name "Test User"
-# Create basic template files in .ralph/ subfolder
-cat > .ralph/PROMPT.md << 'EOF'
-# Ralph Development Instructions
+# Create basic template files in .hank/ subfolder
+cat > .hank/PROMPT.md << 'EOF'
+# Hank Development Instructions
 
 ## Context
-You are Ralph, an autonomous AI development agent.
+You are Hank, an autonomous AI development agent.
 
 ## Current Objectives
 - Study specs/* to learn about the project specifications
@@ -54,8 +54,8 @@ You are Ralph, an autonomous AI development agent.
 - LIMIT testing to ~20% of your total effort
 EOF
 
-cat > ".ralph/fix_plan.md" << 'EOF'
-# Ralph Fix Plan
+cat > ".hank/fix_plan.md" << 'EOF'
+# Hank Fix Plan
 
 ## High Priority
 - [ ] Task 1
@@ -70,7 +70,7 @@ cat > ".ralph/fix_plan.md" << 'EOF'
 - [x] Project initialization
 EOF
 
-cat > ".ralph/AGENT.md" << 'EOF'
+cat > ".hank/AGENT.md" << 'EOF'
 # Agent Build Instructions
 
 ## Project Setup
@@ -79,9 +79,9 @@ EOF
 
 git add -A > /dev/null 2>&1
 git commit -m "Initial project setup" > /dev/null 2>&1
-echo "Created Ralph project: $project_name"
+echo "Created Hank project: $project_name"
 MOCK_SETUP_EOF
-    chmod +x "$MOCK_BIN_DIR/ralph-setup"
+    chmod +x "$MOCK_BIN_DIR/hank-setup"
 
     # Create mock claude command for PRD conversion
     # Default behavior: create the expected output files
@@ -105,7 +105,7 @@ teardown() {
 create_mock_claude_success() {
     cat > "$MOCK_BIN_DIR/claude" << 'MOCK_CLAUDE_EOF'
 #!/bin/bash
-# Mock Claude Code CLI that creates expected output files in .ralph/ subfolder
+# Mock Claude Code CLI that creates expected output files in .hank/ subfolder
 
 # Handle --version flag first (before reading stdin)
 if [[ "$1" == "--version" ]]; then
@@ -116,15 +116,15 @@ fi
 # Read from stdin (conversion prompt)
 cat > /dev/null
 
-# Ensure .ralph directory exists
-mkdir -p .ralph/specs
+# Ensure .hank directory exists
+mkdir -p .hank/specs
 
-# Create PROMPT.md with Ralph format in .ralph/
-cat > .ralph/PROMPT.md << 'EOF'
-# Ralph Development Instructions
+# Create PROMPT.md with Hank format in .hank/
+cat > .hank/PROMPT.md << 'EOF'
+# Hank Development Instructions
 
 ## Context
-You are Ralph, an autonomous AI development agent working on a Task Management App project.
+You are Hank, an autonomous AI development agent working on a Task Management App project.
 
 ## Current Objectives
 1. Study specs/* to learn about the project specifications
@@ -169,9 +169,9 @@ You are Ralph, an autonomous AI development agent working on a Task Management A
 Follow fix_plan.md and choose the most important item to implement next.
 EOF
 
-# Create fix_plan.md in .ralph/
-cat > ".ralph/fix_plan.md" << 'EOF'
-# Ralph Fix Plan
+# Create fix_plan.md in .hank/
+cat > ".hank/fix_plan.md" << 'EOF'
+# Hank Fix Plan
 
 ## High Priority
 - [ ] Set up user authentication with JWT
@@ -197,8 +197,8 @@ cat > ".ralph/fix_plan.md" << 'EOF'
 - Update this file after each major milestone
 EOF
 
-# Create specs/requirements.md in .ralph/specs/
-cat > .ralph/specs/requirements.md << 'EOF'
+# Create specs/requirements.md in .hank/specs/
+cat > .hank/specs/requirements.md << 'EOF'
 # Technical Specifications
 
 ## System Architecture
@@ -278,22 +278,22 @@ MOCK_CLAUDE_FAIL_EOF
     chmod +x "$MOCK_BIN_DIR/claude"
 }
 
-# Helper: Remove ralph-setup from mock bin (simulate not installed)
-remove_ralph_setup_mock() {
-    rm -f "$MOCK_BIN_DIR/ralph-setup"
+# Helper: Remove hank-setup from mock bin (simulate not installed)
+remove_hank_setup_mock() {
+    rm -f "$MOCK_BIN_DIR/hank-setup"
 }
 
 # =============================================================================
 # FILE FORMAT SUPPORT TESTS
 # =============================================================================
 
-# Test 1: ralph-import with .md file
-@test "ralph-import accepts and processes .md file format" {
+# Test 1: hank-import with .md file
+@test "hank-import accepts and processes .md file format" {
     # Create sample PRD markdown file
     create_sample_prd_md "my-project-prd.md"
 
     # Run import
-    run bash "$PROJECT_ROOT/ralph_import.sh" "my-project-prd.md"
+    run bash "$PROJECT_ROOT/hank_import.sh" "my-project-prd.md"
 
     # Should succeed
     assert_success
@@ -305,13 +305,13 @@ remove_ralph_setup_mock() {
     assert_file_exists "my-project-prd/my-project-prd.md"
 }
 
-# Test 2: ralph-import with .txt file
-@test "ralph-import accepts and processes .txt file format" {
+# Test 2: hank-import with .txt file
+@test "hank-import accepts and processes .txt file format" {
     # Create sample .txt PRD
     create_sample_prd_txt "requirements.txt"
 
     # Run import
-    run bash "$PROJECT_ROOT/ralph_import.sh" "requirements.txt"
+    run bash "$PROJECT_ROOT/hank_import.sh" "requirements.txt"
 
     # Should succeed
     assert_success
@@ -323,13 +323,13 @@ remove_ralph_setup_mock() {
     assert_file_exists "requirements/requirements.txt"
 }
 
-# Test 3: ralph-import with .json file
-@test "ralph-import accepts and processes .json file format" {
+# Test 3: hank-import with .json file
+@test "hank-import accepts and processes .json file format" {
     # Create sample JSON PRD
     create_sample_prd_json "project-spec.json"
 
     # Run import
-    run bash "$PROJECT_ROOT/ralph_import.sh" "project-spec.json"
+    run bash "$PROJECT_ROOT/hank_import.sh" "project-spec.json"
 
     # Should succeed
     assert_success
@@ -345,84 +345,84 @@ remove_ralph_setup_mock() {
 # OUTPUT FILE CREATION TESTS
 # =============================================================================
 
-# Test 4: ralph-import creates PROMPT.md
-@test "ralph-import creates PROMPT.md with Ralph instructions" {
+# Test 4: hank-import creates PROMPT.md
+@test "hank-import creates PROMPT.md with Hank instructions" {
     create_sample_prd_md "test-app.md"
 
-    run bash "$PROJECT_ROOT/ralph_import.sh" "test-app.md"
+    run bash "$PROJECT_ROOT/hank_import.sh" "test-app.md"
 
     assert_success
 
-    # PROMPT.md should exist in .ralph/ subfolder
-    assert_file_exists "test-app/.ralph/PROMPT.md"
+    # PROMPT.md should exist in .hank/ subfolder
+    assert_file_exists "test-app/.hank/PROMPT.md"
 
     # Check key sections exist
-    run grep -c "Ralph Development Instructions" "test-app/.ralph/PROMPT.md"
+    run grep -c "Hank Development Instructions" "test-app/.hank/PROMPT.md"
     assert_success
     [[ "$output" -ge 1 ]]
 
-    run grep -c "Current Objectives" "test-app/.ralph/PROMPT.md"
+    run grep -c "Current Objectives" "test-app/.hank/PROMPT.md"
     assert_success
     [[ "$output" -ge 1 ]]
 
-    run grep -c "Key Principles" "test-app/.ralph/PROMPT.md"
+    run grep -c "Key Principles" "test-app/.hank/PROMPT.md"
     assert_success
     [[ "$output" -ge 1 ]]
 
-    run grep -c "Testing Guidelines" "test-app/.ralph/PROMPT.md"
+    run grep -c "Testing Guidelines" "test-app/.hank/PROMPT.md"
     assert_success
     [[ "$output" -ge 1 ]]
 }
 
-# Test 5: ralph-import creates fix_plan.md
-@test "ralph-import creates fix_plan.md with prioritized tasks" {
+# Test 5: hank-import creates fix_plan.md
+@test "hank-import creates fix_plan.md with prioritized tasks" {
     create_sample_prd_md "test-app.md"
 
-    run bash "$PROJECT_ROOT/ralph_import.sh" "test-app.md"
+    run bash "$PROJECT_ROOT/hank_import.sh" "test-app.md"
 
     assert_success
 
-    # fix_plan.md should exist in .ralph/ subfolder
-    assert_file_exists "test-app/.ralph/fix_plan.md"
+    # fix_plan.md should exist in .hank/ subfolder
+    assert_file_exists "test-app/.hank/fix_plan.md"
 
     # Check structure includes priority sections
-    run grep -c "High Priority" "test-app/.ralph/fix_plan.md"
+    run grep -c "High Priority" "test-app/.hank/fix_plan.md"
     assert_success
     [[ "$output" -ge 1 ]]
 
-    run grep -c "Medium Priority" "test-app/.ralph/fix_plan.md"
+    run grep -c "Medium Priority" "test-app/.hank/fix_plan.md"
     assert_success
     [[ "$output" -ge 1 ]]
 
-    run grep -c "Low Priority" "test-app/.ralph/fix_plan.md"
+    run grep -c "Low Priority" "test-app/.hank/fix_plan.md"
     assert_success
     [[ "$output" -ge 1 ]]
 
-    run grep -c "Completed" "test-app/.ralph/fix_plan.md"
+    run grep -c "Completed" "test-app/.hank/fix_plan.md"
     assert_success
     [[ "$output" -ge 1 ]]
 
     # Check checkbox format
-    run grep -E "^\- \[[ x]\]" "test-app/.ralph/fix_plan.md"
+    run grep -E "^\- \[[ x]\]" "test-app/.hank/fix_plan.md"
     assert_success
 }
 
-# Test 6: ralph-import creates specs/requirements.md
-@test "ralph-import creates specs/requirements.md with technical specs" {
+# Test 6: hank-import creates specs/requirements.md
+@test "hank-import creates specs/requirements.md with technical specs" {
     create_sample_prd_md "test-app.md"
 
-    run bash "$PROJECT_ROOT/ralph_import.sh" "test-app.md"
+    run bash "$PROJECT_ROOT/hank_import.sh" "test-app.md"
 
     assert_success
 
-    # specs directory should exist in .ralph/ subfolder
-    assert_dir_exists "test-app/.ralph/specs"
+    # specs directory should exist in .hank/ subfolder
+    assert_dir_exists "test-app/.hank/specs"
 
-    # requirements.md should exist in .ralph/specs/
-    assert_file_exists "test-app/.ralph/specs/requirements.md"
+    # requirements.md should exist in .hank/specs/
+    assert_file_exists "test-app/.hank/specs/requirements.md"
 
     # Check technical specification content
-    run grep -c "Technical Specifications" "test-app/.ralph/specs/requirements.md"
+    run grep -c "Technical Specifications" "test-app/.hank/specs/requirements.md"
     assert_success
     [[ "$output" -ge 1 ]]
 }
@@ -431,50 +431,50 @@ remove_ralph_setup_mock() {
 # PROJECT NAMING TESTS
 # =============================================================================
 
-# Test 7: ralph-import with custom project name
-@test "ralph-import uses custom project name when provided" {
+# Test 7: hank-import with custom project name
+@test "hank-import uses custom project name when provided" {
     create_sample_prd_md "generic-prd.md"
 
     # Run with custom project name
-    run bash "$PROJECT_ROOT/ralph_import.sh" "generic-prd.md" "my-custom-project"
+    run bash "$PROJECT_ROOT/hank_import.sh" "generic-prd.md" "my-custom-project"
 
     assert_success
 
     # Custom project directory should be created
     assert_dir_exists "my-custom-project"
 
-    # Files should be in custom-named directory under .ralph/ subfolder
-    assert_file_exists "my-custom-project/.ralph/PROMPT.md"
-    assert_file_exists "my-custom-project/.ralph/fix_plan.md"
-    assert_file_exists "my-custom-project/.ralph/specs/requirements.md"
+    # Files should be in custom-named directory under .hank/ subfolder
+    assert_file_exists "my-custom-project/.hank/PROMPT.md"
+    assert_file_exists "my-custom-project/.hank/fix_plan.md"
+    assert_file_exists "my-custom-project/.hank/specs/requirements.md"
 
     # Default name directory should NOT exist
     [[ ! -d "generic-prd" ]]
 }
 
-# Test 8: ralph-import auto-detects name from filename
-@test "ralph-import extracts project name from filename when not provided" {
+# Test 8: hank-import auto-detects name from filename
+@test "hank-import extracts project name from filename when not provided" {
     create_sample_prd_md "awesome-app-requirements.md"
 
     # Run without custom name
-    run bash "$PROJECT_ROOT/ralph_import.sh" "awesome-app-requirements.md"
+    run bash "$PROJECT_ROOT/hank_import.sh" "awesome-app-requirements.md"
 
     assert_success
 
     # Project name should be extracted from filename (without extension)
     assert_dir_exists "awesome-app-requirements"
 
-    # Files should be in auto-named directory under .ralph/ subfolder
-    assert_file_exists "awesome-app-requirements/.ralph/PROMPT.md"
+    # Files should be in auto-named directory under .hank/ subfolder
+    assert_file_exists "awesome-app-requirements/.hank/PROMPT.md"
 }
 
 # =============================================================================
 # ERROR HANDLING TESTS
 # =============================================================================
 
-# Test 9: ralph-import missing source file error
-@test "ralph-import fails gracefully when source file does not exist" {
-    run bash "$PROJECT_ROOT/ralph_import.sh" "nonexistent-file.md"
+# Test 9: hank-import missing source file error
+@test "hank-import fails gracefully when source file does not exist" {
+    run bash "$PROJECT_ROOT/hank_import.sh" "nonexistent-file.md"
 
     # Should fail with error code 1
     assert_failure
@@ -486,19 +486,19 @@ remove_ralph_setup_mock() {
     [[ ! -d "nonexistent-file" ]]
 }
 
-# Test 10: ralph-import dependency check (ralph not installed)
-@test "ralph-import fails when ralph-setup is not installed" {
+# Test 10: hank-import dependency check (hank not installed)
+@test "hank-import fails when hank-setup is not installed" {
     create_sample_prd_md "test-app.md"
 
-    # Remove ralph-setup from mock path AND isolate from system PATH
+    # Remove hank-setup from mock path AND isolate from system PATH
     # Use a completely isolated PATH with only essential system tools
-    remove_ralph_setup_mock
+    remove_hank_setup_mock
 
-    # Save original PATH and use restricted PATH that excludes ralph-setup
+    # Save original PATH and use restricted PATH that excludes hank-setup
     local ORIGINAL_PATH="$PATH"
     export PATH="$MOCK_BIN_DIR:/usr/bin:/bin"
 
-    run bash "$PROJECT_ROOT/ralph_import.sh" "test-app.md"
+    run bash "$PROJECT_ROOT/hank_import.sh" "test-app.md"
 
     # Restore original PATH
     export PATH="$ORIGINAL_PATH"
@@ -506,18 +506,18 @@ remove_ralph_setup_mock() {
     # Should fail
     assert_failure
 
-    # Error message should mention Ralph not installed
-    [[ "$output" == *"Ralph not installed"* ]] || [[ "$output" == *"ralph-setup"* ]]
+    # Error message should mention Hank not installed
+    [[ "$output" == *"Hank not installed"* ]] || [[ "$output" == *"hank-setup"* ]]
 }
 
-# Test 11: ralph-import conversion failure handling
-@test "ralph-import handles Claude Code conversion failure gracefully" {
+# Test 11: hank-import conversion failure handling
+@test "hank-import handles Claude Code conversion failure gracefully" {
     create_sample_prd_md "test-app.md"
 
     # Set up mock to fail
     create_mock_claude_failure
 
-    run bash "$PROJECT_ROOT/ralph_import.sh" "test-app.md"
+    run bash "$PROJECT_ROOT/hank_import.sh" "test-app.md"
 
     # Should fail
     assert_failure
@@ -530,9 +530,9 @@ remove_ralph_setup_mock() {
 # HELP AND USAGE TESTS
 # =============================================================================
 
-# Test 12: ralph-import with no arguments shows help
-@test "ralph-import shows help when called with no arguments" {
-    run bash "$PROJECT_ROOT/ralph_import.sh"
+# Test 12: hank-import with no arguments shows help
+@test "hank-import shows help when called with no arguments" {
+    run bash "$PROJECT_ROOT/hank_import.sh"
 
     # Should succeed (help is not an error)
     assert_success
@@ -542,9 +542,9 @@ remove_ralph_setup_mock() {
     [[ "$output" == *"source-file"* ]]
 }
 
-# Test 13: ralph-import --help shows full help
-@test "ralph-import --help shows full help with examples" {
-    run bash "$PROJECT_ROOT/ralph_import.sh" --help
+# Test 13: hank-import --help shows full help
+@test "hank-import --help shows full help with examples" {
+    run bash "$PROJECT_ROOT/hank_import.sh" --help
 
     # Should succeed
     assert_success
@@ -556,9 +556,9 @@ remove_ralph_setup_mock() {
     [[ "$output" == *"Supported formats"* ]]
 }
 
-# Test 14: ralph-import -h shows help (short form)
-@test "ralph-import -h shows help" {
-    run bash "$PROJECT_ROOT/ralph_import.sh" -h
+# Test 14: hank-import -h shows help (short form)
+@test "hank-import -h shows help" {
+    run bash "$PROJECT_ROOT/hank_import.sh" -h
 
     assert_success
     [[ "$output" == *"Usage"* ]]
@@ -568,23 +568,23 @@ remove_ralph_setup_mock() {
 # CONVERSION PROMPT TESTS
 # =============================================================================
 
-# Test 15: ralph-import cleans up temporary conversion prompt
-@test "ralph-import cleans up .ralph_conversion_prompt.md after conversion" {
+# Test 15: hank-import cleans up temporary conversion prompt
+@test "hank-import cleans up .hank_conversion_prompt.md after conversion" {
     create_sample_prd_md "test-app.md"
 
-    run bash "$PROJECT_ROOT/ralph_import.sh" "test-app.md"
+    run bash "$PROJECT_ROOT/hank_import.sh" "test-app.md"
 
     assert_success
 
     # Temporary prompt file should NOT exist in project directory
-    [[ ! -f "test-app/.ralph_conversion_prompt.md" ]]
+    [[ ! -f "test-app/.hank_conversion_prompt.md" ]]
 }
 
-# Test 16: ralph-import outputs completion message with next steps
-@test "ralph-import shows success message with next steps" {
+# Test 16: hank-import outputs completion message with next steps
+@test "hank-import shows success message with next steps" {
     create_sample_prd_md "test-app.md"
 
-    run bash "$PROJECT_ROOT/ralph_import.sh" "test-app.md"
+    run bash "$PROJECT_ROOT/hank_import.sh" "test-app.md"
 
     assert_success
 
@@ -592,33 +592,33 @@ remove_ralph_setup_mock() {
     [[ "$output" == *"successfully"* ]] || [[ "$output" == *"SUCCESS"* ]]
 
     # Should show next steps
-    [[ "$output" == *"Next steps"* ]] || [[ "$output" == *"ralph --monitor"* ]]
+    [[ "$output" == *"Next steps"* ]] || [[ "$output" == *"hank --monitor"* ]]
 }
 
 # =============================================================================
 # FULL WORKFLOW INTEGRATION TESTS
 # =============================================================================
 
-# Test 17: Complete import workflow creates valid Ralph project
-@test "full workflow creates complete Ralph project structure" {
+# Test 17: Complete import workflow creates valid Hank project
+@test "full workflow creates complete Hank project structure" {
     create_sample_prd_md "my-app.md"
 
-    run bash "$PROJECT_ROOT/ralph_import.sh" "my-app.md"
+    run bash "$PROJECT_ROOT/hank_import.sh" "my-app.md"
 
     assert_success
 
-    # Verify complete project structure with .ralph/ subfolder
+    # Verify complete project structure with .hank/ subfolder
     assert_dir_exists "my-app"
-    assert_dir_exists "my-app/.ralph/specs"
+    assert_dir_exists "my-app/.hank/specs"
     assert_dir_exists "my-app/src"
-    assert_dir_exists "my-app/.ralph/logs"
-    assert_dir_exists "my-app/.ralph/docs/generated"
+    assert_dir_exists "my-app/.hank/logs"
+    assert_dir_exists "my-app/.hank/docs/generated"
 
-    # Verify all required files in .ralph/ subfolder
-    assert_file_exists "my-app/.ralph/PROMPT.md"
-    assert_file_exists "my-app/.ralph/fix_plan.md"
-    assert_file_exists "my-app/.ralph/AGENT.md"
-    assert_file_exists "my-app/.ralph/specs/requirements.md"
+    # Verify all required files in .hank/ subfolder
+    assert_file_exists "my-app/.hank/PROMPT.md"
+    assert_file_exists "my-app/.hank/fix_plan.md"
+    assert_file_exists "my-app/.hank/AGENT.md"
+    assert_file_exists "my-app/.hank/specs/requirements.md"
 
     # Verify source PRD was copied
     assert_file_exists "my-app/my-app.md"
@@ -628,7 +628,7 @@ remove_ralph_setup_mock() {
 @test "imported project is initialized as git repository" {
     create_sample_prd_md "git-test.md"
 
-    run bash "$PROJECT_ROOT/ralph_import.sh" "git-test.md"
+    run bash "$PROJECT_ROOT/hank_import.sh" "git-test.md"
 
     assert_success
 
@@ -646,32 +646,32 @@ remove_ralph_setup_mock() {
 # EDGE CASE TESTS
 # =============================================================================
 
-# Test 19: ralph-import handles project names with hyphens
-@test "ralph-import handles project names with hyphens correctly" {
+# Test 19: hank-import handles project names with hyphens
+@test "hank-import handles project names with hyphens correctly" {
     create_sample_prd_md "my-awesome-app.md"
 
-    run bash "$PROJECT_ROOT/ralph_import.sh" "my-awesome-app.md"
+    run bash "$PROJECT_ROOT/hank_import.sh" "my-awesome-app.md"
 
     assert_success
     assert_dir_exists "my-awesome-app"
 }
 
-# Test 20: ralph-import handles uppercase filenames
-@test "ralph-import handles uppercase in filename" {
+# Test 20: hank-import handles uppercase filenames
+@test "hank-import handles uppercase in filename" {
     create_sample_prd_md "MyProject.md"
 
-    run bash "$PROJECT_ROOT/ralph_import.sh" "MyProject.md"
+    run bash "$PROJECT_ROOT/hank_import.sh" "MyProject.md"
 
     assert_success
     assert_dir_exists "MyProject"
 }
 
-# Test 21: ralph-import handles path with directories
-@test "ralph-import handles source file in subdirectory" {
+# Test 21: hank-import handles path with directories
+@test "hank-import handles source file in subdirectory" {
     mkdir -p "docs/specs"
     create_sample_prd_md "docs/specs/project-prd.md"
 
-    run bash "$PROJECT_ROOT/ralph_import.sh" "docs/specs/project-prd.md"
+    run bash "$PROJECT_ROOT/hank_import.sh" "docs/specs/project-prd.md"
 
     assert_success
 
@@ -679,8 +679,8 @@ remove_ralph_setup_mock() {
     assert_dir_exists "project-prd"
 }
 
-# Test 22: ralph-import preserves original PRD content
-@test "ralph-import preserves original PRD content in project" {
+# Test 22: hank-import preserves original PRD content
+@test "hank-import preserves original PRD content in project" {
     # Create PRD with unique content
     cat > "unique-prd.md" << 'EOF'
 # Unique Test PRD
@@ -694,7 +694,7 @@ This is a unique test PRD with identifiable content.
 - Unique requirement B
 EOF
 
-    run bash "$PROJECT_ROOT/ralph_import.sh" "unique-prd.md"
+    run bash "$PROJECT_ROOT/hank_import.sh" "unique-prd.md"
 
     assert_success
 
@@ -715,7 +715,7 @@ EOF
 create_mock_claude_json_success() {
     cat > "$MOCK_BIN_DIR/claude" << 'MOCK_CLAUDE_JSON_EOF'
 #!/bin/bash
-# Mock Claude Code CLI that outputs JSON format and creates expected files in .ralph/
+# Mock Claude Code CLI that outputs JSON format and creates expected files in .hank/
 
 # Handle --version flag first
 if [[ "$1" == "--version" ]]; then
@@ -726,15 +726,15 @@ fi
 # Read from stdin (conversion prompt)
 cat > /dev/null
 
-# Ensure .ralph directory exists
-mkdir -p .ralph/specs
+# Ensure .hank directory exists
+mkdir -p .hank/specs
 
-# Create PROMPT.md with Ralph format in .ralph/
-cat > .ralph/PROMPT.md << 'EOF'
-# Ralph Development Instructions
+# Create PROMPT.md with Hank format in .hank/
+cat > .hank/PROMPT.md << 'EOF'
+# Hank Development Instructions
 
 ## Context
-You are Ralph, an autonomous AI development agent working on a Task Management App project.
+You are Hank, an autonomous AI development agent working on a Task Management App project.
 
 ## Current Objectives
 1. Study specs/* to learn about the project specifications
@@ -747,9 +747,9 @@ You are Ralph, an autonomous AI development agent working on a Task Management A
 - LIMIT testing to ~20% of your total effort
 EOF
 
-# Create fix_plan.md in .ralph/
-cat > ".ralph/fix_plan.md" << 'EOF'
-# Ralph Fix Plan
+# Create fix_plan.md in .hank/
+cat > ".hank/fix_plan.md" << 'EOF'
+# Hank Fix Plan
 
 ## High Priority
 - [ ] Set up user authentication with JWT
@@ -764,8 +764,8 @@ cat > ".ralph/fix_plan.md" << 'EOF'
 - [x] Project initialization
 EOF
 
-# Create specs/requirements.md in .ralph/specs/
-cat > .ralph/specs/requirements.md << 'EOF'
+# Create specs/requirements.md in .hank/specs/
+cat > .hank/specs/requirements.md << 'EOF'
 # Technical Specifications
 
 ## System Architecture
@@ -781,13 +781,13 @@ EOF
 # Output JSON response to stdout (mimicking --output-format json)
 cat << 'JSON_OUTPUT'
 {
-    "result": "Successfully converted PRD to Ralph format. Created .ralph/PROMPT.md, .ralph/fix_plan.md, and .ralph/specs/requirements.md",
+    "result": "Successfully converted PRD to Hank format. Created .hank/PROMPT.md, .hank/fix_plan.md, and .hank/specs/requirements.md",
     "sessionId": "session-prd-convert-123",
     "metadata": {
         "files_changed": 3,
         "has_errors": false,
         "completion_status": "complete",
-        "files_created": [".ralph/PROMPT.md", ".ralph/fix_plan.md", ".ralph/specs/requirements.md"]
+        "files_created": [".hank/PROMPT.md", ".hank/fix_plan.md", ".hank/specs/requirements.md"]
     }
 }
 JSON_OUTPUT
@@ -801,7 +801,7 @@ MOCK_CLAUDE_JSON_EOF
 create_mock_claude_json_partial() {
     cat > "$MOCK_BIN_DIR/claude" << 'MOCK_CLAUDE_PARTIAL_EOF'
 #!/bin/bash
-# Mock Claude Code CLI that outputs JSON but only creates some files in .ralph/
+# Mock Claude Code CLI that outputs JSON but only creates some files in .hank/
 
 # Handle --version flag first
 if [[ "$1" == "--version" ]]; then
@@ -811,15 +811,15 @@ fi
 
 cat > /dev/null
 
-# Ensure .ralph directory exists
-mkdir -p .ralph
+# Ensure .hank directory exists
+mkdir -p .hank
 
 # Only create PROMPT.md (missing fix_plan.md and specs/requirements.md)
-cat > .ralph/PROMPT.md << 'EOF'
-# Ralph Development Instructions
+cat > .hank/PROMPT.md << 'EOF'
+# Hank Development Instructions
 
 ## Context
-You are Ralph, an autonomous AI development agent.
+You are Hank, an autonomous AI development agent.
 EOF
 
 # Output JSON response indicating partial success
@@ -831,8 +831,8 @@ cat << 'JSON_OUTPUT'
         "files_changed": 1,
         "has_errors": true,
         "completion_status": "partial",
-        "files_created": [".ralph/PROMPT.md"],
-        "missing_files": [".ralph/fix_plan.md", ".ralph/specs/requirements.md"]
+        "files_created": [".hank/PROMPT.md"],
+        "missing_files": [".hank/fix_plan.md", ".hank/specs/requirements.md"]
     }
 }
 JSON_OUTPUT
@@ -880,7 +880,7 @@ MOCK_CLAUDE_JSON_ERROR_EOF
 create_mock_claude_text_output() {
     cat > "$MOCK_BIN_DIR/claude" << 'MOCK_CLAUDE_TEXT_EOF'
 #!/bin/bash
-# Mock Claude Code CLI that outputs text (older CLI version) - files in .ralph/
+# Mock Claude Code CLI that outputs text (older CLI version) - files in .hank/
 
 # Handle --version flag first
 if [[ "$1" == "--version" ]]; then
@@ -890,19 +890,19 @@ fi
 
 cat > /dev/null
 
-# Ensure .ralph directory exists
-mkdir -p .ralph/specs
+# Ensure .hank directory exists
+mkdir -p .hank/specs
 
-# Create files in .ralph/
-cat > .ralph/PROMPT.md << 'EOF'
-# Ralph Development Instructions
+# Create files in .hank/
+cat > .hank/PROMPT.md << 'EOF'
+# Hank Development Instructions
 
 ## Context
-You are Ralph, an autonomous AI development agent.
+You are Hank, an autonomous AI development agent.
 EOF
 
-cat > ".ralph/fix_plan.md" << 'EOF'
-# Ralph Fix Plan
+cat > ".hank/fix_plan.md" << 'EOF'
+# Hank Fix Plan
 
 ## High Priority
 - [ ] Set up project structure
@@ -911,7 +911,7 @@ cat > ".ralph/fix_plan.md" << 'EOF'
 - [x] Project initialization
 EOF
 
-cat > .ralph/specs/requirements.md << 'EOF'
+cat > .hank/specs/requirements.md << 'EOF'
 # Technical Specifications
 
 ## Overview
@@ -920,50 +920,50 @@ EOF
 
 # Output plain text (no JSON)
 echo "Mock: Claude Code conversion completed successfully"
-echo "Created: .ralph/PROMPT.md, .ralph/fix_plan.md, .ralph/specs/requirements.md"
+echo "Created: .hank/PROMPT.md, .hank/fix_plan.md, .hank/specs/requirements.md"
 exit 0
 MOCK_CLAUDE_TEXT_EOF
     chmod +x "$MOCK_BIN_DIR/claude"
 }
 
-# Test 23: ralph-import parses JSON output format successfully
-@test "ralph-import parses JSON output from Claude CLI" {
+# Test 23: hank-import parses JSON output format successfully
+@test "hank-import parses JSON output from Claude CLI" {
     create_sample_prd_md "json-test.md"
     create_mock_claude_json_success
 
-    run bash "$PROJECT_ROOT/ralph_import.sh" "json-test.md"
+    run bash "$PROJECT_ROOT/hank_import.sh" "json-test.md"
 
     assert_success
 
-    # All files should be created in .ralph/ subfolder
-    assert_file_exists "json-test/.ralph/PROMPT.md"
-    assert_file_exists "json-test/.ralph/fix_plan.md"
-    assert_file_exists "json-test/.ralph/specs/requirements.md"
+    # All files should be created in .hank/ subfolder
+    assert_file_exists "json-test/.hank/PROMPT.md"
+    assert_file_exists "json-test/.hank/fix_plan.md"
+    assert_file_exists "json-test/.hank/specs/requirements.md"
 }
 
-# Test 24: ralph-import handles JSON partial success response
-@test "ralph-import handles JSON partial success and warns about missing files" {
+# Test 24: hank-import handles JSON partial success response
+@test "hank-import handles JSON partial success and warns about missing files" {
     create_sample_prd_md "partial-test.md"
     create_mock_claude_json_partial
 
-    run bash "$PROJECT_ROOT/ralph_import.sh" "partial-test.md"
+    run bash "$PROJECT_ROOT/hank_import.sh" "partial-test.md"
 
     # Should succeed but with warnings
     assert_success
 
-    # PROMPT.md should exist in .ralph/ subfolder
-    assert_file_exists "partial-test/.ralph/PROMPT.md"
+    # PROMPT.md should exist in .hank/ subfolder
+    assert_file_exists "partial-test/.hank/PROMPT.md"
 
     # Warning should mention missing files
     [[ "$output" == *"WARN"* ]] || [[ "$output" == *"not created"* ]] || [[ "$output" == *"missing"* ]]
 }
 
-# Test 25: ralph-import handles JSON error response gracefully
-@test "ralph-import handles JSON error response with structured error message" {
+# Test 25: hank-import handles JSON error response gracefully
+@test "hank-import handles JSON error response with structured error message" {
     create_sample_prd_md "error-test.md"
     create_mock_claude_json_error
 
-    run bash "$PROJECT_ROOT/ralph_import.sh" "error-test.md"
+    run bash "$PROJECT_ROOT/hank_import.sh" "error-test.md"
 
     # Should fail
     assert_failure
@@ -972,43 +972,43 @@ MOCK_CLAUDE_TEXT_EOF
     [[ "$output" == *"failed"* ]] || [[ "$output" == *"ERROR"* ]] || [[ "$output" == *"error"* ]]
 }
 
-# Test 26: ralph-import maintains backward compatibility with text output
-@test "ralph-import works with text output (backward compatibility)" {
+# Test 26: hank-import maintains backward compatibility with text output
+@test "hank-import works with text output (backward compatibility)" {
     create_sample_prd_md "text-test.md"
     create_mock_claude_text_output
 
-    run bash "$PROJECT_ROOT/ralph_import.sh" "text-test.md"
+    run bash "$PROJECT_ROOT/hank_import.sh" "text-test.md"
 
     assert_success
 
-    # All files should be created in .ralph/ subfolder
-    assert_file_exists "text-test/.ralph/PROMPT.md"
-    assert_file_exists "text-test/.ralph/fix_plan.md"
-    assert_file_exists "text-test/.ralph/specs/requirements.md"
+    # All files should be created in .hank/ subfolder
+    assert_file_exists "text-test/.hank/PROMPT.md"
+    assert_file_exists "text-test/.hank/fix_plan.md"
+    assert_file_exists "text-test/.hank/specs/requirements.md"
 }
 
-# Test 27: ralph-import cleans up JSON output file after processing
-@test "ralph-import cleans up temporary JSON output file" {
+# Test 27: hank-import cleans up JSON output file after processing
+@test "hank-import cleans up temporary JSON output file" {
     create_sample_prd_md "cleanup-test.md"
     create_mock_claude_json_success
 
-    run bash "$PROJECT_ROOT/ralph_import.sh" "cleanup-test.md"
+    run bash "$PROJECT_ROOT/hank_import.sh" "cleanup-test.md"
 
     assert_success
 
     # Temporary output file should NOT exist
-    [[ ! -f "cleanup-test/.ralph_conversion_output.json" ]]
+    [[ ! -f "cleanup-test/.hank_conversion_output.json" ]]
 
     # Temporary prompt file should NOT exist
-    [[ ! -f "cleanup-test/.ralph_conversion_prompt.md" ]]
+    [[ ! -f "cleanup-test/.hank_conversion_prompt.md" ]]
 }
 
-# Test 28: ralph-import detects JSON vs text output format correctly
-@test "ralph-import detects output format and uses appropriate parsing" {
+# Test 28: hank-import detects JSON vs text output format correctly
+@test "hank-import detects output format and uses appropriate parsing" {
     create_sample_prd_md "format-test.md"
     create_mock_claude_json_success
 
-    run bash "$PROJECT_ROOT/ralph_import.sh" "format-test.md"
+    run bash "$PROJECT_ROOT/hank_import.sh" "format-test.md"
 
     assert_success
 
@@ -1016,12 +1016,12 @@ MOCK_CLAUDE_TEXT_EOF
     [[ "$output" == *"SUCCESS"* ]] || [[ "$output" == *"successfully"* ]]
 }
 
-# Test 29: ralph-import extracts session ID from JSON response
-@test "ralph-import extracts and stores session ID from JSON response" {
+# Test 29: hank-import extracts session ID from JSON response
+@test "hank-import extracts and stores session ID from JSON response" {
     create_sample_prd_md "session-test.md"
     create_mock_claude_json_success
 
-    run bash "$PROJECT_ROOT/ralph_import.sh" "session-test.md"
+    run bash "$PROJECT_ROOT/hank_import.sh" "session-test.md"
 
     assert_success
 
@@ -1030,12 +1030,12 @@ MOCK_CLAUDE_TEXT_EOF
     # This test verifies JSON parsing extracts the sessionId field
 }
 
-# Test 30: ralph-import reports file creation status from JSON metadata
-@test "ralph-import reports files created based on JSON metadata" {
+# Test 30: hank-import reports file creation status from JSON metadata
+@test "hank-import reports files created based on JSON metadata" {
     create_sample_prd_md "files-test.md"
     create_mock_claude_json_success
 
-    run bash "$PROJECT_ROOT/ralph_import.sh" "files-test.md"
+    run bash "$PROJECT_ROOT/hank_import.sh" "files-test.md"
 
     assert_success
 
@@ -1043,29 +1043,29 @@ MOCK_CLAUDE_TEXT_EOF
     [[ "$output" == *"Next steps"* ]] || [[ "$output" == *"PROMPT.md"* ]]
 }
 
-# Test 31: ralph-import uses modern CLI flags
-@test "ralph-import invokes Claude CLI with modern flags" {
+# Test 31: hank-import uses modern CLI flags
+@test "hank-import invokes Claude CLI with modern flags" {
     # Create a wrapper that captures the command invocation
     cat > "$MOCK_BIN_DIR/claude" << 'CAPTURE_ARGS_EOF'
 #!/bin/bash
 # Capture invocation arguments for testing
 echo "INVOCATION_ARGS: $*" >> /tmp/claude_invocation.log
 
-# Ensure .ralph directory exists
-mkdir -p .ralph/specs
+# Ensure .hank directory exists
+mkdir -p .hank/specs
 
-# Create expected files in .ralph/
-cat > .ralph/PROMPT.md << 'EOF'
-# Ralph Development Instructions
+# Create expected files in .hank/
+cat > .hank/PROMPT.md << 'EOF'
+# Hank Development Instructions
 EOF
 
-cat > ".ralph/fix_plan.md" << 'EOF'
-# Ralph Fix Plan
+cat > ".hank/fix_plan.md" << 'EOF'
+# Hank Fix Plan
 ## High Priority
 - [ ] Task 1
 EOF
 
-cat > .ralph/specs/requirements.md << 'EOF'
+cat > .hank/specs/requirements.md << 'EOF'
 # Technical Specifications
 EOF
 
@@ -1091,7 +1091,7 @@ CAPTURE_ARGS_EOF
 
     create_sample_prd_md "cli-flags-test.md"
 
-    run bash "$PROJECT_ROOT/ralph_import.sh" "cli-flags-test.md"
+    run bash "$PROJECT_ROOT/hank_import.sh" "cli-flags-test.md"
 
     assert_success
 
@@ -1107,8 +1107,8 @@ CAPTURE_ARGS_EOF
     rm -f /tmp/claude_invocation.log
 }
 
-# Test 32: ralph-import handles malformed JSON gracefully
-@test "ralph-import handles malformed JSON and falls back to text parsing" {
+# Test 32: hank-import handles malformed JSON gracefully
+@test "hank-import handles malformed JSON and falls back to text parsing" {
     cat > "$MOCK_BIN_DIR/claude" << 'MALFORMED_JSON_EOF'
 #!/bin/bash
 
@@ -1120,21 +1120,21 @@ fi
 
 cat > /dev/null
 
-# Ensure .ralph directory exists
-mkdir -p .ralph/specs
+# Ensure .hank directory exists
+mkdir -p .hank/specs
 
-# Create files in .ralph/
-cat > .ralph/PROMPT.md << 'EOF'
-# Ralph Development Instructions
+# Create files in .hank/
+cat > .hank/PROMPT.md << 'EOF'
+# Hank Development Instructions
 EOF
 
-cat > ".ralph/fix_plan.md" << 'EOF'
-# Ralph Fix Plan
+cat > ".hank/fix_plan.md" << 'EOF'
+# Hank Fix Plan
 ## High Priority
 - [ ] Task 1
 EOF
 
-cat > .ralph/specs/requirements.md << 'EOF'
+cat > .hank/specs/requirements.md << 'EOF'
 # Technical Specifications
 EOF
 
@@ -1147,17 +1147,17 @@ MALFORMED_JSON_EOF
 
     create_sample_prd_md "malformed-test.md"
 
-    run bash "$PROJECT_ROOT/ralph_import.sh" "malformed-test.md"
+    run bash "$PROJECT_ROOT/hank_import.sh" "malformed-test.md"
 
     # Should still succeed (fallback to text parsing)
     assert_success
 
-    # Files should exist in .ralph/ subfolder
-    assert_file_exists "malformed-test/.ralph/PROMPT.md"
+    # Files should exist in .hank/ subfolder
+    assert_file_exists "malformed-test/.hank/PROMPT.md"
 }
 
-# Test 33: ralph-import extracts error details from JSON error response
-@test "ralph-import extracts specific error message from JSON error" {
+# Test 33: hank-import extracts error details from JSON error response
+@test "hank-import extracts specific error message from JSON error" {
     cat > "$MOCK_BIN_DIR/claude" << 'DETAILED_ERROR_EOF'
 #!/bin/bash
 
@@ -1190,7 +1190,7 @@ DETAILED_ERROR_EOF
 
     create_sample_prd_md "detailed-error-test.md"
 
-    run bash "$PROJECT_ROOT/ralph_import.sh" "detailed-error-test.md"
+    run bash "$PROJECT_ROOT/hank_import.sh" "detailed-error-test.md"
 
     # Should fail
     assert_failure

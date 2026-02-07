@@ -1,18 +1,18 @@
-# Ralph for Claude Code
+# Hank for Claude Code
 
-[![CI](https://github.com/frankbria/ralph-claude-code/actions/workflows/test.yml/badge.svg)](https://github.com/frankbria/ralph-claude-code/actions/workflows/test.yml)
+[![CI](https://github.com/frankbria/hank/actions/workflows/test.yml/badge.svg)](https://github.com/frankbria/hank/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Version](https://img.shields.io/badge/version-0.11.4-blue)
 ![Tests](https://img.shields.io/badge/tests-465%20passing-green)
-[![GitHub Issues](https://img.shields.io/github/issues/frankbria/ralph-claude-code)](https://github.com/frankbria/ralph-claude-code/issues)
+[![GitHub Issues](https://img.shields.io/github/issues/frankbria/hank)](https://github.com/frankbria/hank/issues)
 [![Mentioned in Awesome Claude Code](https://awesome.re/mentioned-badge.svg)](https://github.com/hesreallyhim/awesome-claude-code)
 [![Follow on X](https://img.shields.io/twitter/follow/FrankBria18044?style=social)](https://x.com/FrankBria18044)
 
 > **Autonomous AI development loop with intelligent exit detection and rate limiting**
 
-Ralph is an implementation of the Geoffrey Huntley's technique for Claude Code that enables continuous autonomous development cycles he named after [Ralph Wiggum](https://ghuntley.com/ralph/). It enables continuous autonomous development cycles where Claude Code iteratively improves your project until completion, with built-in safeguards to prevent infinite loops and API overuse.
+Hank is an implementation of the Geoffrey Huntley's technique for Claude Code that enables continuous autonomous development cycles he named after [Hank Wiggum](https://ghuntley.com/hank/). It enables continuous autonomous development cycles where Claude Code iteratively improves your project until completion, with built-in safeguards to prevent infinite loops and API overuse.
 
-**Install once, use everywhere** - Ralph becomes a global command available in any directory.
+**Install once, use everywhere** - Hank becomes a global command available in any directory.
 
 ## Project Status
 
@@ -30,8 +30,8 @@ Ralph is an implementation of the Geoffrey Huntley's technique for Claude Code t
 - **Session continuity with `--resume` flag for context preservation (no session hijacking)**
 - **Session expiration with configurable timeout (default: 24 hours)**
 - **Modern CLI flags: `--output-format`, `--allowed-tools`, `--no-continue`**
-- **Interactive project enablement with `ralph-enable` wizard**
-- **`.ralphrc` configuration file for project settings**
+- **Interactive project enablement with `hank-enable` wizard**
+- **`.hankrc` configuration file for project settings**
 - **Live streaming output with `--live` flag for real-time Claude Code visibility**
 - Multi-line error matching for accurate stuck loop detection
 - 5-hour API limit handling with user prompts
@@ -47,8 +47,8 @@ Ralph is an implementation of the Geoffrey Huntley's technique for Claude Code t
 - Fixed checkbox regex: Date entries `[2026-01-29]` no longer counted as checkboxes (#144)
 - Fixed session hijacking: Use `--resume <session_id>` instead of `--continue` (#151)
 - Fixed EXIT_SIGNAL override: `STATUS: COMPLETE` with `EXIT_SIGNAL: false` now continues working (#146)
-- Fixed ralph-import hanging indefinitely (added `--print` flag for non-interactive mode)
-- Fixed ralph-import absolute path handling
+- Fixed hank-import hanging indefinitely (added `--print` flag for non-interactive mode)
+- Fixed hank-import absolute path handling
 - Fixed cross-platform date commands for macOS with Homebrew coreutils
 - Added configurable circuit breaker thresholds via environment variables (#99)
 - Added tmux support for non-zero `base-index` configurations
@@ -61,10 +61,10 @@ Ralph is an implementation of the Geoffrey Huntley's technique for Claude Code t
 - Added 12 new tests for live streaming and beads import improvements
 
 **v0.11.2 - Setup Permissions Fix**
-- Fixed issue #136: `ralph-setup` now creates `.ralphrc` with consistent tool permissions
+- Fixed issue #136: `hank-setup` now creates `.hankrc` with consistent tool permissions
 - Updated default `ALLOWED_TOOLS` to include `Edit`, `Bash(npm *)`, and `Bash(pytest)`
-- Both `ralph-setup` and `ralph-enable` now create identical `.ralphrc` configurations
-- Monitor now forwards all CLI parameters to inner ralph loop (#126)
+- Both `hank-setup` and `hank-enable` now create identical `.hankrc` configurations
+- Monitor now forwards all CLI parameters to inner hank loop (#126)
 - Added 16 new tests for permissions and parameter forwarding
 
 **v0.11.1 - Completion Indicators Fix**
@@ -72,34 +72,34 @@ Ralph is an implementation of the Geoffrey Huntley's technique for Claude Code t
 - `completion_indicators` now only accumulates when `EXIT_SIGNAL: true`
 - Aligns with documented dual-condition exit gate behavior
 
-**v0.11.0 - Ralph Enable Wizard**
-- Added `ralph-enable` interactive wizard for enabling Ralph in existing projects
+**v0.11.0 - Hank Enable Wizard**
+- Added `hank-enable` interactive wizard for enabling Hank in existing projects
 - 5-phase wizard: Environment Detection → Task Source Selection → Configuration → File Generation → Verification
 - Auto-detects project type (TypeScript, Python, Rust, Go) and framework (Next.js, FastAPI, Django)
 - Imports tasks from beads, GitHub Issues, or PRD documents
-- Added `ralph-enable-ci` non-interactive version for CI/automation
+- Added `hank-enable-ci` non-interactive version for CI/automation
 - New library components: `enable_core.sh`, `wizard_utils.sh`, `task_sources.sh`
 
 **v0.10.1 - Bug Fixes & Monitor Path Corrections**
-- Fixed `ralph_monitor.sh` hardcoded paths for v0.10.0 compatibility
+- Fixed `hank_monitor.sh` hardcoded paths for v0.10.0 compatibility
 - Fixed EXIT_SIGNAL parsing in JSON format
 - Added safety circuit breaker (force exit after 5 consecutive completion indicators)
 - Fixed checkbox parsing for indented markdown
 
-**v0.10.0 - .ralph/ Subfolder Structure (BREAKING CHANGE)**
-- **Breaking**: Moved all Ralph-specific files to `.ralph/` subfolder
+**v0.10.0 - .hank/ Subfolder Structure (BREAKING CHANGE)**
+- **Breaking**: Moved all Hank-specific files to `.hank/` subfolder
 - Project root stays clean: only `src/`, `README.md`, and user files remain
-- Added `ralph-migrate` command for upgrading existing projects
+- Added `hank-migrate` command for upgrading existing projects
 
 <details>
 <summary>Earlier versions (v0.9.x)</summary>
 
 **v0.9.9 - EXIT_SIGNAL Gate & Uninstall Script**
 - Fixed premature exit bug: completion indicators now require Claude's explicit `EXIT_SIGNAL: true`
-- Added dedicated `uninstall.sh` script for clean Ralph removal
+- Added dedicated `uninstall.sh` script for clean Hank removal
 
 **v0.9.8 - Modern CLI for PRD Import**
-- Modernized `ralph_import.sh` to use Claude Code CLI JSON output format
+- Modernized `hank_import.sh` to use Claude Code CLI JSON output format
 - Enhanced error handling with structured JSON error messages
 
 **v0.9.7 - Session Lifecycle Management**
@@ -136,8 +136,8 @@ Ralph is an implementation of the Geoffrey Huntley's technique for Claude Code t
 - **Live Monitoring** - Real-time dashboard showing loop status, progress, and logs
 - **Task Management** - Structured approach with prioritized task lists and progress tracking
 - **Project Templates** - Quick setup for new projects with best-practice structure
-- **Interactive Project Setup** - `ralph-enable` wizard for existing projects with task import
-- **Configuration Files** - `.ralphrc` for project-specific settings and tool permissions
+- **Interactive Project Setup** - `hank-enable` wizard for existing projects with task import
+- **Configuration Files** - `.hankrc` for project-specific settings and tool permissions
 - **Comprehensive Logging** - Detailed execution logs with timestamps and status tracking
 - **Configurable Timeouts** - Set execution timeout for Claude Code operations (1-120 minutes)
 - **Verbose Progress Mode** - Optional detailed progress updates during execution
@@ -149,117 +149,117 @@ Ralph is an implementation of the Geoffrey Huntley's technique for Claude Code t
 
 ## Quick Start
 
-Ralph has two phases: **one-time installation** and **per-project setup**.
+Hank has two phases: **one-time installation** and **per-project setup**.
 
 ```
 INSTALL ONCE              USE MANY TIMES
 +-----------------+          +----------------------+
-| ./install.sh    |    ->    | ralph-setup project1 |
-|                 |          | ralph-enable         |
-| Adds global     |          | ralph-import prd.md  |
+| ./install.sh    |    ->    | hank-setup project1 |
+|                 |          | hank-enable         |
+| Adds global     |          | hank-import prd.md  |
 | commands        |          | ...                  |
 +-----------------+          +----------------------+
 ```
 
-### Phase 1: Install Ralph (One Time Only)
+### Phase 1: Install Hank (One Time Only)
 
-Install Ralph globally on your system:
+Install Hank globally on your system:
 
 ```bash
-git clone https://github.com/frankbria/ralph-claude-code.git
-cd ralph-claude-code
+git clone https://github.com/frankbria/hank.git
+cd hank
 ./install.sh
 ```
 
-This adds `ralph`, `ralph-monitor`, `ralph-setup`, `ralph-import`, `ralph-migrate`, `ralph-enable`, and `ralph-enable-ci` commands to your PATH.
+This adds `hank`, `hank-monitor`, `hank-setup`, `hank-import`, `hank-migrate`, `hank-enable`, and `hank-enable-ci` commands to your PATH.
 
 > **Note**: You only need to do this once per system. After installation, you can delete the cloned repository if desired.
 
 ### Phase 2: Initialize Projects (Per Project)
 
-#### Option A: Enable Ralph in Existing Project (Recommended)
+#### Option A: Enable Hank in Existing Project (Recommended)
 ```bash
 cd my-existing-project
 
 # Interactive wizard - auto-detects project type and imports tasks
-ralph-enable
+hank-enable
 
 # Or with specific task source
-ralph-enable --from beads
-ralph-enable --from github --label "sprint-1"
-ralph-enable --from prd ./docs/requirements.md
+hank-enable --from beads
+hank-enable --from github --label "sprint-1"
+hank-enable --from prd ./docs/requirements.md
 
 # Start autonomous development
-ralph --monitor
+hank --monitor
 ```
 
 #### Option B: Import Existing PRD/Specifications
 ```bash
-# Convert existing PRD/specs to Ralph format
-ralph-import my-requirements.md my-project
+# Convert existing PRD/specs to Hank format
+hank-import my-requirements.md my-project
 cd my-project
 
 # Review and adjust the generated files:
-# - .ralph/PROMPT.md (Ralph instructions)
-# - .ralph/fix_plan.md (task priorities)
-# - .ralph/specs/requirements.md (technical specs)
+# - .hank/PROMPT.md (Hank instructions)
+# - .hank/fix_plan.md (task priorities)
+# - .hank/specs/requirements.md (technical specs)
 
 # Start autonomous development
-ralph --monitor
+hank --monitor
 ```
 
 #### Option C: Create New Project from Scratch
 ```bash
-# Create blank Ralph project
-ralph-setup my-awesome-project
+# Create blank Hank project
+hank-setup my-awesome-project
 cd my-awesome-project
 
 # Configure your project requirements manually
-# Edit .ralph/PROMPT.md with your project goals
-# Edit .ralph/specs/ with detailed specifications
-# Edit .ralph/fix_plan.md with initial priorities
+# Edit .hank/PROMPT.md with your project goals
+# Edit .hank/specs/ with detailed specifications
+# Edit .hank/fix_plan.md with initial priorities
 
 # Start autonomous development
-ralph --monitor
+hank --monitor
 ```
 
 ### Ongoing Usage (After Setup)
 
-Once Ralph is installed and your project is initialized:
+Once Hank is installed and your project is initialized:
 
 ```bash
-# Navigate to any Ralph project and run:
-ralph --monitor              # Integrated tmux monitoring (recommended)
+# Navigate to any Hank project and run:
+hank --monitor              # Integrated tmux monitoring (recommended)
 
 # Or use separate terminals:
-ralph                        # Terminal 1: Ralph loop
-ralph-monitor               # Terminal 2: Live monitor dashboard
+hank                        # Terminal 1: Hank loop
+hank-monitor               # Terminal 2: Live monitor dashboard
 ```
 
-### Uninstalling Ralph
+### Uninstalling Hank
 
-To completely remove Ralph from your system:
+To completely remove Hank from your system:
 
 ```bash
 # Run the uninstall script
 ./uninstall.sh
 
 # Or if you deleted the repo, download and run:
-curl -sL https://raw.githubusercontent.com/frankbria/ralph-claude-code/main/uninstall.sh | bash
+curl -sL https://raw.githubusercontent.com/frankbria/hank/main/uninstall.sh | bash
 ```
 
-## Understanding Ralph Files
+## Understanding Hank Files
 
-After running `ralph-enable` or `ralph-import`, you'll have a `.ralph/` directory with several files. Here's what each file does and whether you need to edit it:
+After running `hank-enable` or `hank-import`, you'll have a `.hank/` directory with several files. Here's what each file does and whether you need to edit it:
 
 | File | Auto-Generated? | You Should... |
 |------|-----------------|---------------|
-| `.ralph/PROMPT.md` | Yes (smart defaults) | **Review & customize** project goals and principles |
-| `.ralph/fix_plan.md` | Yes (can import tasks) | **Add/modify** specific implementation tasks |
-| `.ralph/AGENT.md` | Yes (detects build commands) | Rarely edit (auto-maintained by Ralph) |
-| `.ralph/specs/` | Empty directory | Add files when PROMPT.md isn't detailed enough |
-| `.ralph/specs/stdlib/` | Empty directory | Add reusable patterns and conventions |
-| `.ralphrc` | Yes (project-aware) | Rarely edit (sensible defaults) |
+| `.hank/PROMPT.md` | Yes (smart defaults) | **Review & customize** project goals and principles |
+| `.hank/fix_plan.md` | Yes (can import tasks) | **Add/modify** specific implementation tasks |
+| `.hank/AGENT.md` | Yes (detects build commands) | Rarely edit (auto-maintained by Hank) |
+| `.hank/specs/` | Empty directory | Add files when PROMPT.md isn't detailed enough |
+| `.hank/specs/stdlib/` | Empty directory | Add reusable patterns and conventions |
+| `.hankrc` | Yes (project-aware) | Rarely edit (sensible defaults) |
 
 ### Key File Relationships
 
@@ -268,7 +268,7 @@ PROMPT.md (high-level goals)
     ↓
 specs/ (detailed requirements when needed)
     ↓
-fix_plan.md (specific tasks Ralph executes)
+fix_plan.md (specific tasks Hank executes)
     ↓
 AGENT.md (build/test commands - auto-maintained)
 ```
@@ -283,7 +283,7 @@ See the [User Guide](docs/user-guide/) for detailed explanations and the [exampl
 
 ## How It Works
 
-Ralph operates on a simple but powerful cycle:
+Hank operates on a simple but powerful cycle:
 
 1. **Read Instructions** - Loads `PROMPT.md` with your project requirements
 2. **Execute Claude Code** - Runs Claude Code with current context and priorities
@@ -293,11 +293,11 @@ Ralph operates on a simple but powerful cycle:
 
 ### Intelligent Exit Detection
 
-Ralph uses a **dual-condition check** to prevent premature exits during productive iterations:
+Hank uses a **dual-condition check** to prevent premature exits during productive iterations:
 
 **Exit requires BOTH conditions:**
 1. `completion_indicators >= 2` (heuristic detection from natural language patterns)
-2. Claude's explicit `EXIT_SIGNAL: true` in the RALPH_STATUS block
+2. Claude's explicit `EXIT_SIGNAL: true` in the HANK_STATUS block
 
 **Example behavior:**
 ```
@@ -313,38 +313,38 @@ Loop 8: Claude outputs "All tasks complete, project ready"
 ```
 
 **Other exit conditions:**
-- All tasks in `.ralph/fix_plan.md` marked complete
+- All tasks in `.hank/fix_plan.md` marked complete
 - Multiple consecutive "done" signals from Claude Code
 - Too many test-focused loops (indicating feature completeness)
 - Claude API 5-hour usage limit reached (with user prompt to wait or exit)
 
-## Enabling Ralph in Existing Projects
+## Enabling Hank in Existing Projects
 
-The `ralph-enable` command provides an interactive wizard for adding Ralph to existing projects:
+The `hank-enable` command provides an interactive wizard for adding Hank to existing projects:
 
 ```bash
 cd my-existing-project
-ralph-enable
+hank-enable
 ```
 
 **The wizard:**
 1. **Detects Environment** - Identifies project type (TypeScript, Python, etc.) and framework
 2. **Selects Task Sources** - Choose from beads, GitHub Issues, or PRD documents
 3. **Configures Settings** - Set tool permissions and loop parameters
-4. **Generates Files** - Creates `.ralph/` directory and `.ralphrc` configuration
+4. **Generates Files** - Creates `.hank/` directory and `.hankrc` configuration
 5. **Verifies Setup** - Confirms all files are created correctly
 
 **Non-interactive mode for CI/automation:**
 ```bash
-ralph-enable-ci                              # Sensible defaults
-ralph-enable-ci --from github               # Import from GitHub Issues
-ralph-enable-ci --project-type typescript   # Override detection
-ralph-enable-ci --json                      # Machine-readable output
+hank-enable-ci                              # Sensible defaults
+hank-enable-ci --from github               # Import from GitHub Issues
+hank-enable-ci --project-type typescript   # Override detection
+hank-enable-ci --json                      # Machine-readable output
 ```
 
 ## Importing Existing Requirements
 
-Ralph can convert existing PRDs, specifications, or requirement documents into the proper Ralph format using Claude Code.
+Hank can convert existing PRDs, specifications, or requirement documents into the proper Hank format using Claude Code.
 
 ### Supported Formats
 - **Markdown** (.md) - Product requirements, technical specs
@@ -352,44 +352,44 @@ Ralph can convert existing PRDs, specifications, or requirement documents into t
 - **JSON** (.json) - Structured requirement data
 - **Word documents** (.docx) - Business requirements
 - **PDFs** (.pdf) - Design documents, specifications
-- **Any text-based format** - Ralph will intelligently parse the content
+- **Any text-based format** - Hank will intelligently parse the content
 
 ### Usage Examples
 
 ```bash
 # Convert a markdown PRD
-ralph-import product-requirements.md my-app
+hank-import product-requirements.md my-app
 
 # Convert a text specification
-ralph-import requirements.txt webapp
+hank-import requirements.txt webapp
 
 # Convert a JSON API spec
-ralph-import api-spec.json backend-service
+hank-import api-spec.json backend-service
 
-# Let Ralph auto-name the project from filename
-ralph-import design-doc.pdf
+# Let Hank auto-name the project from filename
+hank-import design-doc.pdf
 ```
 
 ### What Gets Generated
 
-Ralph-import creates a complete project with:
+Hank-import creates a complete project with:
 
-- **.ralph/PROMPT.md** - Converted into Ralph development instructions
-- **.ralph/fix_plan.md** - Requirements broken down into prioritized tasks
-- **.ralph/specs/requirements.md** - Technical specifications extracted from your document
-- **.ralphrc** - Project configuration file with tool permissions
-- **Standard Ralph structure** - All necessary directories and template files in `.ralph/`
+- **.hank/PROMPT.md** - Converted into Hank development instructions
+- **.hank/fix_plan.md** - Requirements broken down into prioritized tasks
+- **.hank/specs/requirements.md** - Technical specifications extracted from your document
+- **.hankrc** - Project configuration file with tool permissions
+- **Standard Hank structure** - All necessary directories and template files in `.hank/`
 
 The conversion is intelligent and preserves your original requirements while making them actionable for autonomous development.
 
 ## Configuration
 
-### Project Configuration (.ralphrc)
+### Project Configuration (.hankrc)
 
-Each Ralph project can have a `.ralphrc` configuration file:
+Each Hank project can have a `.hankrc` configuration file:
 
 ```bash
-# .ralphrc - Ralph project configuration
+# .hankrc - Hank project configuration
 PROJECT_NAME="my-project"
 PROJECT_TYPE="typescript"
 
@@ -412,17 +412,17 @@ CB_SAME_ERROR_THRESHOLD=5
 
 ### Rate Limiting & Circuit Breaker
 
-Ralph includes intelligent rate limiting and circuit breaker functionality:
+Hank includes intelligent rate limiting and circuit breaker functionality:
 
 ```bash
 # Default: 100 calls per hour
-ralph --calls 50
+hank --calls 50
 
 # With integrated monitoring
-ralph --monitor --calls 50
+hank --monitor --calls 50
 
 # Check current usage
-ralph --status
+hank --status
 ```
 
 The circuit breaker automatically:
@@ -435,7 +435,7 @@ The circuit breaker automatically:
 
 ### Claude API 5-Hour Limit
 
-When Claude's 5-hour usage limit is reached, Ralph:
+When Claude's 5-hour usage limit is reached, Hank:
 1. Detects the limit error automatically
 2. Prompts you to choose:
    - **Option 1**: Wait 60 minutes for the limit to reset (with countdown timer)
@@ -446,67 +446,67 @@ When Claude's 5-hour usage limit is reached, Ralph:
 
 ```bash
 # Use custom prompt file
-ralph --prompt my_custom_instructions.md
+hank --prompt my_custom_instructions.md
 
 # With integrated monitoring
-ralph --monitor --prompt my_custom_instructions.md
+hank --monitor --prompt my_custom_instructions.md
 ```
 
 ### Execution Timeouts
 
 ```bash
 # Set Claude Code execution timeout (default: 15 minutes)
-ralph --timeout 30  # 30-minute timeout for complex tasks
+hank --timeout 30  # 30-minute timeout for complex tasks
 
 # With monitoring and custom timeout
-ralph --monitor --timeout 60  # 60-minute timeout
+hank --monitor --timeout 60  # 60-minute timeout
 
 # Short timeout for quick iterations
-ralph --verbose --timeout 5  # 5-minute timeout with progress
+hank --verbose --timeout 5  # 5-minute timeout with progress
 ```
 
 ### Verbose Mode
 
 ```bash
 # Enable detailed progress updates during execution
-ralph --verbose
+hank --verbose
 
 # Combine with other options
-ralph --monitor --verbose --timeout 30
+hank --monitor --verbose --timeout 30
 ```
 
 ### Live Streaming Output
 
 ```bash
 # Enable real-time visibility into Claude Code execution
-ralph --live
+hank --live
 
 # Combine with monitoring for best experience
-ralph --monitor --live
+hank --monitor --live
 
-# Live output is written to .ralph/live.log
-tail -f .ralph/live.log  # Watch in another terminal
+# Live output is written to .hank/live.log
+tail -f .hank/live.log  # Watch in another terminal
 ```
 
 Live streaming mode shows Claude Code's output in real-time as it works, providing visibility into what's happening during each loop iteration.
 
 ### Session Continuity
 
-Ralph maintains session context across loop iterations for improved coherence:
+Hank maintains session context across loop iterations for improved coherence:
 
 ```bash
 # Sessions are enabled by default with --continue flag
-ralph --monitor                 # Uses session continuity
+hank --monitor                 # Uses session continuity
 
 # Start fresh without session context
-ralph --no-continue             # Isolated iterations
+hank --no-continue             # Isolated iterations
 
 # Reset session manually (clears context)
-ralph --reset-session           # Clears current session
+hank --reset-session           # Clears current session
 
 # Check session status
-cat .ralph/.ralph_session              # View current session file
-cat .ralph/.ralph_session_history      # View session transition history
+cat .hank/.hank_session              # View current session file
+cat .hank/.hank_session_history      # View session transition history
 ```
 
 **Session Auto-Reset Triggers:**
@@ -516,11 +516,11 @@ cat .ralph/.ralph_session_history      # View session transition history
 - Manual circuit breaker reset (`--reset-circuit`)
 - Session expiration (default: 24 hours)
 
-Sessions are persisted to `.ralph/.ralph_session` with a configurable expiration (default: 24 hours). The last 50 session transitions are logged to `.ralph/.ralph_session_history` for debugging.
+Sessions are persisted to `.hank/.hank_session` with a configurable expiration (default: 24 hours). The last 50 session transitions are logged to `.hank/.hank_session_history` for debugging.
 
 ### Exit Thresholds
 
-Modify these variables in `~/.ralph/ralph_loop.sh`:
+Modify these variables in `~/.hank/hank_loop.sh`:
 
 **Exit Detection Thresholds:**
 ```bash
@@ -547,46 +547,46 @@ CB_OUTPUT_DECLINE_THRESHOLD=70   # Open circuit if output declines by >70%
 
 ## Project Structure
 
-Ralph creates a standardized structure for each project with a `.ralph/` subfolder for configuration:
+Hank creates a standardized structure for each project with a `.hank/` subfolder for configuration:
 
 ```
 my-project/
-├── .ralph/                 # Ralph configuration and state (hidden folder)
-│   ├── PROMPT.md           # Main development instructions for Ralph
+├── .hank/                 # Hank configuration and state (hidden folder)
+│   ├── PROMPT.md           # Main development instructions for Hank
 │   ├── fix_plan.md        # Prioritized task list
 │   ├── AGENT.md           # Build and run instructions
 │   ├── specs/              # Project specifications and requirements
 │   │   └── stdlib/         # Standard library specifications
 │   ├── examples/           # Usage examples and test cases
-│   ├── logs/               # Ralph execution logs
+│   ├── logs/               # Hank execution logs
 │   └── docs/generated/     # Auto-generated documentation
-├── .ralphrc                # Ralph configuration file (tool permissions, settings)
+├── .hankrc                # Hank configuration file (tool permissions, settings)
 └── src/                    # Source code implementation (at project root)
 ```
 
-> **Migration**: If you have existing Ralph projects using the old flat structure, run `ralph-migrate` to automatically move files to the `.ralph/` subfolder.
+> **Migration**: If you have existing Hank projects using the old flat structure, run `hank-migrate` to automatically move files to the `.hank/` subfolder.
 
 ## Best Practices
 
 ### Writing Effective Prompts
 
 1. **Be Specific** - Clear requirements lead to better results
-2. **Prioritize** - Use `.ralph/fix_plan.md` to guide Ralph's focus
+2. **Prioritize** - Use `.hank/fix_plan.md` to guide Hank's focus
 3. **Set Boundaries** - Define what's in/out of scope
 4. **Include Examples** - Show expected inputs/outputs
 
 ### Project Specifications
 
-- Place detailed requirements in `.ralph/specs/`
-- Use `.ralph/fix_plan.md` for prioritized task tracking
-- Keep `.ralph/AGENT.md` updated with build instructions
+- Place detailed requirements in `.hank/specs/`
+- Use `.hank/fix_plan.md` for prioritized task tracking
+- Keep `.hank/AGENT.md` updated with build instructions
 - Document key decisions and architecture
 
 ### Monitoring Progress
 
-- Use `ralph-monitor` for live status updates
-- Check logs in `.ralph/logs/` for detailed execution history
-- Monitor `.ralph/status.json` for programmatic access
+- Use `hank-monitor` for live status updates
+- Check logs in `.hank/logs/` for detailed execution history
+- Monitor `.hank/status.json` for programmatic access
 - Watch for exit condition signals
 
 ## System Requirements
@@ -623,7 +623,7 @@ bats tests/unit/test_cli_parsing.bats
 bats tests/unit/test_session_continuity.bats
 bats tests/unit/test_enable_core.bats
 bats tests/unit/test_task_sources.bats
-bats tests/unit/test_ralph_enable.bats
+bats tests/unit/test_hank_enable.bats
 bats tests/unit/test_wizard_utils.bats
 bats tests/integration/test_loop_execution.bats
 bats tests/integration/test_prd_import.bats
@@ -658,7 +658,7 @@ sudo yum install tmux
 
 ### Installing GNU coreutils (macOS)
 
-Ralph uses the `timeout` command for execution timeouts. On macOS, you need to install GNU coreutils:
+Hank uses the `timeout` command for execution timeouts. On macOS, you need to install GNU coreutils:
 
 ```bash
 # Install coreutils (provides gtimeout)
@@ -668,7 +668,7 @@ brew install coreutils
 gtimeout --version
 ```
 
-Ralph automatically detects and uses `gtimeout` on macOS. No additional configuration is required after installation.
+Hank automatically detects and uses `gtimeout` on macOS. No additional configuration is required after installation.
 
 ## Monitoring and Debugging
 
@@ -676,10 +676,10 @@ Ralph automatically detects and uses `gtimeout` on macOS. No additional configur
 
 ```bash
 # Integrated tmux monitoring (recommended)
-ralph --monitor
+hank --monitor
 
 # Manual monitoring in separate terminal
-ralph-monitor
+hank-monitor
 ```
 
 Shows real-time:
@@ -689,7 +689,7 @@ Shows real-time:
 - Rate limit countdown
 
 **tmux Controls:**
-- `Ctrl+B` then `D` - Detach from session (keeps Ralph running)
+- `Ctrl+B` then `D` - Detach from session (keeps Hank running)
 - `Ctrl+B` then `←/→` - Switch between panes
 - `tmux list-sessions` - View active sessions
 - `tmux attach -t <session-name>` - Reattach to session
@@ -698,33 +698,33 @@ Shows real-time:
 
 ```bash
 # JSON status output
-ralph --status
+hank --status
 
 # Manual log inspection
-tail -f .ralph/logs/ralph.log
+tail -f .hank/logs/hank.log
 ```
 
 ### Common Issues
 
-- **Rate Limits** - Ralph automatically waits and displays countdown
-- **5-Hour API Limit** - Ralph detects and prompts for user action (wait or exit)
+- **Rate Limits** - Hank automatically waits and displays countdown
+- **5-Hour API Limit** - Hank detects and prompts for user action (wait or exit)
 - **Stuck Loops** - Check `fix_plan.md` for unclear or conflicting tasks
-- **Early Exit** - Review exit thresholds if Ralph stops too soon
-- **Premature Exit** - Check if Claude is setting `EXIT_SIGNAL: false` (Ralph now respects this)
+- **Early Exit** - Review exit thresholds if Hank stops too soon
+- **Premature Exit** - Check if Claude is setting `EXIT_SIGNAL: false` (Hank now respects this)
 - **Execution Timeouts** - Increase `--timeout` value for complex operations
 - **Missing Dependencies** - Ensure Claude Code CLI and tmux are installed
 - **tmux Session Lost** - Use `tmux list-sessions` and `tmux attach` to reconnect
 - **Session Expired** - Sessions expire after 24 hours by default; use `--reset-session` to start fresh
 - **timeout: command not found (macOS)** - Install GNU coreutils: `brew install coreutils`
-- **Permission Denied** - Ralph halts when Claude Code is denied permission for commands:
-  1. Edit `.ralphrc` and update `ALLOWED_TOOLS` to include required tools
+- **Permission Denied** - Hank halts when Claude Code is denied permission for commands:
+  1. Edit `.hankrc` and update `ALLOWED_TOOLS` to include required tools
   2. Common patterns: `Bash(npm *)`, `Bash(git *)`, `Bash(pytest)`
-  3. Run `ralph --reset-session` after updating `.ralphrc`
-  4. Restart with `ralph --monitor`
+  3. Run `hank --reset-session` after updating `.hankrc`
+  4. Restart with `hank --monitor`
 
 ## Contributing
 
-Ralph is actively seeking contributors! We're working toward v1.0.0 with clear priorities and a detailed roadmap.
+Hank is actively seeking contributors! We're working toward v1.0.0 with clear priorities and a detailed roadmap.
 
 **See [CONTRIBUTING.md](CONTRIBUTING.md) for the complete contributor guide** including:
 - Getting started and setup instructions
@@ -738,8 +738,8 @@ Ralph is actively seeking contributors! We're working toward v1.0.0 with clear p
 
 ```bash
 # Fork and clone
-git clone https://github.com/YOUR_USERNAME/ralph-claude-code.git
-cd ralph-claude-code
+git clone https://github.com/YOUR_USERNAME/hank.git
+cd hank
 
 # Install dependencies and run tests
 npm install
@@ -751,7 +751,7 @@ npm test  # All 465 tests must pass
 1. **Test Implementation** - Help expand test coverage
 2. **Feature Development** - Log rotation, dry-run mode, metrics
 3. **Documentation** - Tutorials, troubleshooting guides, examples
-4. **Real-World Testing** - Use Ralph, report bugs, share feedback
+4. **Real-World Testing** - Use Hank, report bugs, share feedback
 
 **Every contribution matters** - from fixing typos to implementing major features!
 
@@ -761,14 +761,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-- Inspired by the [Ralph technique](https://ghuntley.com/ralph/) created by Geoffrey Huntley
+- Inspired by the [Hank technique](https://ghuntley.com/hank/) created by Geoffrey Huntley
 - Built for [Claude Code](https://claude.ai/code) by Anthropic
 - Community feedback and contributions
 
 ## Related Projects
 
-- [Claude Code](https://claude.ai/code) - The AI coding assistant that powers Ralph
-- [Aider](https://github.com/paul-gauthier/aider) - Original Ralph technique implementation
+- [Claude Code](https://claude.ai/code) - The AI coding assistant that powers Hank
+- [Aider](https://github.com/paul-gauthier/aider) - Original Hank technique implementation
 
 ---
 
@@ -776,16 +776,16 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### Installation Commands (Run Once)
 ```bash
-./install.sh              # Install Ralph globally
-./uninstall.sh            # Remove Ralph from system (dedicated script)
-./install.sh uninstall    # Alternative: Remove Ralph from system
+./install.sh              # Install Hank globally
+./uninstall.sh            # Remove Hank from system (dedicated script)
+./install.sh uninstall    # Alternative: Remove Hank from system
 ./install.sh --help       # Show installation help
-ralph-migrate             # Migrate existing project to .ralph/ structure
+hank-migrate             # Migrate existing project to .hank/ structure
 ```
 
-### Ralph Loop Options
+### Hank Loop Options
 ```bash
-ralph [OPTIONS]
+hank [OPTIONS]
   -h, --help              Show help message
   -c, --calls NUM         Set max calls per hour (default: 100)
   -p, --prompt FILE       Set prompt file (default: PROMPT.md)
@@ -804,23 +804,23 @@ ralph [OPTIONS]
 
 ### Project Commands (Per Project)
 ```bash
-ralph-setup project-name     # Create new Ralph project
-ralph-enable                 # Enable Ralph in existing project (interactive)
-ralph-enable-ci              # Enable Ralph in existing project (non-interactive)
-ralph-import prd.md project  # Convert PRD/specs to Ralph project
-ralph --monitor              # Start with integrated monitoring
-ralph --status               # Check current loop status
-ralph --verbose              # Enable detailed progress updates
-ralph --timeout 30           # Set 30-minute execution timeout
-ralph --calls 50             # Limit to 50 API calls per hour
-ralph --reset-session        # Reset session state manually
-ralph --live                 # Enable live streaming output
-ralph-monitor                # Manual monitoring dashboard
+hank-setup project-name     # Create new Hank project
+hank-enable                 # Enable Hank in existing project (interactive)
+hank-enable-ci              # Enable Hank in existing project (non-interactive)
+hank-import prd.md project  # Convert PRD/specs to Hank project
+hank --monitor              # Start with integrated monitoring
+hank --status               # Check current loop status
+hank --verbose              # Enable detailed progress updates
+hank --timeout 30           # Set 30-minute execution timeout
+hank --calls 50             # Limit to 50 API calls per hour
+hank --reset-session        # Reset session state manually
+hank --live                 # Enable live streaming output
+hank-monitor                # Manual monitoring dashboard
 ```
 
 ### tmux Session Management
 ```bash
-tmux list-sessions        # View active Ralph sessions
+tmux list-sessions        # View active Hank sessions
 tmux attach -t <name>     # Reattach to detached session
 # Ctrl+B then D           # Detach from session (keeps running)
 ```
@@ -829,7 +829,7 @@ tmux attach -t <name>     # Reattach to detached session
 
 ## Development Roadmap
 
-Ralph is under active development with a clear path to v1.0.0. See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for the complete roadmap.
+Hank is under active development with a clear path to v1.0.0. See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for the complete roadmap.
 
 ### Current Status: v0.11.4
 
@@ -845,8 +845,8 @@ Ralph is under active development with a clear path to v1.0.0. See [IMPLEMENTATI
 - Installation system and project templates
 - Modern CLI commands with JSON output support
 - CI/CD pipeline with GitHub Actions
-- **Interactive `ralph-enable` wizard for existing projects**
-- **`.ralphrc` configuration file support**
+- **Interactive `hank-enable` wizard for existing projects**
+- **`.hankrc` configuration file support**
 - Session lifecycle management with auto-reset triggers
 - Session expiration with configurable timeout
 - Dedicated uninstall script
@@ -877,7 +877,7 @@ Ralph is under active development with a clear path to v1.0.0. See [IMPLEMENTATI
 See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) for detailed progress tracking.
 
 ### How to Contribute
-Ralph is seeking contributors! See [CONTRIBUTING.md](CONTRIBUTING.md) for the complete guide. Priority areas:
+Hank is seeking contributors! See [CONTRIBUTING.md](CONTRIBUTING.md) for the complete guide. Priority areas:
 1. **Test Implementation** - Help expand test coverage ([see plan](IMPLEMENTATION_PLAN.md))
 2. **Feature Development** - Log rotation, dry-run mode, metrics
 3. **Documentation** - Usage examples, tutorials, troubleshooting guides
@@ -885,8 +885,8 @@ Ralph is seeking contributors! See [CONTRIBUTING.md](CONTRIBUTING.md) for the co
 
 ---
 
-**Ready to let AI build your project?** Start with `./install.sh` and let Ralph take it from there!
+**Ready to let AI build your project?** Start with `./install.sh` and let Hank take it from there!
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=frankbria/ralph-claude-code&type=date&legend=top-left)](https://www.star-history.com/#frankbria/ralph-claude-code&type=date&legend=top-left)
+[![Star History Chart](https://api.star-history.com/svg?repos=frankbria/hank&type=date&legend=top-left)](https://www.star-history.com/#frankbria/hank&type=date&legend=top-left)

@@ -1,6 +1,6 @@
-# Ralph Build Instructions
+# Hank Build Instructions
 
-0a. Study .ralph/specs/_ with up to 500 parallel Sonnet subagents to learn the application specifications.
+0a. Study .hank/specs/_ with up to 500 parallel Sonnet subagents to learn the application specifications.
 0b. Study @IMPLEMENTATION_PLAN.md.
 0c. For reference, the application source code is in `src/_`.
 
@@ -20,12 +20,12 @@
 13. If you find inconsistencies in the specs/\* then use an Opus subagent with 'ultrathink' requested to update the specs.
 14. IMPORTANT: Keep @AGENTS.md operational only -- status updates and progress notes belong in IMPLEMENTATION_PLAN.md. A bloated AGENTS.md pollutes every future loop's context.
 
-## Status Reporting (CRITICAL - Ralph needs this!)
+## Status Reporting (CRITICAL - Hank needs this!)
 
 At the end of your response, ALWAYS include this status block:
 
 ```
----RALPH_STATUS---
+---HANK_STATUS---
 STATUS: IN_PROGRESS | COMPLETE | BLOCKED
 TASKS_COMPLETED_THIS_LOOP: <number>
 FILES_MODIFIED: <number>
@@ -33,7 +33,7 @@ TESTS_STATUS: PASSING | FAILING | NOT_RUN
 WORK_TYPE: IMPLEMENTATION | TESTING | DOCUMENTATION | REFACTORING
 EXIT_SIGNAL: false | true
 RECOMMENDATION: <one line summary of what to do next>
----END_RALPH_STATUS---
+---END_HANK_STATUS---
 ```
 
 Set EXIT_SIGNAL to true when ALL items in IMPLEMENTATION_PLAN.md are resolved, all tests pass, and all specs are implemented. Do NOT continue with busy work when EXIT_SIGNAL should be true. Do NOT run tests repeatedly without implementing new features.

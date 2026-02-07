@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Ralph Status Monitor - Live terminal dashboard for the Ralph loop
+# Hank Status Monitor - Live terminal dashboard for the Hank loop
 set -e
 
-STATUS_FILE=".ralph/status.json"
-LOG_FILE=".ralph/logs/ralph.log"
+STATUS_FILE=".hank/status.json"
+LOG_FILE=".hank/logs/hank.log"
 REFRESH_INTERVAL=2
 
 # Colors
@@ -45,7 +45,7 @@ display_status() {
     
     # Header
     echo -e "${WHITE}╔════════════════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${WHITE}║                           🤖 RALPH MONITOR                              ║${NC}"
+    echo -e "${WHITE}║                           🤖 HANK MONITOR                              ║${NC}"
     echo -e "${WHITE}║                        Live Status Dashboard                           ║${NC}"
     echo -e "${WHITE}╚════════════════════════════════════════════════════════════════════════╝${NC}"
     echo
@@ -68,14 +68,14 @@ display_status() {
         
     else
         echo -e "${RED}┌─ Status ────────────────────────────────────────────────────────────────┐${NC}"
-        echo -e "${RED}│${NC} Status file not found. Ralph may not be running."
+        echo -e "${RED}│${NC} Status file not found. Hank may not be running."
         echo -e "${RED}└─────────────────────────────────────────────────────────────────────────┘${NC}"
         echo
     fi
     
     # Claude Code Progress section
-    if [[ -f ".ralph/progress.json" ]]; then
-        local progress_data=$(cat ".ralph/progress.json" 2>/dev/null)
+    if [[ -f ".hank/progress.json" ]]; then
+        local progress_data=$(cat ".hank/progress.json" 2>/dev/null)
         local progress_status=$(echo "$progress_data" | jq -r '.status // "idle"' 2>/dev/null || echo "idle")
         
         if [[ "$progress_status" == "executing" ]]; then
@@ -113,7 +113,7 @@ display_status() {
 
 # Main monitor loop
 main() {
-    echo "Starting Ralph Monitor..."
+    echo "Starting Hank Monitor..."
     sleep 2
     
     while true; do

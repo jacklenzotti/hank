@@ -3,21 +3,21 @@
 
 load '../helpers/test_helper'
 
-# Source ralph functions (we need to extract these first)
+# Source hank functions (we need to extract these first)
 setup() {
     # Source helper functions
     source "$(dirname "$BATS_TEST_FILENAME")/../helpers/test_helper.bash"
 
-    # Set up environment with .ralph/ subfolder structure
-    export RALPH_DIR=".ralph"
+    # Set up environment with .hank/ subfolder structure
+    export HANK_DIR=".hank"
     export MAX_CALLS_PER_HOUR=100
-    export CALL_COUNT_FILE="$RALPH_DIR/.call_count"
-    export TIMESTAMP_FILE="$RALPH_DIR/.last_reset"
+    export CALL_COUNT_FILE="$HANK_DIR/.call_count"
+    export TIMESTAMP_FILE="$HANK_DIR/.last_reset"
 
     # Create temp test directory
-    export TEST_TEMP_DIR="$(mktemp -d /tmp/ralph-test.XXXXXX)"
+    export TEST_TEMP_DIR="$(mktemp -d /tmp/hank-test.XXXXXX)"
     cd "$TEST_TEMP_DIR"
-    mkdir -p "$RALPH_DIR"
+    mkdir -p "$HANK_DIR"
 
     # Initialize files
     echo "0" > "$CALL_COUNT_FILE"
@@ -30,7 +30,7 @@ teardown() {
     rm -rf "$TEST_TEMP_DIR"
 }
 
-# Helper function: can_make_call (extracted from ralph_loop.sh)
+# Helper function: can_make_call (extracted from hank_loop.sh)
 can_make_call() {
     local calls_made=0
     if [[ -f "$CALL_COUNT_FILE" ]]; then
@@ -44,7 +44,7 @@ can_make_call() {
     fi
 }
 
-# Helper function: increment_call_counter (extracted from ralph_loop.sh)
+# Helper function: increment_call_counter (extracted from hank_loop.sh)
 increment_call_counter() {
     local calls_made=0
     if [[ -f "$CALL_COUNT_FILE" ]]; then

@@ -1,6 +1,6 @@
 # Writing Effective Requirements
 
-Ralph works best when it understands what you want. This guide shows you how to write clear requirements in PROMPT.md, when to use specs/, and how fix_plan.md evolves during development.
+Hank works best when it understands what you want. This guide shows you how to write clear requirements in PROMPT.md, when to use specs/, and how fix_plan.md evolves during development.
 
 ## PROMPT.md: Good vs Bad Examples
 
@@ -21,10 +21,10 @@ Should be fast and work well.
 ### Good Example
 
 ```markdown
-# Ralph Development Instructions
+# Hank Development Instructions
 
 ## Context
-You are Ralph, building a REST API for a pet adoption shelter.
+You are Hank, building a REST API for a pet adoption shelter.
 The API manages animals, adopters, and adoption records.
 
 ## Technology Stack
@@ -63,7 +63,7 @@ The API manages animals, adopters, and adoption records.
 
 Tasks should be **not too big, not too small**.
 
-**Too big** (Ralph doesn't know where to start):
+**Too big** (Hank doesn't know where to start):
 ```markdown
 - [ ] Build the entire authentication system
 ```
@@ -100,7 +100,7 @@ Tasks should be **not too big, not too small**.
 - [ ] [Documentation]
 
 ## Discovered
-<!-- Ralph adds tasks it discovers here -->
+<!-- Hank adds tasks it discovers here -->
 ```
 
 ### How fix_plan.md Evolves
@@ -114,7 +114,7 @@ Tasks should be **not too big, not too small**.
 - [ ] Create CRUD endpoints for animals
 ```
 
-**After Loop 1** (Ralph updates):
+**After Loop 1** (Hank updates):
 ```markdown
 ## Priority 1: Database
 - [x] Set up database models for Animal, Adopter, Adoption
@@ -142,7 +142,7 @@ Tasks should be **not too big, not too small**.
 - [ ] Add pagination to GET /animals endpoint
 ```
 
-Ralph adds tasks it discovers and checks them off as it works. You can:
+Hank adds tasks it discovers and checks them off as it works. You can:
 - Reorder tasks by moving them to different priority sections
 - Delete tasks that are no longer relevant
 - Add new tasks anytime
@@ -156,7 +156,7 @@ Ralph adds tasks it discovers and checks them off as it works. You can:
 Add a matching algorithm that suggests animals to adopters.
 ```
 
-**This is too vague.** Create `.ralph/specs/matching-algorithm.md`:
+**This is too vague.** Create `.hank/specs/matching-algorithm.md`:
 ```markdown
 # Animal Matching Algorithm
 
@@ -195,7 +195,7 @@ Add a matching algorithm that suggests animals to adopters.
 
 When you want consistency across the project, document it:
 
-`.ralph/specs/stdlib/error-responses.md`:
+`.hank/specs/stdlib/error-responses.md`:
 ```markdown
 # Error Response Standard
 
@@ -266,7 +266,7 @@ from datetime import datetime
 Use JWT for authentication. Tokens should expire after 1 hour.
 ```
 
-Let Ralph figure out the implementation details.
+Let Hank figure out the implementation details.
 
 ### Mistake 3: Over-specifying tests
 
@@ -283,7 +283,7 @@ Let Ralph figure out the implementation details.
 - [ ] Write tests for animal creation (success and validation errors)
 ```
 
-Ralph knows how to write tests. Tell it what to test, not how.
+Hank knows how to write tests. Tell it what to test, not how.
 
 ### Mistake 4: Forgetting the "why"
 
@@ -297,19 +297,19 @@ Add a 100ms delay to all API responses.
 Add a 100ms delay to all API responses (required for rate limiting compliance with external payment API).
 ```
 
-When Ralph understands *why*, it makes better decisions.
+When Hank understands *why*, it makes better decisions.
 
-## Checklist: Before Running Ralph
+## Checklist: Before Running Hank
 
-Before `ralph --monitor`, verify:
+Before `hank --monitor`, verify:
 
-- [ ] **PROMPT.md has clear context** - Does Ralph know what it's building?
+- [ ] **PROMPT.md has clear context** - Does Hank know what it's building?
 - [ ] **Technology stack is specified** - Did you pick the frameworks?
 - [ ] **Key constraints are documented** - Auth approach? API conventions?
-- [ ] **fix_plan.md has specific tasks** - Can Ralph start on task 1 immediately?
+- [ ] **fix_plan.md has specific tasks** - Can Hank start on task 1 immediately?
 - [ ] **Complex features have specs/** - Is anything too vague for PROMPT.md?
 
-If you can answer "yes" to these, Ralph will do good work.
+If you can answer "yes" to these, Hank will do good work.
 
 ## Quick Reference
 
@@ -320,4 +320,4 @@ If you can answer "yes" to these, Ralph will do good work.
 | List specific implementation tasks | fix_plan.md |
 | Document complex feature requirements | specs/feature-name.md |
 | Establish coding conventions | specs/stdlib/convention-name.md |
-| Configure Ralph behavior | .ralphrc |
+| Configure Hank behavior | .hankrc |

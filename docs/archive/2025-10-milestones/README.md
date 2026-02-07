@@ -27,7 +27,7 @@ For current project status and planning, see:
 
 ## Historical Context
 
-These documents capture the state of the Ralph project in October 2025 when:
+These documents capture the state of the Hank project in October 2025 when:
 - 75 tests were passing (15 rate + 20 exit + 20 loop + 20 edge)
 - Response analyzer and circuit breaker were implemented
 - Test infrastructure was established

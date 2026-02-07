@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 # Unit tests for session continuity enhancements
-# TDD: Tests for session lifecycle management across Ralph loops
+# TDD: Tests for session lifecycle management across Hank loops
 
 load '../helpers/test_helper'
 load '../helpers/fixtures'
@@ -15,19 +15,19 @@ setup() {
     git config user.email "test@example.com"
     git config user.name "Test User"
 
-    # Set up environment with .ralph/ subfolder structure
-    export RALPH_DIR=".ralph"
-    export PROMPT_FILE="$RALPH_DIR/PROMPT.md"
-    export LOG_DIR="$RALPH_DIR/logs"
-    export DOCS_DIR="$RALPH_DIR/docs/generated"
-    export STATUS_FILE="$RALPH_DIR/status.json"
-    export EXIT_SIGNALS_FILE="$RALPH_DIR/.exit_signals"
-    export CALL_COUNT_FILE="$RALPH_DIR/.call_count"
-    export TIMESTAMP_FILE="$RALPH_DIR/.last_reset"
-    export CLAUDE_SESSION_FILE="$RALPH_DIR/.claude_session_id"
-    export RALPH_SESSION_FILE="$RALPH_DIR/.ralph_session"
-    export RALPH_SESSION_HISTORY_FILE="$RALPH_DIR/.ralph_session_history"
-    export RESPONSE_ANALYSIS_FILE="$RALPH_DIR/.response_analysis"
+    # Set up environment with .hank/ subfolder structure
+    export HANK_DIR=".hank"
+    export PROMPT_FILE="$HANK_DIR/PROMPT.md"
+    export LOG_DIR="$HANK_DIR/logs"
+    export DOCS_DIR="$HANK_DIR/docs/generated"
+    export STATUS_FILE="$HANK_DIR/status.json"
+    export EXIT_SIGNALS_FILE="$HANK_DIR/.exit_signals"
+    export CALL_COUNT_FILE="$HANK_DIR/.call_count"
+    export TIMESTAMP_FILE="$HANK_DIR/.last_reset"
+    export CLAUDE_SESSION_FILE="$HANK_DIR/.claude_session_id"
+    export HANK_SESSION_FILE="$HANK_DIR/.hank_session"
+    export HANK_SESSION_HISTORY_FILE="$HANK_DIR/.hank_session_history"
+    export RESPONSE_ANALYSIS_FILE="$HANK_DIR/.response_analysis"
     export CLAUDE_MIN_VERSION="2.0.76"
     export CLAUDE_CODE_CMD="claude"
     export CLAUDE_USE_CONTINUE="true"
@@ -37,9 +37,9 @@ setup() {
     echo "$(date +%Y%m%d%H)" > "$TIMESTAMP_FILE"
     echo '{"test_only_loops": [], "done_signals": [], "completion_indicators": []}' > "$EXIT_SIGNALS_FILE"
 
-    # Create sample project files in .ralph/ directory
-    create_sample_prompt "$RALPH_DIR/PROMPT.md"
-    create_sample_fix_plan "$RALPH_DIR/fix_plan.md" 10 3
+    # Create sample project files in .hank/ directory
+    create_sample_prompt "$HANK_DIR/PROMPT.md"
+    create_sample_fix_plan "$HANK_DIR/fix_plan.md" 10 3
 
     # Source library components
     source "${BATS_TEST_DIRNAME}/../../lib/date_utils.sh"
@@ -71,30 +71,30 @@ teardown() {
 }
 
 # =============================================================================
-# HELPER: Check if function exists in ralph_loop.sh
+# HELPER: Check if function exists in hank_loop.sh
 # =============================================================================
 
-function_exists_in_ralph() {
+function_exists_in_hank() {
     local func_name=$1
-    grep -qE "^${func_name}\s*\(\)|^function\s+${func_name}" "${BATS_TEST_DIRNAME}/../../ralph_loop.sh" 2>/dev/null
+    grep -qE "^${func_name}\s*\(\)|^function\s+${func_name}" "${BATS_TEST_DIRNAME}/../../hank_loop.sh" 2>/dev/null
 }
 
 # =============================================================================
 # SESSION RESET FUNCTION TESTS
 # =============================================================================
 
-@test "reset_session function exists in ralph_loop.sh" {
-    run function_exists_in_ralph "reset_session"
+@test "reset_session function exists in hank_loop.sh" {
+    run function_exists_in_hank "reset_session"
     [[ $status -eq 0 ]] || skip "reset_session function not yet implemented"
 }
 
-@test "get_session_id function exists in ralph_loop.sh" {
-    run function_exists_in_ralph "get_session_id"
+@test "get_session_id function exists in hank_loop.sh" {
+    run function_exists_in_hank "get_session_id"
     [[ $status -eq 0 ]] || skip "get_session_id function not yet implemented"
 }
 
-@test "log_session_transition function exists in ralph_loop.sh" {
-    run function_exists_in_ralph "log_session_transition"
+@test "log_session_transition function exists in hank_loop.sh" {
+    run function_exists_in_hank "log_session_transition"
     [[ $status -eq 0 ]] || skip "log_session_transition function not yet implemented"
 }
 
@@ -103,25 +103,25 @@ function_exists_in_ralph() {
 # =============================================================================
 
 @test "--reset-session flag is recognized in help" {
-    run bash "${BATS_TEST_DIRNAME}/../../ralph_loop.sh" --help
+    run bash "${BATS_TEST_DIRNAME}/../../hank_loop.sh" --help
 
     [[ "$output" == *"reset-session"* ]] || skip "--reset-session flag not yet implemented"
 }
 
 @test "--reset-session flag in argument parser" {
     # Check if the flag exists in the argument parsing section
-    run grep -E '\-\-reset-session' "${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+    run grep -E '\-\-reset-session' "${BATS_TEST_DIRNAME}/../../hank_loop.sh"
 
     [[ $status -eq 0 ]] || skip "--reset-session flag not yet implemented"
 }
 
 @test "--reset-session resets session file" {
     # Create a session file
-    echo '{"session_id": "session-to-reset", "timestamp": "2026-01-09T10:00:00Z"}' > "$RALPH_SESSION_FILE"
+    echo '{"session_id": "session-to-reset", "timestamp": "2026-01-09T10:00:00Z"}' > "$HANK_SESSION_FILE"
     echo 'session-to-reset' > "$CLAUDE_SESSION_FILE"
 
     # Run with --reset-session flag (should exit quickly)
-    run timeout 5 bash "${BATS_TEST_DIRNAME}/../../ralph_loop.sh" --reset-session 2>&1
+    run timeout 5 bash "${BATS_TEST_DIRNAME}/../../hank_loop.sh" --reset-session 2>&1
 
     # If flag not recognized, skip
     if [[ "$output" == *"Unknown option"* ]]; then
@@ -129,8 +129,8 @@ function_exists_in_ralph() {
     fi
 
     # Check that session was reset
-    if [[ -f "$RALPH_SESSION_FILE" ]]; then
-        local session=$(jq -r '.session_id // ""' "$RALPH_SESSION_FILE" 2>/dev/null || echo "")
+    if [[ -f "$HANK_SESSION_FILE" ]]; then
+        local session=$(jq -r '.session_id // ""' "$HANK_SESSION_FILE" 2>/dev/null || echo "")
         [[ -z "$session" || "$session" == "" || "$session" == "null" ]]
     fi
 }
@@ -141,14 +141,14 @@ function_exists_in_ralph() {
 
 @test "circuit breaker reset code includes session reset" {
     # Check if reset_circuit_breaker mentions reset_session
-    run grep -A10 'reset_circuit_breaker' "${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+    run grep -A10 'reset_circuit_breaker' "${BATS_TEST_DIRNAME}/../../hank_loop.sh"
 
     [[ "$output" == *"reset_session"* ]] || skip "Circuit breaker session integration not yet implemented"
 }
 
 @test "cleanup function includes session reset" {
     # Check if cleanup function includes reset_session
-    run grep -A5 'cleanup()' "${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+    run grep -A5 'cleanup()' "${BATS_TEST_DIRNAME}/../../hank_loop.sh"
 
     [[ "$output" == *"reset_session"* ]] || skip "Cleanup session reset not yet implemented"
 }
@@ -157,8 +157,8 @@ function_exists_in_ralph() {
 # SESSION HISTORY TESTS
 # =============================================================================
 
-@test "RALPH_SESSION_HISTORY_FILE constant defined" {
-    run grep 'RALPH_SESSION_HISTORY_FILE' "${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+@test "HANK_SESSION_HISTORY_FILE constant defined" {
+    run grep 'HANK_SESSION_HISTORY_FILE' "${BATS_TEST_DIRNAME}/../../hank_loop.sh"
 
     [[ $status -eq 0 ]] || skip "Session history file constant not yet defined"
 }
@@ -240,7 +240,7 @@ function_exists_in_ralph() {
 EOF
 
     run parse_json_response "$output_file"
-    local result_file="$RALPH_DIR/.json_parse_result"
+    local result_file="$HANK_DIR/.json_parse_result"
 
     [[ -f "$result_file" ]]
 
@@ -273,7 +273,7 @@ EOF
 
 @test "--continue flag is added to Claude CLI command" {
     # Check that --continue is used in build_claude_command
-    run grep -E '\-\-continue' "${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+    run grep -E '\-\-continue' "${BATS_TEST_DIRNAME}/../../hank_loop.sh"
 
     [[ $status -eq 0 ]]
     [[ "$output" == *"--continue"* ]]
@@ -281,7 +281,7 @@ EOF
 
 @test "CLAUDE_USE_CONTINUE configuration controls session continuity" {
     # Check that CLAUDE_USE_CONTINUE is defined and controls --continue
-    run grep 'CLAUDE_USE_CONTINUE' "${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+    run grep 'CLAUDE_USE_CONTINUE' "${BATS_TEST_DIRNAME}/../../hank_loop.sh"
 
     [[ $status -eq 0 ]]
 }
@@ -306,35 +306,35 @@ EOF
     [[ "$output" == "false" ]]
 }
 
-@test "CLAUDE_SESSION_EXPIRY_HOURS is defined in ralph_loop.sh" {
-    run grep 'CLAUDE_SESSION_EXPIRY_HOURS' "${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+@test "CLAUDE_SESSION_EXPIRY_HOURS is defined in hank_loop.sh" {
+    run grep 'CLAUDE_SESSION_EXPIRY_HOURS' "${BATS_TEST_DIRNAME}/../../hank_loop.sh"
 
     [[ $status -eq 0 ]] || skip "CLAUDE_SESSION_EXPIRY_HOURS not yet implemented"
 }
 
 @test "CLAUDE_SESSION_EXPIRY_HOURS defaults to 24" {
-    # Source ralph_loop.sh in a subshell to get the default
-    run bash -c "source '${BATS_TEST_DIRNAME}/../../ralph_loop.sh'; echo \$CLAUDE_SESSION_EXPIRY_HOURS"
+    # Source hank_loop.sh in a subshell to get the default
+    run bash -c "source '${BATS_TEST_DIRNAME}/../../hank_loop.sh'; echo \$CLAUDE_SESSION_EXPIRY_HOURS"
 
     # Should contain 24 as default
     [[ "$output" == *"24"* ]] || skip "CLAUDE_SESSION_EXPIRY_HOURS not yet implemented"
 }
 
 @test "--session-expiry flag is recognized in help" {
-    run bash "${BATS_TEST_DIRNAME}/../../ralph_loop.sh" --help
+    run bash "${BATS_TEST_DIRNAME}/../../hank_loop.sh" --help
 
     [[ "$output" == *"session-expiry"* ]] || skip "--session-expiry flag not yet implemented"
 }
 
 @test "--session-expiry flag accepts positive integer" {
     # Just check the flag is parsed (don't run full loop)
-    run grep -E '\-\-session-expiry' "${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+    run grep -E '\-\-session-expiry' "${BATS_TEST_DIRNAME}/../../hank_loop.sh"
 
     [[ $status -eq 0 ]] || skip "--session-expiry flag not yet implemented"
 }
 
 @test "--session-expiry rejects non-integer value" {
-    run timeout 5 bash "${BATS_TEST_DIRNAME}/../../ralph_loop.sh" --session-expiry abc 2>&1
+    run timeout 5 bash "${BATS_TEST_DIRNAME}/../../hank_loop.sh" --session-expiry abc 2>&1
 
     # Should fail with error about invalid value
     if [[ "$output" == *"Unknown option"* ]]; then
@@ -345,7 +345,7 @@ EOF
 }
 
 @test "--session-expiry rejects zero value" {
-    run timeout 5 bash "${BATS_TEST_DIRNAME}/../../ralph_loop.sh" --session-expiry 0 2>&1
+    run timeout 5 bash "${BATS_TEST_DIRNAME}/../../hank_loop.sh" --session-expiry 0 2>&1
 
     # Should fail with error about invalid value
     if [[ "$output" == *"Unknown option"* ]]; then
@@ -356,7 +356,7 @@ EOF
 }
 
 @test "--session-expiry rejects negative value" {
-    run timeout 5 bash "${BATS_TEST_DIRNAME}/../../ralph_loop.sh" --session-expiry -5 2>&1
+    run timeout 5 bash "${BATS_TEST_DIRNAME}/../../hank_loop.sh" --session-expiry -5 2>&1
 
     # Should fail with error about invalid value
     if [[ "$output" == *"Unknown option"* ]]; then
@@ -372,7 +372,7 @@ EOF
 
 @test "init_claude_session checks session expiration" {
     # Check that init_claude_session includes expiration logic
-    run grep -A30 'init_claude_session' "${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+    run grep -A30 'init_claude_session' "${BATS_TEST_DIRNAME}/../../hank_loop.sh"
 
     # Should reference expiration or age checking
     [[ "$output" == *"expir"* ]] || [[ "$output" == *"age"* ]] || [[ "$output" == *"stat"* ]] || skip "Session expiration not yet implemented in init_claude_session"
@@ -380,7 +380,7 @@ EOF
 
 @test "init_claude_session uses cross-platform stat command" {
     # Check for uname or Darwin/Linux detection in get_session_file_age_hours
-    run grep -A30 'get_session_file_age_hours' "${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+    run grep -A30 'get_session_file_age_hours' "${BATS_TEST_DIRNAME}/../../hank_loop.sh"
 
     # Should have cross-platform handling
     [[ "$output" == *"Darwin"* ]] || [[ "$output" == *"uname"* ]] || skip "Cross-platform stat not yet implemented"
@@ -388,14 +388,14 @@ EOF
 
 @test "get_session_file_age_hours returns correct age" {
     # Check if helper function exists
-    run grep 'get_session_file_age_hours' "${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+    run grep 'get_session_file_age_hours' "${BATS_TEST_DIRNAME}/../../hank_loop.sh"
 
     [[ $status -eq 0 ]] || skip "get_session_file_age_hours function not yet implemented"
 }
 
 @test "get_session_file_age_hours returns 0 for missing file" {
     # Source the script to get the function
-    source "${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+    source "${BATS_TEST_DIRNAME}/../../hank_loop.sh"
 
     # Test with non-existent file
     run get_session_file_age_hours "/nonexistent/path/file"
@@ -405,20 +405,20 @@ EOF
 
 @test "get_session_file_age_hours returns -1 for stat failure" {
     # Source the script to get the function
-    source "${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+    source "${BATS_TEST_DIRNAME}/../../hank_loop.sh"
 
     # Create a file then make it inaccessible (simulate stat failure via directory permissions)
     local test_file="$TEST_DIR/unreadable_file"
     echo "test" > "$test_file"
 
     # Verify the function code handles stat failure by checking the implementation
-    run grep -A35 'get_session_file_age_hours' "${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+    run grep -A35 'get_session_file_age_hours' "${BATS_TEST_DIRNAME}/../../hank_loop.sh"
     [[ "$output" == *'echo "-1"'* ]]
 }
 
 @test "init_claude_session removes expired session file" {
     # Source the script to get the function
-    source "${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+    source "${BATS_TEST_DIRNAME}/../../hank_loop.sh"
 
     # Create an old session file (simulate by setting low expiry)
     echo '{"session_id": "old-session", "timestamp": 1000000000}' > "$CLAUDE_SESSION_FILE"
@@ -435,28 +435,28 @@ EOF
 
 @test "init_claude_session logs expiration with age info" {
     # Source the script to get the function
-    source "${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+    source "${BATS_TEST_DIRNAME}/../../hank_loop.sh"
 
     # Verify code structure includes age logging
-    run grep -A40 'init_claude_session()' "${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+    run grep -A40 'init_claude_session()' "${BATS_TEST_DIRNAME}/../../hank_loop.sh"
     [[ "$output" == *'age_hours'* ]] && [[ "$output" == *'expired'* ]]
 }
 
 @test "init_claude_session logs session age when resuming" {
     # Source the script to get the function
-    source "${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+    source "${BATS_TEST_DIRNAME}/../../hank_loop.sh"
 
     # Verify code structure includes resume logging
-    run grep -A50 'init_claude_session()' "${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+    run grep -A50 'init_claude_session()' "${BATS_TEST_DIRNAME}/../../hank_loop.sh"
     [[ "$output" == *'Resuming'* ]] && [[ "$output" == *'old'* ]]
 }
 
 @test "init_claude_session handles stat failure gracefully" {
     # Source the script to get the function
-    source "${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+    source "${BATS_TEST_DIRNAME}/../../hank_loop.sh"
 
     # Verify code structure handles -1 return
-    run grep -A40 'init_claude_session()' "${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+    run grep -A40 'init_claude_session()' "${BATS_TEST_DIRNAME}/../../hank_loop.sh"
     [[ "$output" == *"-1"* ]] && [[ "$output" == *"WARN"* ]]
 }
 
@@ -536,16 +536,16 @@ EOF
     local completion_count=$(jq '.completion_indicators | length' "$EXIT_SIGNALS_FILE")
     [[ "$completion_count" == "3" ]]
 
-    # Source ralph_loop.sh to get reset_session function
+    # Source hank_loop.sh to get reset_session function
     # We need to mock some things to prevent full initialization
-    export RALPH_SESSION_HISTORY_FILE="$RALPH_DIR/.ralph_session_history"
-    export RESPONSE_ANALYSIS_FILE="$RALPH_DIR/.response_analysis"
+    export HANK_SESSION_HISTORY_FILE="$HANK_DIR/.hank_session_history"
+    export RESPONSE_ANALYSIS_FILE="$HANK_DIR/.response_analysis"
 
     # Create a mock response analysis file
     echo '{"analysis": {"exit_signal": true}}' > "$RESPONSE_ANALYSIS_FILE"
     [[ -f "$RESPONSE_ANALYSIS_FILE" ]]
 
-    # Define reset_session inline for testing (extracted from ralph_loop.sh)
+    # Define reset_session inline for testing (extracted from hank_loop.sh)
     reset_session() {
         local reason=${1:-"manual_reset"}
         local reset_timestamp
@@ -563,7 +563,7 @@ EOF
                 last_used: $last_used,
                 reset_at: $reset_at,
                 reset_reason: $reset_reason
-            }' > "$RALPH_SESSION_FILE"
+            }' > "$HANK_SESSION_FILE"
 
         rm -f "$CLAUDE_SESSION_FILE" 2>/dev/null
 
@@ -594,11 +594,11 @@ EOF
 }
 
 @test "reset_session prevents issue #91 scenario (stale completion indicators)" {
-    # Issue #91: Ralph exits immediately when stale completion_indicators exist
+    # Issue #91: Hank exits immediately when stale completion_indicators exist
 
     # Ensure variables are set before use (defensive against env differences)
-    export RESPONSE_ANALYSIS_FILE="$RALPH_DIR/.response_analysis"
-    export RALPH_SESSION_HISTORY_FILE="$RALPH_DIR/.ralph_session_history"
+    export RESPONSE_ANALYSIS_FILE="$HANK_DIR/.response_analysis"
+    export HANK_SESSION_HISTORY_FILE="$HANK_DIR/.hank_session_history"
 
     # Simulate the issue scenario:
     # 1. Previous session ended with completion_indicators: [1,2]
@@ -631,7 +631,7 @@ EOF
                 last_used: $last_used,
                 reset_at: $reset_at,
                 reset_reason: $reset_reason
-            }' > "$RALPH_SESSION_FILE"
+            }' > "$HANK_SESSION_FILE"
 
         rm -f "$CLAUDE_SESSION_FILE" 2>/dev/null
 

@@ -15,16 +15,16 @@ setup() {
     git config user.email "test@example.com"
     git config user.name "Test User"
 
-    # Set up environment with .ralph/ subfolder structure
-    export RALPH_DIR=".ralph"
-    export PROMPT_FILE="$RALPH_DIR/PROMPT.md"
-    export LOG_DIR="$RALPH_DIR/logs"
-    export DOCS_DIR="$RALPH_DIR/docs/generated"
-    export STATUS_FILE="$RALPH_DIR/status.json"
-    export EXIT_SIGNALS_FILE="$RALPH_DIR/.exit_signals"
-    export CALL_COUNT_FILE="$RALPH_DIR/.call_count"
-    export TIMESTAMP_FILE="$RALPH_DIR/.last_reset"
-    export CLAUDE_SESSION_FILE="$RALPH_DIR/.claude_session_id"
+    # Set up environment with .hank/ subfolder structure
+    export HANK_DIR=".hank"
+    export PROMPT_FILE="$HANK_DIR/PROMPT.md"
+    export LOG_DIR="$HANK_DIR/logs"
+    export DOCS_DIR="$HANK_DIR/docs/generated"
+    export STATUS_FILE="$HANK_DIR/status.json"
+    export EXIT_SIGNALS_FILE="$HANK_DIR/.exit_signals"
+    export CALL_COUNT_FILE="$HANK_DIR/.call_count"
+    export TIMESTAMP_FILE="$HANK_DIR/.last_reset"
+    export CLAUDE_SESSION_FILE="$HANK_DIR/.claude_session_id"
     export CLAUDE_MIN_VERSION="2.0.76"
     export CLAUDE_CODE_CMD="claude"
 
@@ -35,7 +35,7 @@ setup() {
 
     # Create sample project files
     create_sample_prompt
-    create_sample_fix_plan "$RALPH_DIR/fix_plan.md" 10 3
+    create_sample_fix_plan "$HANK_DIR/fix_plan.md" 10 3
 
     # Source library components
     source "${BATS_TEST_DIRNAME}/../../lib/date_utils.sh"
@@ -59,7 +59,7 @@ setup() {
 
     # ==========================================================================
     # INLINE FUNCTION DEFINITIONS FOR TESTING
-    # These are copies of the functions from ralph_loop.sh for isolated testing
+    # These are copies of the functions from hank_loop.sh for isolated testing
     # ==========================================================================
 
     # Check Claude CLI version for compatibility with modern flags
@@ -93,20 +93,20 @@ setup() {
 
         context="Loop #${loop_count}. "
 
-        if [[ -f "$RALPH_DIR/fix_plan.md" ]]; then
-            local incomplete_tasks=$(grep -c "^- \[ \]" "$RALPH_DIR/fix_plan.md" 2>/dev/null || echo "0")
+        if [[ -f "$HANK_DIR/fix_plan.md" ]]; then
+            local incomplete_tasks=$(grep -c "^- \[ \]" "$HANK_DIR/fix_plan.md" 2>/dev/null || echo "0")
             context+="Remaining tasks: ${incomplete_tasks}. "
         fi
 
-        if [[ -f "$RALPH_DIR/.circuit_breaker_state" ]]; then
-            local cb_state=$(jq -r '.state // "UNKNOWN"' "$RALPH_DIR/.circuit_breaker_state" 2>/dev/null)
+        if [[ -f "$HANK_DIR/.circuit_breaker_state" ]]; then
+            local cb_state=$(jq -r '.state // "UNKNOWN"' "$HANK_DIR/.circuit_breaker_state" 2>/dev/null)
             if [[ "$cb_state" != "CLOSED" && "$cb_state" != "null" && -n "$cb_state" ]]; then
                 context+="Circuit breaker: ${cb_state}. "
             fi
         fi
 
-        if [[ -f "$RALPH_DIR/.response_analysis" ]]; then
-            local prev_summary=$(jq -r '.analysis.work_summary // ""' "$RALPH_DIR/.response_analysis" 2>/dev/null | head -c 200)
+        if [[ -f "$HANK_DIR/.response_analysis" ]]; then
+            local prev_summary=$(jq -r '.analysis.work_summary // ""' "$HANK_DIR/.response_analysis" 2>/dev/null | head -c 200)
             if [[ -n "$prev_summary" && "$prev_summary" != "null" ]]; then
                 context+="Previous: ${prev_summary}"
             fi
@@ -156,15 +156,15 @@ teardown() {
 # =============================================================================
 
 @test "CLAUDE_OUTPUT_FORMAT defaults to json" {
-    # Verify by checking the default in ralph_loop.sh via grep
+    # Verify by checking the default in hank_loop.sh via grep
     # The default is set via ${CLAUDE_OUTPUT_FORMAT:-json} pattern
-    run grep 'CLAUDE_OUTPUT_FORMAT=' "${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+    run grep 'CLAUDE_OUTPUT_FORMAT=' "${BATS_TEST_DIRNAME}/../../hank_loop.sh"
     [[ "$output" == *"json"* ]]
 }
 
 @test "CLAUDE_ALLOWED_TOOLS has sensible defaults" {
-    # Verify by checking the default in ralph_loop.sh via grep
-    run grep 'CLAUDE_ALLOWED_TOOLS=' "${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+    # Verify by checking the default in hank_loop.sh via grep
+    run grep 'CLAUDE_ALLOWED_TOOLS=' "${BATS_TEST_DIRNAME}/../../hank_loop.sh"
 
     # Should include Write, Bash, Read at minimum
     [[ "$output" == *"Write"* ]]
@@ -173,7 +173,7 @@ teardown() {
 
 @test "CLAUDE_ALLOWED_TOOLS default includes Edit tool (issue #136)" {
     # Verify the default includes Edit for file editing
-    run grep 'CLAUDE_ALLOWED_TOOLS=.*:-' "${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+    run grep 'CLAUDE_ALLOWED_TOOLS=.*:-' "${BATS_TEST_DIRNAME}/../../hank_loop.sh"
 
     # The default should include Edit
     [[ "$output" == *"Edit"* ]]
@@ -181,7 +181,7 @@ teardown() {
 
 @test "CLAUDE_ALLOWED_TOOLS default includes test execution tools (issue #136)" {
     # Verify the default includes test execution capabilities
-    run grep 'CLAUDE_ALLOWED_TOOLS=.*:-' "${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+    run grep 'CLAUDE_ALLOWED_TOOLS=.*:-' "${BATS_TEST_DIRNAME}/../../hank_loop.sh"
 
     # Should include Bash(npm *) for npm test
     [[ "$output" == *'Bash(npm *)'* ]]
@@ -190,8 +190,8 @@ teardown() {
 }
 
 @test "CLAUDE_USE_CONTINUE defaults to true" {
-    # Verify by checking the default in ralph_loop.sh via grep
-    run grep 'CLAUDE_USE_CONTINUE=' "${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+    # Verify by checking the default in hank_loop.sh via grep
+    run grep 'CLAUDE_USE_CONTINUE=' "${BATS_TEST_DIRNAME}/../../hank_loop.sh"
     [[ "$output" == *"true"* ]]
 }
 
@@ -201,27 +201,27 @@ teardown() {
 
 @test "--output-format flag sets CLAUDE_OUTPUT_FORMAT" {
     # Simulate parsing
-    run bash -c "source ${BATS_TEST_DIRNAME}/../../ralph_loop.sh --output-format text --help 2>&1 || true"
+    run bash -c "source ${BATS_TEST_DIRNAME}/../../hank_loop.sh --output-format text --help 2>&1 || true"
 
     # After implementation, should accept this flag
     [[ "$output" != *"Unknown option"* ]] || skip "--output-format flag not yet implemented"
 }
 
 @test "--output-format rejects invalid values" {
-    run bash -c "source ${BATS_TEST_DIRNAME}/../../ralph_loop.sh --output-format invalid 2>&1"
+    run bash -c "source ${BATS_TEST_DIRNAME}/../../hank_loop.sh --output-format invalid 2>&1"
 
     # Should error on invalid format
     [[ $status -ne 0 ]] || [[ "$output" == *"invalid"* ]] || skip "--output-format validation not yet implemented"
 }
 
 @test "--allowed-tools flag sets CLAUDE_ALLOWED_TOOLS" {
-    run bash -c "source ${BATS_TEST_DIRNAME}/../../ralph_loop.sh --allowed-tools 'Write,Read' --help 2>&1 || true"
+    run bash -c "source ${BATS_TEST_DIRNAME}/../../hank_loop.sh --allowed-tools 'Write,Read' --help 2>&1 || true"
 
     [[ "$output" != *"Unknown option"* ]] || skip "--allowed-tools flag not yet implemented"
 }
 
 @test "--no-continue flag disables session continuity" {
-    run bash -c "source ${BATS_TEST_DIRNAME}/../../ralph_loop.sh --no-continue --help 2>&1 || true"
+    run bash -c "source ${BATS_TEST_DIRNAME}/../../hank_loop.sh --no-continue --help 2>&1 || true"
 
     [[ "$output" != *"Unknown option"* ]] || skip "--no-continue flag not yet implemented"
 }
@@ -237,8 +237,8 @@ teardown() {
 }
 
 @test "build_loop_context counts remaining tasks from fix_plan.md" {
-    # Create fix plan with 7 incomplete tasks in .ralph/ directory
-    cat > "$RALPH_DIR/fix_plan.md" << 'EOF'
+    # Create fix plan with 7 incomplete tasks in .hank/ directory
+    cat > "$HANK_DIR/fix_plan.md" << 'EOF'
 # Fix Plan
 - [x] Task 1 done
 - [x] Task 2 done
@@ -272,7 +272,7 @@ EOF
 
 @test "build_loop_context includes previous loop summary" {
     # Create previous response analysis
-    cat > "$RALPH_DIR/.response_analysis" << 'EOF'
+    cat > "$HANK_DIR/.response_analysis" << 'EOF'
 {
     "loop_number": 1,
     "analysis": {
@@ -290,7 +290,7 @@ EOF
 @test "build_loop_context limits output length to 500 chars" {
     # Create very long work summary
     local long_summary=$(printf 'x%.0s' {1..1000})
-    cat > "$RALPH_DIR/.response_analysis" << EOF
+    cat > "$HANK_DIR/.response_analysis" << EOF
 {
     "loop_number": 1,
     "analysis": {
@@ -306,7 +306,7 @@ EOF
 }
 
 @test "build_loop_context handles missing fix_plan.md gracefully" {
-    rm -f "$RALPH_DIR/fix_plan.md"
+    rm -f "$HANK_DIR/fix_plan.md"
 
     run build_loop_context 1
 
@@ -315,7 +315,7 @@ EOF
 }
 
 @test "build_loop_context handles missing .response_analysis gracefully" {
-    rm -f "$RALPH_DIR/.response_analysis"
+    rm -f "$HANK_DIR/.response_analysis"
 
     run build_loop_context 1
 
@@ -421,19 +421,19 @@ EOF
 # =============================================================================
 
 @test "show_help includes --output-format option" {
-    run bash "${BATS_TEST_DIRNAME}/../../ralph_loop.sh" --help
+    run bash "${BATS_TEST_DIRNAME}/../../hank_loop.sh" --help
 
     [[ "$output" == *"output-format"* ]] || skip "--output-format help not yet added"
 }
 
 @test "show_help includes --allowed-tools option" {
-    run bash "${BATS_TEST_DIRNAME}/../../ralph_loop.sh" --help
+    run bash "${BATS_TEST_DIRNAME}/../../hank_loop.sh" --help
 
     [[ "$output" == *"allowed-tools"* ]] || skip "--allowed-tools help not yet added"
 }
 
 @test "show_help includes --no-continue option" {
-    run bash "${BATS_TEST_DIRNAME}/../../ralph_loop.sh" --help
+    run bash "${BATS_TEST_DIRNAME}/../../hank_loop.sh" --help
 
     [[ "$output" == *"no-continue"* ]] || skip "--no-continue help not yet added"
 }
@@ -443,7 +443,7 @@ EOF
 # Tests for the fix of --prompt-file -> -p flag
 # =============================================================================
 
-# Global array for Claude command arguments (mirrors ralph_loop.sh)
+# Global array for Claude command arguments (mirrors hank_loop.sh)
 declare -a CLAUDE_CMD_ARGS=()
 
 # Define build_claude_command function for testing
@@ -643,25 +643,25 @@ EOF
 }
 
 # =============================================================================
-# .RALPHRC CONFIGURATION LOADING TESTS
+# .HANKRC CONFIGURATION LOADING TESTS
 # Tests for the environment variable precedence fix
 # =============================================================================
 
-@test "load_ralphrc uses env var capture pattern for precedence" {
+@test "load_hankrc uses env var capture pattern for precedence" {
     # Verify the implementation pattern: _env_* variables capture state before defaults
-    # This test validates the pattern is correctly implemented in ralph_loop.sh
+    # This test validates the pattern is correctly implemented in hank_loop.sh
 
-    run grep '_env_MAX_CALLS_PER_HOUR=' "${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+    run grep '_env_MAX_CALLS_PER_HOUR=' "${BATS_TEST_DIRNAME}/../../hank_loop.sh"
 
     # Should capture env var state BEFORE setting defaults
     [[ "$output" == *'${MAX_CALLS_PER_HOUR:-}'* ]]
 }
 
-@test "load_ralphrc restores only env var overrides, not defaults" {
-    # Verify that load_ralphrc uses _env_* pattern for restoration
-    # This ensures .ralphrc values are not overwritten by script defaults
+@test "load_hankrc restores only env var overrides, not defaults" {
+    # Verify that load_hankrc uses _env_* pattern for restoration
+    # This ensures .hankrc values are not overwritten by script defaults
 
-    run grep -A5 'Restore ONLY values' "${BATS_TEST_DIRNAME}/../../ralph_loop.sh"
+    run grep -A5 'Restore ONLY values' "${BATS_TEST_DIRNAME}/../../hank_loop.sh"
 
     # Should check _env_* variables (not saved_* which would always have values)
     [[ "$output" == *'_env_MAX_CALLS_PER_HOUR'* ]]

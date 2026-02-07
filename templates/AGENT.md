@@ -16,4 +16,4 @@ Run these after implementing to get immediate feedback:
 
 ## Operational Notes
 
-<!-- Ralph updates this section automatically with learnings -->
+<!-- Hank updates this section automatically with learnings -->

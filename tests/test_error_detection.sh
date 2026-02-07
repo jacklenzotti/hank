@@ -3,7 +3,7 @@
 # Validates that JSON field names don't trigger false positives
 #
 # TEST STRATEGY:
-# This suite validates the two-stage error detection implemented in ralph_loop.sh
+# This suite validates the two-stage error detection implemented in hank_loop.sh
 # and lib/response_analyzer.sh to prevent circuit breaker false positives from
 # JSON output and other structured data formats.
 #
@@ -24,7 +24,7 @@
 #   - Edge cases and pattern validation (test 10)
 #
 # Pattern Consistency:
-# Both ralph_loop.sh and lib/response_analyzer.sh use identical patterns to ensure
+# Both hank_loop.sh and lib/response_analyzer.sh use identical patterns to ensure
 # consistent behavior across the codebase. This test suite validates both implementations.
 
 set -e
@@ -51,7 +51,7 @@ run_test() {
 
     echo -e "\n${YELLOW}Running test: $test_name${NC}"
 
-    # Apply the error detection logic (same as in ralph_loop.sh)
+    # Apply the error detection logic (same as in hank_loop.sh)
     local has_errors="false"
     if grep -v '"[^"]*error[^"]*":' "$test_file" 2>/dev/null | \
        grep -qE '(^Error:|^ERROR:|^error:|\]: error|Link: error|Error occurred|failed with error|[Ee]xception|Fatal|FATAL)'; then

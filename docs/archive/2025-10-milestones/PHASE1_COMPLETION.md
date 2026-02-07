@@ -6,10 +6,10 @@
 
 ## Executive Summary
 
-Successfully implemented all Phase 1 critical recommendations from the expert panel review. Ralph now has:
+Successfully implemented all Phase 1 critical recommendations from the expert panel review. Hank now has:
 - **Response Analysis**: Intelligent parsing of Claude Code output to detect completion signals
 - **Circuit Breaker**: Automatic stagnation detection preventing infinite loops and token waste
-- **Structured Output**: Clear contract between Ralph and Claude for reliable exit detection
+- **Structured Output**: Clear contract between Hank and Claude for reliable exit detection
 
 **Test Coverage**: 20/20 integration tests passing (100%)
 
@@ -22,7 +22,7 @@ Successfully implemented all Phase 1 critical recommendations from the expert pa
 **Expert Recommendation**: Martin Fowler (Architecture)
 
 **Features Implemented**:
-- ✅ Parse structured RALPH_STATUS output (JSON-like format)
+- ✅ Parse structured HANK_STATUS output (JSON-like format)
 - ✅ Detect natural language completion keywords
 - ✅ Identify test-only loops (no implementation work)
 - ✅ Track file changes via git integration
@@ -78,7 +78,7 @@ OPEN (Halted)
 - Output decline threshold: 70%
 
 **User Experience**:
-When circuit opens, Ralph displays:
+When circuit opens, Hank displays:
 - Current circuit state and reason
 - Loops since last progress
 - Possible causes
@@ -93,7 +93,7 @@ When circuit opens, Ralph displays:
 
 **Contract Format**:
 ```
----RALPH_STATUS---
+---HANK_STATUS---
 STATUS: IN_PROGRESS | COMPLETE | BLOCKED
 TASKS_COMPLETED_THIS_LOOP: <number>
 FILES_MODIFIED: <number>
@@ -101,7 +101,7 @@ TESTS_STATUS: PASSING | FAILING | NOT_RUN
 WORK_TYPE: IMPLEMENTATION | TESTING | DOCUMENTATION | REFACTORING
 EXIT_SIGNAL: false | true
 RECOMMENDATION: <one line summary>
----END_RALPH_STATUS---
+---END_HANK_STATUS---
 ```
 
 **Clear Exit Criteria**:
@@ -119,8 +119,8 @@ Claude sets `EXIT_SIGNAL: true` only when ALL conditions met:
 
 ---
 
-### 4. Ralph Loop Integration ✅
-**File**: `ralph_loop.sh` (updated)
+### 4. Hank Loop Integration ✅
+**File**: `hank_loop.sh` (updated)
 **Lines Changed**: +93 insertions
 
 **Integration Points**:
@@ -157,7 +157,7 @@ Next Loop
 **Test Coverage** (20 tests, all passing):
 
 **Response Analysis Tests** (Tests 1-5):
-1. ✅ Detects structured RALPH_STATUS output
+1. ✅ Detects structured HANK_STATUS output
 2. ✅ Detects natural language completion signals
 3. ✅ Identifies test-only loops
 4. ✅ Detects file modifications via git
@@ -228,7 +228,7 @@ Next Loop
 - `tests/integration/test_loop_execution.bats` - 464 lines
 
 **Modified Files** (2):
-- `ralph_loop.sh` - +93 lines (integration)
+- `hank_loop.sh` - +93 lines (integration)
 - `templates/PROMPT.md` - +79 lines (structured output contract)
 
 **Documentation** (2):
@@ -280,11 +280,11 @@ All Phase 1 critical recommendations fully addressed.
 
 1. **Metrics & Observability** (Kelsey Hightower)
    - Per-loop metrics (tokens, duration, progress)
-   - Enhanced ralph-monitor dashboard
+   - Enhanced hank-monitor dashboard
    - Efficiency trend tracking
 
 2. **Health Checks** (Michael Nygard)
-   - `ralph --health` command
+   - `hank --health` command
    - JSON status endpoint
    - CI/CD integration
 
@@ -295,7 +295,7 @@ All Phase 1 critical recommendations fully addressed.
 
 ## Conclusion
 
-Phase 1 implementation is **complete and validated**. Ralph now has:
+Phase 1 implementation is **complete and validated**. Hank now has:
 - Intelligent exit detection with multi-signal analysis
 - Automatic stagnation prevention via circuit breaker
 - Clear communication contract with Claude Code

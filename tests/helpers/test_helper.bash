@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Test Helper Utilities for Ralph Test Suite
+# Test Helper Utilities for Hank Test Suite
 
 # Helper: Fail with message (for use in assertions)
 fail() {
@@ -41,7 +41,7 @@ assert_output() {
 }
 
 # Test temporary directory management
-export BATS_TEST_TMPDIR="${BATS_TEST_TMPDIR:-/tmp/bats-ralph-$$}"
+export BATS_TEST_TMPDIR="${BATS_TEST_TMPDIR:-/tmp/bats-hank-$$}"
 
 # Setup function - runs before each test
 setup() {
@@ -49,20 +49,20 @@ setup() {
     export TEST_TEMP_DIR="$(mktemp -d "${BATS_TEST_TMPDIR}/test.XXXXXX")"
     cd "$TEST_TEMP_DIR"
 
-    # Set up test environment variables with .ralph/ subfolder structure
-    export RALPH_DIR=".ralph"
-    export PROMPT_FILE="$RALPH_DIR/PROMPT.md"
-    export LOG_DIR="$RALPH_DIR/logs"
-    export DOCS_DIR="$RALPH_DIR/docs/generated"
-    export STATUS_FILE="$RALPH_DIR/status.json"
-    export PROGRESS_FILE="$RALPH_DIR/progress.json"
-    export CALL_COUNT_FILE="$RALPH_DIR/.call_count"
-    export TIMESTAMP_FILE="$RALPH_DIR/.last_reset"
-    export EXIT_SIGNALS_FILE="$RALPH_DIR/.exit_signals"
-    export RESPONSE_ANALYSIS_FILE="$RALPH_DIR/.response_analysis"
+    # Set up test environment variables with .hank/ subfolder structure
+    export HANK_DIR=".hank"
+    export PROMPT_FILE="$HANK_DIR/PROMPT.md"
+    export LOG_DIR="$HANK_DIR/logs"
+    export DOCS_DIR="$HANK_DIR/docs/generated"
+    export STATUS_FILE="$HANK_DIR/status.json"
+    export PROGRESS_FILE="$HANK_DIR/progress.json"
+    export CALL_COUNT_FILE="$HANK_DIR/.call_count"
+    export TIMESTAMP_FILE="$HANK_DIR/.last_reset"
+    export EXIT_SIGNALS_FILE="$HANK_DIR/.exit_signals"
+    export RESPONSE_ANALYSIS_FILE="$HANK_DIR/.response_analysis"
 
     # Create necessary directories
-    mkdir -p "$LOG_DIR" "$DOCS_DIR" "$RALPH_DIR"
+    mkdir -p "$LOG_DIR" "$DOCS_DIR" "$HANK_DIR"
 
     # Initialize files
     echo "0" > "$CALL_COUNT_FILE"
@@ -85,10 +85,10 @@ strip_colors() {
 
 # Helper: Create a mock PROMPT.md file
 create_mock_prompt() {
-    mkdir -p "$RALPH_DIR"
+    mkdir -p "$HANK_DIR"
     cat > "$PROMPT_FILE" << 'EOF'
 # Test Prompt
-This is a test prompt for Ralph.
+This is a test prompt for Hank.
 
 ## Task
 Test the system.
@@ -99,9 +99,9 @@ EOF
 create_mock_fix_plan() {
     local total=${1:-5}
     local completed=${2:-0}
-    local fix_plan_file="$RALPH_DIR/fix_plan.md"
+    local fix_plan_file="$HANK_DIR/fix_plan.md"
 
-    mkdir -p "$RALPH_DIR"
+    mkdir -p "$HANK_DIR"
     cat > "$fix_plan_file" << EOF
 # Fix Plan
 
@@ -219,8 +219,8 @@ restore_date() {
     unset -f date
 }
 
-# Helper: Source ralph functions without executing main
-source_ralph_functions() {
+# Helper: Source hank functions without executing main
+source_hank_functions() {
     # Source the script but prevent main execution
     # We'll extract functions into a separate file for testing
     :

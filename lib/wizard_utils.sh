@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# wizard_utils.sh - Interactive prompt utilities for Ralph enable wizard
+# wizard_utils.sh - Interactive prompt utilities for Hank enable wizard
 # Provides consistent, user-friendly prompts for configuration
 
 # Colors (exported for subshells)

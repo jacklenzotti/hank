@@ -1,8 +1,8 @@
-# Contributing to Ralph for Claude Code
+# Contributing to Hank for Claude Code
 
-Thank you for your interest in contributing to Ralph! This guide will help you get started and ensure your contributions follow our established patterns and quality standards.
+Thank you for your interest in contributing to Hank! This guide will help you get started and ensure your contributions follow our established patterns and quality standards.
 
-**Every contribution matters** - from fixing typos to implementing major features. We appreciate your help in making Ralph better!
+**Every contribution matters** - from fixing typos to implementing major features. We appreciate your help in making Hank better!
 
 ## Table of Contents
 
@@ -33,8 +33,8 @@ Before contributing, ensure you have the following installed:
 
 ```bash
 # Fork the repository on GitHub first, then clone your fork
-git clone https://github.com/YOUR_USERNAME/ralph-claude-code.git
-cd ralph-claude-code
+git clone https://github.com/YOUR_USERNAME/hank.git
+cd hank
 ```
 
 ### Install Dependencies
@@ -46,7 +46,7 @@ npm install
 # Verify BATS is available
 ./node_modules/.bin/bats --version
 
-# Optional: Install Ralph globally for testing
+# Optional: Install Hank globally for testing
 ./install.sh
 ```
 
@@ -63,11 +63,11 @@ npm test
 ### Project Structure
 
 ```
-ralph-claude-code/
-├── ralph_loop.sh        # Main loop script
-├── ralph_monitor.sh     # Live monitoring dashboard
+hank/
+├── hank_loop.sh        # Main loop script
+├── hank_monitor.sh     # Live monitoring dashboard
 ├── setup.sh             # Project initialization
-├── ralph_import.sh      # PRD import tool
+├── hank_import.sh      # PRD import tool
 ├── install.sh           # Global installation script
 ├── lib/                 # Modular library components
 │   ├── circuit_breaker.sh
@@ -179,7 +179,7 @@ test(cli): add 27 comprehensive CLI parsing tests
 
 ### Bash Best Practices
 
-Ralph follows consistent bash conventions across all scripts:
+Hank follows consistent bash conventions across all scripts:
 
 **File Structure:**
 
@@ -347,7 +347,7 @@ setup() {
     source "$(dirname "$BATS_TEST_FILENAME")/../helpers/test_helper.bash"
 
     # Create isolated test environment
-    export TEST_TEMP_DIR="$(mktemp -d /tmp/ralph-test.XXXXXX)"
+    export TEST_TEMP_DIR="$(mktemp -d /tmp/hank-test.XXXXXX)"
     cd "$TEST_TEMP_DIR"
 
     # Initialize test state
@@ -572,7 +572,7 @@ Before marking any feature complete:
 2. **Feature Development**
    - Log rotation functionality
    - Dry-run mode
-   - Config file support (.ralphrc)
+   - Config file support (.hankrc)
    - Metrics tracking
    - Desktop notifications
    - Backup/rollback system
@@ -583,7 +583,7 @@ Before marking any feature complete:
    - Video walkthroughs
 
 4. **Real-World Testing**
-   - Use Ralph on your projects
+   - Use Hank on your projects
    - Report bugs and edge cases
    - Share your experience
 
@@ -624,8 +624,8 @@ Before marking any feature complete:
 - [CLAUDE.md](CLAUDE.md) - Technical specifications
 - [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) - Development roadmap
 - [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) - Progress tracking
-- [GitHub Issues](https://github.com/frankbria/ralph-claude-code/issues) - Bug reports and feature requests
+- [GitHub Issues](https://github.com/frankbria/hank/issues) - Bug reports and feature requests
 
 ---
 
-**Thank you for contributing to Ralph!** Your efforts help make autonomous AI development more accessible to everyone.
+**Thank you for contributing to Hank!** Your efforts help make autonomous AI development more accessible to everyone.

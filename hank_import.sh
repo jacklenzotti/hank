@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Ralph Import - Convert PRDs to Ralph format using Claude Code
+# Hank Import - Convert PRDs to Hank format using Claude Code
 # Version: 0.9.8 - Modern CLI support with JSON output parsing
 set -e
 
@@ -15,8 +15,8 @@ declare -a CLAUDE_ALLOWED_TOOLS=('Read' 'Write' 'Bash(mkdir:*)' 'Bash(cp:*)')
 CLAUDE_MIN_VERSION="2.0.76"  # Minimum version for modern CLI features
 
 # Temporary file names
-CONVERSION_OUTPUT_FILE=".ralph_conversion_output.json"
-CONVERSION_PROMPT_FILE=".ralph_conversion_prompt.md"
+CONVERSION_OUTPUT_FILE=".hank_conversion_output.json"
+CONVERSION_PROMPT_FILE=".hank_conversion_prompt.md"
 
 # Global parsed conversion result variables
 # Set by parse_conversion_response() when parsing JSON output from Claude CLI
@@ -235,13 +235,13 @@ check_claude_version() {
 
 show_help() {
     cat << HELPEOF
-Ralph Import - Convert PRDs to Ralph Format
+Hank Import - Convert PRDs to Hank Format
 
 Usage: $0 <source-file> [project-name]
 
 Arguments:
     source-file     Path to your PRD/specification file (any format)
-    project-name    Name for the new Ralph project (optional, defaults to filename)
+    project-name    Name for the new Hank project (optional, defaults to filename)
 
 Examples:
     $0 my-app-prd.md
@@ -258,19 +258,19 @@ Supported formats:
     - Any text-based format
 
 The command will:
-1. Create a new Ralph project
+1. Create a new Hank project
 2. Use Claude Code to intelligently convert your PRD into:
-   - .ralph/PROMPT.md (Ralph instructions)
-   - .ralph/fix_plan.md (prioritized tasks)
-   - .ralph/specs/ (technical specifications)
+   - .hank/PROMPT.md (Hank instructions)
+   - .hank/fix_plan.md (prioritized tasks)
+   - .hank/specs/ (technical specifications)
 
 HELPEOF
 }
 
 # Check dependencies
 check_dependencies() {
-    if ! command -v ralph-setup &> /dev/null; then
-        log "ERROR" "Ralph not installed. Run ./install.sh first"
+    if ! command -v hank-setup &> /dev/null; then
+        log "ERROR" "Hank not installed. Run ./install.sh first"
         exit 1
     fi
 
@@ -290,7 +290,7 @@ convert_prd() {
     local use_modern_cli=true
     local cli_exit_code=0
 
-    log "INFO" "Converting PRD to Ralph format using Claude Code..."
+    log "INFO" "Converting PRD to Hank format using Claude Code..."
 
     # Check for modern CLI support
     if ! check_claude_version 2>/dev/null; then
@@ -302,9 +302,9 @@ convert_prd() {
 
     # Create conversion prompt
     cat > "$CONVERSION_PROMPT_FILE" << 'PROMPTEOF'
-# PRD to Ralph Conversion Task
+# PRD to Hank Conversion Task
 
-You are tasked with converting a Product Requirements Document (PRD) or specification into Ralph for Claude Code format.
+You are tasked with converting a Product Requirements Document (PRD) or specification into Hank for Claude Code format.
 
 ## Input Analysis
 Analyze the provided specification file and extract:
@@ -316,15 +316,15 @@ Analyze the provided specification file and extract:
 
 ## Required Outputs
 
-Create these files in the .ralph/ subdirectory:
+Create these files in the .hank/ subdirectory:
 
-### 1. .ralph/PROMPT.md
-Transform the PRD into Ralph development instructions:
+### 1. .hank/PROMPT.md
+Transform the PRD into Hank development instructions:
 ```markdown
-# Ralph Development Instructions
+# Hank Development Instructions
 
 ## Context
-You are Ralph, an autonomous AI development agent working on a [PROJECT NAME] project.
+You are Hank, an autonomous AI development agent working on a [PROJECT NAME] project.
 
 ## Current Objectives
 [Extract and prioritize 4-6 main objectives from the PRD]
@@ -357,10 +357,10 @@ You are Ralph, an autonomous AI development agent working on a [PROJECT NAME] pr
 Follow fix_plan.md and choose the most important item to implement next.
 ```
 
-### 2. .ralph/fix_plan.md
+### 2. .hank/fix_plan.md
 Convert requirements into a prioritized task list:
 ```markdown
-# Ralph Fix Plan
+# Hank Fix Plan
 
 ## High Priority
 [Extract and convert critical features into actionable tasks]
@@ -378,7 +378,7 @@ Convert requirements into a prioritized task list:
 [Any important context from the original PRD]
 ```
 
-### 3. .ralph/specs/requirements.md
+### 3. .hank/specs/requirements.md
 Create detailed technical specifications:
 ```markdown
 # Technical Specifications
@@ -511,7 +511,7 @@ PROMPTEOF
     # Use PARSED_FILES_CREATED from JSON if available, otherwise check filesystem
     local missing_files=()
     local created_files=()
-    local expected_files=(".ralph/PROMPT.md" ".ralph/fix_plan.md" ".ralph/specs/requirements.md")
+    local expected_files=(".hank/PROMPT.md" ".hank/fix_plan.md" ".hank/specs/requirements.md")
 
     # If JSON provided files_created, use that to inform verification
     if [[ "$json_parsed" == "true" && -n "$PARSED_FILES_CREATED" && "$PARSED_FILES_CREATED" != "[]" ]]; then
@@ -595,8 +595,8 @@ main() {
     check_dependencies
     
     # Create project directory
-    log "INFO" "Creating Ralph project: $project_name"
-    ralph-setup "$project_name"
+    log "INFO" "Creating Hank project: $project_name"
+    hank-setup "$project_name"
     cd "$project_name"
 
     # Copy source file to project (uses basename since we cd'd into project)
@@ -615,11 +615,11 @@ main() {
     echo ""
     echo "Next steps:"
     echo "  1. Review and edit the generated files:"
-    echo "     - .ralph/PROMPT.md (Ralph instructions)"
-    echo "     - .ralph/fix_plan.md (task priorities)"
-    echo "     - .ralph/specs/requirements.md (technical specs)"
+    echo "     - .hank/PROMPT.md (Hank instructions)"
+    echo "     - .hank/fix_plan.md (task priorities)"
+    echo "     - .hank/specs/requirements.md (technical specs)"
     echo "  2. Start autonomous development:"
-    echo "     ralph --monitor"
+    echo "     hank --monitor"
     echo ""
     echo "Project created in: $(pwd)"
 }

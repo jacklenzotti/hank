@@ -1,8 +1,8 @@
-# Ralph Specification Workshop Guide
+# Hank Specification Workshop Guide
 
 **Based on**: Janet Gregory's "Three Amigos" collaborative testing approach
-**Purpose**: Facilitate productive specification conversations for new Ralph features
-**Audience**: Developers, Testers, Product Owners working on Ralph enhancements
+**Purpose**: Facilitate productive specification conversations for new Hank features
+**Audience**: Developers, Testers, Product Owners working on Hank enhancements
 
 ---
 
@@ -38,7 +38,7 @@ A specification workshop brings together three perspectives ("Three Amigos") to 
 **So that** [benefit]
 
 **Example**:
-> As a Ralph user
+> As a Hank user
 > I want circuit breaker auto-recovery
 > So that temporary issues don't require manual intervention
 
@@ -209,7 +209,7 @@ How will we verify this works?
 - [x] Test recovery with real file changes via git
 
 **Manual Tests**:
-- [ ] Run ralph-monitor during recovery and observe state changes
+- [ ] Run hank-monitor during recovery and observe state changes
 - [ ] Verify .circuit_breaker_history contains transition records
 
 ---
@@ -281,16 +281,16 @@ What needs to happen next?
 
 ### 1. User Story
 
-**As a** Ralph user
+**As a** Hank user
 **I want** automatic retries on temporary API errors
 **So that** transient issues don't stop my development workflow
 
 ### 2. Acceptance Criteria
 
-- [x] Ralph detects "rate_limit_error" in Claude output
-- [x] Ralph waits appropriate time before retry (5 minutes)
-- [x] Ralph limits retries to 3 attempts
-- [x] Ralph falls back to user prompt on persistent failure
+- [x] Hank detects "rate_limit_error" in Claude output
+- [x] Hank waits appropriate time before retry (5 minutes)
+- [x] Hank limits retries to 3 attempts
+- [x] Hank falls back to user prompt on persistent failure
 - [x] Retry attempts are logged clearly
 
 ### 3. Questions from Tester
@@ -322,29 +322,29 @@ What needs to happen next?
 **Scenario 1: Successful Retry**
 
 **Given**:
-- Ralph executes Claude Code at loop #5
+- Hank executes Claude Code at loop #5
 - Claude returns "rate_limit_error: please retry"
 - Retry count is 0
 
-**When**: Ralph detects the rate limit error
+**When**: Hank detects the rate limit error
 
 **Then**:
-- Ralph logs "Rate limit detected, attempt 1/3. Waiting 5 minutes..."
-- Ralph sleeps for 300 seconds
-- Ralph retries Claude Code execution
+- Hank logs "Rate limit detected, attempt 1/3. Waiting 5 minutes..."
+- Hank sleeps for 300 seconds
+- Hank retries Claude Code execution
 - If successful: continues normally, resets retry count to 0
 
 **Scenario 2: Persistent Failure**
 
 **Given**:
-- Ralph has retried 3 times already
+- Hank has retried 3 times already
 - Each retry resulted in "rate_limit_error"
 
 **When**: 4th execution also returns rate limit error
 
 **Then**:
-- Ralph logs "Retry limit exceeded (3 attempts)"
-- Ralph prompts user: "Continue waiting? (y/n)"
+- Hank logs "Retry limit exceeded (3 attempts)"
+- Hank prompts user: "Continue waiting? (y/n)"
 - User decision determines next action (exit or continue)
 
 ### 6. Edge Cases
@@ -368,7 +368,7 @@ What needs to happen next?
 
 ### 8. Definition of Done
 
-- [x] Code implemented in ralph_loop.sh
+- [x] Code implemented in hank_loop.sh
 - [x] Unit tests added to tests/unit/
 - [x] Integration tests added to tests/integration/
 - [x] Documentation updated in README.md
@@ -450,4 +450,4 @@ What needs to happen next?
 
 **Last Updated**: 2025-10-01
 **Status**: Phase 2 Complete
-**Next**: Use this template for all new Ralph features
+**Next**: Use this template for all new Hank features

@@ -52,7 +52,7 @@
 - [x] #28 - Update CLI commands with modern options
 - [x] #29 - Enhance response parsing for JSON output
 - [x] #30 - Add session management for continuity
-- [x] #31 - Update ralph-import with CLI enhancements
+- [x] #31 - Update hank-import with CLI enhancements
 - [x] #48 - Shell escaping security fix
 - [x] #50 - Input validation for --allowed-tools
 - [x] #10 - CLI parsing tests (27 tests)
@@ -80,7 +80,7 @@
 - [ ] #37 - Update installation for SDK support (P2)
 - [ ] #18 - Implement log rotation feature (P2)
 - [ ] #19 - Implement dry-run mode feature (P2)
-- [ ] #20 - Implement config file support (.ralphrc) (P2)
+- [ ] #20 - Implement config file support (.hankrc) (P2)
 - [ ] #38 - Create CLI and SDK documentation (P3)
 - [ ] #21 - Implement metrics and analytics (P3)
 - [ ] #22 - Implement notification system (P3)
@@ -170,7 +170,7 @@
 
 | Issue | Title |
 |-------|-------|
-| #1 | Cannot find file ~/.ralph/lib/response_analyzer.sh |
+| #1 | Cannot find file ~/.hank/lib/response_analyzer.sh |
 | #2 | is_error: false triggers "error" circuit breaker incorrectly |
 | #5 | Bug: date: illegal option -- d on macOS |
 | #7 | Review codebase for updated Anthropic CLI |
@@ -181,8 +181,8 @@
 | #28 | Phase 1.1: Update CLI commands with modern options |
 | #29 | Phase 1.2: Enhance response parsing for JSON output |
 | #30 | Phase 1.3: Add session management for continuity |
-| #31 | Phase 1.4: Update ralph-import with CLI enhancements |
-| #42 | Windows: Git Bash windows spawn when running Ralph loop |
+| #31 | Phase 1.4: Update hank-import with CLI enhancements |
+| #42 | Windows: Git Bash windows spawn when running Hank loop |
 | #48 | MAJOR-01: Enhance shell escaping to prevent command injection |
 | #50 | MAJOR-02: Add input validation for --allowed-tools flag |
 | #55 | --prompt-file flag does not exist in Claude Code CLI |
@@ -207,7 +207,7 @@
 | #37 | 3.2 | Update installation for SDK support |
 | #18 | 3.4 | Implement log rotation feature |
 | #19 | 3.5 | Implement dry-run mode feature |
-| #20 | 3.6 | Implement config file support (.ralphrc) |
+| #20 | 3.6 | Implement config file support (.hankrc) |
 | #14 | 4.4 | Implement tmux integration tests |
 | #15 | 4.5 | Implement monitor dashboard tests |
 | #16 | 4.6 | Implement status update tests |

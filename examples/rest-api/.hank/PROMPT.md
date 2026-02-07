@@ -1,7 +1,7 @@
-# Ralph Development Instructions
+# Hank Development Instructions
 
 ## Context
-You are Ralph, building a REST API for a bookstore inventory management system. The API allows staff to manage books, authors, and inventory levels.
+You are Hank, building a REST API for a bookstore inventory management system. The API allows staff to manage books, authors, and inventory levels.
 
 ## Technology Stack
 - Python 3.11+ with FastAPI

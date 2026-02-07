@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 
-# enable_core.sh - Shared logic for ralph enable commands
+# enable_core.sh - Shared logic for hank enable commands
 # Provides idempotency checks, safe file creation, and project detection
 #
 # Used by:
-#   - ralph_enable.sh (interactive wizard)
-#   - ralph_enable_ci.sh (non-interactive CI version)
+#   - hank_enable.sh (interactive wizard)
+#   - hank_enable_ci.sh (non-interactive CI version)
 
 # Exit codes - specific codes for different failure types
 export ENABLE_SUCCESS=0           # Successful completion
 export ENABLE_ERROR=1             # General error
-export ENABLE_ALREADY_ENABLED=2   # Ralph already enabled (use --force)
+export ENABLE_ALREADY_ENABLED=2   # Hank already enabled (use --force)
 export ENABLE_INVALID_ARGS=3      # Invalid command line arguments
 export ENABLE_FILE_NOT_FOUND=4    # Required file not found (e.g., PRD file)
 export ENABLE_DEPENDENCY_MISSING=5 # Required dependency missing (e.g., jq for --json)
@@ -60,34 +60,34 @@ enable_log() {
 # IDEMPOTENCY CHECKS
 # =============================================================================
 
-# check_existing_ralph - Check if .ralph directory exists and its state
+# check_existing_hank - Check if .hank directory exists and its state
 #
 # Returns:
-#   0 - No .ralph directory, safe to proceed
-#   1 - .ralph exists but incomplete (partial setup)
-#   2 - .ralph exists and fully initialized
+#   0 - No .hank directory, safe to proceed
+#   1 - .hank exists but incomplete (partial setup)
+#   2 - .hank exists and fully initialized
 #
 # Outputs:
-#   Sets global RALPH_STATE: "none" | "partial" | "complete"
-#   Sets global RALPH_MISSING_FILES: array of missing files if partial
+#   Sets global HANK_STATE: "none" | "partial" | "complete"
+#   Sets global HANK_MISSING_FILES: array of missing files if partial
 #
-check_existing_ralph() {
-    RALPH_STATE="none"
-    RALPH_MISSING_FILES=()
+check_existing_hank() {
+    HANK_STATE="none"
+    HANK_MISSING_FILES=()
 
-    if [[ ! -d ".ralph" ]]; then
-        RALPH_STATE="none"
+    if [[ ! -d ".hank" ]]; then
+        HANK_STATE="none"
         return 0
     fi
 
     # Check for required files
     # Accept either IMPLEMENTATION_PLAN.md (new) or fix_plan.md (legacy)
     local required_files=(
-        ".ralph/PROMPT.md"
-        ".ralph/AGENT.md"
+        ".hank/PROMPT.md"
+        ".hank/AGENT.md"
     )
     local has_plan=false
-    if [[ -f ".ralph/IMPLEMENTATION_PLAN.md" ]] || [[ -f ".ralph/fix_plan.md" ]]; then
+    if [[ -f ".hank/IMPLEMENTATION_PLAN.md" ]] || [[ -f ".hank/fix_plan.md" ]]; then
         has_plan=true
     fi
 
@@ -104,34 +104,34 @@ check_existing_ralph() {
 
     # Add plan file to missing if neither variant exists
     if [[ "$has_plan" == "false" ]]; then
-        missing+=(".ralph/IMPLEMENTATION_PLAN.md")
+        missing+=(".hank/IMPLEMENTATION_PLAN.md")
     else
         found=$((found + 1))
     fi
 
-    RALPH_MISSING_FILES=("${missing[@]}")
+    HANK_MISSING_FILES=("${missing[@]}")
 
     if [[ $found -eq 0 ]]; then
-        RALPH_STATE="none"
+        HANK_STATE="none"
         return 0
     elif [[ ${#missing[@]} -gt 0 ]]; then
-        RALPH_STATE="partial"
+        HANK_STATE="partial"
         return 1
     else
-        RALPH_STATE="complete"
+        HANK_STATE="complete"
         return 2
     fi
 }
 
-# is_ralph_enabled - Simple check if Ralph is fully enabled
+# is_hank_enabled - Simple check if Hank is fully enabled
 #
 # Returns:
-#   0 - Ralph is fully enabled
-#   1 - Ralph is not enabled or only partially
+#   0 - Hank is fully enabled
+#   1 - Hank is not enabled or only partially
 #
-is_ralph_enabled() {
-    check_existing_ralph || true
-    [[ "$RALPH_STATE" == "complete" ]]
+is_hank_enabled() {
+    check_existing_hank || true
+    [[ "$HANK_STATE" == "complete" ]]
 }
 
 # =============================================================================
@@ -225,26 +225,26 @@ safe_create_dir() {
 # DIRECTORY STRUCTURE
 # =============================================================================
 
-# create_ralph_structure - Create the .ralph/ directory structure
+# create_hank_structure - Create the .hank/ directory structure
 #
 # Creates:
-#   .ralph/
-#   .ralph/specs/
-#   .ralph/examples/
-#   .ralph/logs/
-#   .ralph/docs/generated/
+#   .hank/
+#   .hank/specs/
+#   .hank/examples/
+#   .hank/logs/
+#   .hank/docs/generated/
 #
 # Returns:
 #   0 - Structure created successfully
 #   1 - Error creating structure
 #
-create_ralph_structure() {
+create_hank_structure() {
     local dirs=(
-        ".ralph"
-        ".ralph/specs"
-        ".ralph/examples"
-        ".ralph/logs"
-        ".ralph/docs/generated"
+        ".hank"
+        ".hank/specs"
+        ".hank/examples"
+        ".hank/logs"
+        ".hank/docs/generated"
     )
 
     for dir in "${dirs[@]}"; do
@@ -477,8 +477,8 @@ detect_task_sources() {
 #
 get_templates_dir() {
     # Check global installation first
-    if [[ -d "$HOME/.ralph/templates" ]]; then
-        echo "$HOME/.ralph/templates"
+    if [[ -d "$HOME/.hank/templates" ]]; then
+        echo "$HOME/.hank/templates"
         return 0
     fi
 
@@ -510,9 +510,9 @@ generate_prompt_md() {
     local objectives="${4:-}"
 
     cat << 'PROMPTEOF'
-# Ralph Build Instructions
+# Hank Build Instructions
 
-0a. Study .ralph/specs/* with up to 500 parallel Sonnet subagents to learn the application specifications.
+0a. Study .hank/specs/* with up to 500 parallel Sonnet subagents to learn the application specifications.
 0b. Study @IMPLEMENTATION_PLAN.md.
 0c. For reference, the application source code is in `src/*`.
 
@@ -532,12 +532,12 @@ generate_prompt_md() {
 13. If you find inconsistencies in the specs/* then use an Opus subagent with 'ultrathink' requested to update the specs.
 14. IMPORTANT: Keep @AGENTS.md operational only -- status updates and progress notes belong in IMPLEMENTATION_PLAN.md. A bloated AGENTS.md pollutes every future loop's context.
 
-## Status Reporting (CRITICAL - Ralph needs this!)
+## Status Reporting (CRITICAL - Hank needs this!)
 
 At the end of your response, ALWAYS include this status block:
 
 ```
----RALPH_STATUS---
+---HANK_STATUS---
 STATUS: IN_PROGRESS | COMPLETE | BLOCKED
 TASKS_COMPLETED_THIS_LOOP: <number>
 FILES_MODIFIED: <number>
@@ -545,7 +545,7 @@ TESTS_STATUS: PASSING | FAILING | NOT_RUN
 WORK_TYPE: IMPLEMENTATION | TESTING | DOCUMENTATION | REFACTORING
 EXIT_SIGNAL: false | true
 RECOMMENDATION: <one line summary of what to do next>
----END_RALPH_STATUS---
+---END_HANK_STATUS---
 ```
 
 Set EXIT_SIGNAL to true when ALL items in IMPLEMENTATION_PLAN.md are resolved, all tests pass, and all specs are implemented. Do NOT continue with busy work when EXIT_SIGNAL should be true. Do NOT run tests repeatedly without implementing new features.
@@ -558,9 +558,9 @@ PROMPTEOF
 #
 generate_prompt_plan_md() {
     cat << 'PLANEOF'
-# Ralph Planning Instructions
+# Hank Planning Instructions
 
-0a. Study .ralph/specs/* with up to 250 parallel Sonnet subagents to learn the application specifications.
+0a. Study .hank/specs/* with up to 250 parallel Sonnet subagents to learn the application specifications.
 0b. Study @IMPLEMENTATION_PLAN.md (if present) to understand the plan so far.
 0c. Study `src/lib/*` with up to 250 parallel Sonnet subagents to understand shared utilities & components.
 0d. For reference, the application source code is in `src/*`.
@@ -569,12 +569,12 @@ generate_prompt_plan_md() {
 
 IMPORTANT: Plan only. Do NOT implement anything. Do NOT assume functionality is missing; confirm with code search first. Treat `src/lib` as the project's standard library for shared utilities and components. Prefer consolidated, idiomatic implementations there over ad-hoc copies.
 
-## Status Reporting (CRITICAL - Ralph needs this!)
+## Status Reporting (CRITICAL - Hank needs this!)
 
 At the end of your response, ALWAYS include this status block:
 
 ```
----RALPH_STATUS---
+---HANK_STATUS---
 STATUS: IN_PROGRESS | COMPLETE | BLOCKED
 TASKS_COMPLETED_THIS_LOOP: <number>
 FILES_MODIFIED: <number>
@@ -582,7 +582,7 @@ TESTS_STATUS: NOT_RUN
 WORK_TYPE: DOCUMENTATION
 EXIT_SIGNAL: true
 RECOMMENDATION: <one line summary of planning results>
----END_RALPH_STATUS---
+---END_HANK_STATUS---
 ```
 
 Planning mode always sets EXIT_SIGNAL: true (single iteration).
@@ -618,7 +618,7 @@ Run these after implementing to get immediate feedback:
 
 ## Operational Notes
 
-<!-- Ralph updates this section automatically with learnings -->
+<!-- Hank updates this section automatically with learnings -->
 AGENTEOF
 }
 
@@ -653,12 +653,12 @@ IMPLPLANEOF
     else
         cat << 'IMPLPLANEOF'
 <!-- Generated by LLM with content and structure it deems most appropriate -->
-<!-- Run: ralph --mode plan to populate this file -->
+<!-- Run: hank --mode plan to populate this file -->
 IMPLPLANEOF
     fi
 }
 
-# generate_ralphrc - Generate .ralphrc configuration file
+# generate_hankrc - Generate .hankrc configuration file
 #
 # Parameters:
 #   $1 (project_name) - Project name
@@ -667,15 +667,15 @@ IMPLPLANEOF
 #
 # Outputs to stdout
 #
-generate_ralphrc() {
+generate_hankrc() {
     local project_name="${1:-$(basename "$(pwd)")}"
     local project_type="${2:-unknown}"
     local task_sources="${3:-local}"
 
-    cat << RALPHRCEOF
-# .ralphrc - Ralph project configuration
-# Generated by: ralph enable
-# Documentation: https://github.com/frankbria/ralph-claude-code
+    cat << HANKRCEOF
+# .hankrc - Hank project configuration
+# Generated by: hank enable
+# Documentation: https://github.com/frankbria/hank
 
 # Project identification
 PROJECT_NAME="${project_name}"
@@ -694,24 +694,24 @@ ALLOWED_TOOLS="Write,Read,Edit,Bash(git *),Bash(npm *),Bash(pytest)"
 SESSION_CONTINUITY=true
 SESSION_EXPIRY_HOURS=24
 
-# Task sources (for ralph enable --sync)
+# Task sources (for hank enable --sync)
 # Options: local, beads, github (comma-separated for multiple)
 TASK_SOURCES="${task_sources}"
-GITHUB_TASK_LABEL="ralph-task"
+GITHUB_TASK_LABEL="hank-task"
 BEADS_FILTER="status:open"
 
 # Circuit breaker thresholds
 CB_NO_PROGRESS_THRESHOLD=3
 CB_SAME_ERROR_THRESHOLD=5
 CB_OUTPUT_DECLINE_THRESHOLD=70
-RALPHRCEOF
+HANKRCEOF
 }
 
 # =============================================================================
 # MAIN ENABLE LOGIC
 # =============================================================================
 
-# enable_ralph_in_directory - Main function to enable Ralph in current directory
+# enable_hank_in_directory - Main function to enable Hank in current directory
 #
 # Parameters:
 #   $1 (options) - JSON-like options string or empty
@@ -725,7 +725,7 @@ RALPHRCEOF
 #   1 - Error
 #   2 - Already enabled (and no force flag)
 #
-enable_ralph_in_directory() {
+enable_hank_in_directory() {
     local force="${ENABLE_FORCE:-false}"
     local skip_tasks="${ENABLE_SKIP_TASKS:-false}"
     local project_name="${ENABLE_PROJECT_NAME:-}"
@@ -733,10 +733,10 @@ enable_ralph_in_directory() {
     local task_content="${ENABLE_TASK_CONTENT:-}"
 
     # Check existing state (use || true to prevent set -e from exiting)
-    check_existing_ralph || true
+    check_existing_hank || true
 
-    if [[ "$RALPH_STATE" == "complete" && "$force" != "true" ]]; then
-        enable_log "INFO" "Ralph is already enabled in this project"
+    if [[ "$HANK_STATE" == "complete" && "$force" != "true" ]]; then
+        enable_log "INFO" "Hank is already enabled in this project"
         enable_log "INFO" "Use --force to overwrite existing configuration"
         return $ENABLE_ALREADY_ENABLED
     fi
@@ -754,38 +754,38 @@ enable_ralph_in_directory() {
         DETECTED_PROJECT_TYPE="$project_type"
     fi
 
-    enable_log "INFO" "Enabling Ralph for: $project_name"
+    enable_log "INFO" "Enabling Hank for: $project_name"
     enable_log "INFO" "Project type: $DETECTED_PROJECT_TYPE"
     if [[ -n "$DETECTED_FRAMEWORK" ]]; then
         enable_log "INFO" "Framework: $DETECTED_FRAMEWORK"
     fi
 
     # Create directory structure
-    if ! create_ralph_structure; then
-        enable_log "ERROR" "Failed to create .ralph/ structure"
+    if ! create_hank_structure; then
+        enable_log "ERROR" "Failed to create .hank/ structure"
         return $ENABLE_ERROR
     fi
 
     # Generate and create files
     local prompt_content
     prompt_content=$(generate_prompt_md "$project_name" "$DETECTED_PROJECT_TYPE" "$DETECTED_FRAMEWORK")
-    safe_create_file ".ralph/PROMPT.md" "$prompt_content"
+    safe_create_file ".hank/PROMPT.md" "$prompt_content"
 
     local agent_content
     agent_content=$(generate_agent_md "$DETECTED_BUILD_CMD" "$DETECTED_TEST_CMD" "$DETECTED_RUN_CMD")
-    safe_create_file ".ralph/AGENT.md" "$agent_content"
+    safe_create_file ".hank/AGENT.md" "$agent_content"
 
     # Create IMPLEMENTATION_PLAN.md (Playbook-style task state)
     local impl_plan_content
     impl_plan_content=$(generate_implementation_plan_md "$task_content")
-    safe_create_file ".ralph/IMPLEMENTATION_PLAN.md" "$impl_plan_content"
+    safe_create_file ".hank/IMPLEMENTATION_PLAN.md" "$impl_plan_content"
 
     # Create PROMPT_plan.md for planning mode
     local plan_prompt_content
     plan_prompt_content=$(generate_prompt_plan_md)
-    safe_create_file ".ralph/PROMPT_plan.md" "$plan_prompt_content"
+    safe_create_file ".hank/PROMPT_plan.md" "$plan_prompt_content"
 
-    # Detect task sources for .ralphrc
+    # Detect task sources for .hankrc
     detect_task_sources
     local task_sources="local"
     if [[ "$DETECTED_BEADS_AVAILABLE" == "true" ]]; then
@@ -795,23 +795,23 @@ enable_ralph_in_directory() {
         task_sources="github,$task_sources"
     fi
 
-    # Generate .ralphrc
-    local ralphrc_content
-    ralphrc_content=$(generate_ralphrc "$project_name" "$DETECTED_PROJECT_TYPE" "$task_sources")
-    safe_create_file ".ralphrc" "$ralphrc_content"
+    # Generate .hankrc
+    local hankrc_content
+    hankrc_content=$(generate_hankrc "$project_name" "$DETECTED_PROJECT_TYPE" "$task_sources")
+    safe_create_file ".hankrc" "$hankrc_content"
 
-    enable_log "SUCCESS" "Ralph enabled successfully!"
+    enable_log "SUCCESS" "Hank enabled successfully!"
 
     return $ENABLE_SUCCESS
 }
 
 # Export functions for use in other scripts
 export -f enable_log
-export -f check_existing_ralph
-export -f is_ralph_enabled
+export -f check_existing_hank
+export -f is_hank_enabled
 export -f safe_create_file
 export -f safe_create_dir
-export -f create_ralph_structure
+export -f create_hank_structure
 export -f detect_project_context
 export -f detect_git_info
 export -f detect_task_sources
@@ -821,5 +821,5 @@ export -f generate_prompt_plan_md
 export -f generate_agent_md
 export -f generate_fix_plan_md
 export -f generate_implementation_plan_md
-export -f generate_ralphrc
-export -f enable_ralph_in_directory
+export -f generate_hankrc
+export -f enable_hank_in_directory

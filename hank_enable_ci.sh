@@ -1,15 +1,15 @@
 #!/bin/bash
 
-# Ralph Enable CI - Non-Interactive Version for Automation
-# Adds Ralph configuration with sensible defaults
+# Hank Enable CI - Non-Interactive Version for Automation
+# Adds Hank configuration with sensible defaults
 #
 # Usage:
-#   ralph enable-ci                    # Auto-detect and enable
-#   ralph enable-ci --from beads       # With specific task source
-#   ralph enable-ci --json             # Output JSON result
+#   hank enable-ci                    # Auto-detect and enable
+#   hank enable-ci --from beads       # With specific task source
+#   hank enable-ci --json             # Output JSON result
 #
 # Exit codes:
-#   0 - Success: Ralph enabled
+#   0 - Success: Hank enabled
 #   1 - Error: General error
 #   2 - Already enabled (use --force to override)
 #   3 - Invalid arguments
@@ -24,13 +24,13 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Try to load libraries from global installation first, then local
-RALPH_HOME="${RALPH_HOME:-$HOME/.ralph}"
-if [[ -f "$RALPH_HOME/lib/enable_core.sh" ]]; then
-    LIB_DIR="$RALPH_HOME/lib"
+HANK_HOME="${HANK_HOME:-$HOME/.hank}"
+if [[ -f "$HANK_HOME/lib/enable_core.sh" ]]; then
+    LIB_DIR="$HANK_HOME/lib"
 elif [[ -f "$SCRIPT_DIR/lib/enable_core.sh" ]]; then
     LIB_DIR="$SCRIPT_DIR/lib"
 else
-    echo '{"error": "Cannot find Ralph libraries", "code": 1}' >&2
+    echo '{"error": "Cannot find Hank libraries", "code": 1}' >&2
     exit 1
 fi
 
@@ -49,7 +49,7 @@ source "$LIB_DIR/task_sources.sh"
 FORCE_OVERWRITE=false
 TASK_SOURCE=""
 PRD_FILE=""
-GITHUB_LABEL="ralph-task"
+GITHUB_LABEL="hank-task"
 PROJECT_NAME=""
 PROJECT_TYPE=""
 OUTPUT_JSON=false
@@ -65,24 +65,24 @@ VERSION="0.11.0"
 
 show_help() {
     cat << EOF
-Ralph Enable CI - Non-Interactive Version for Automation
+Hank Enable CI - Non-Interactive Version for Automation
 
-Usage: ralph enable-ci [OPTIONS]
+Usage: hank enable-ci [OPTIONS]
 
 Options:
     --from <source>       Import tasks from: beads, github, prd, none
     --prd <file>          PRD file to convert (when --from prd)
-    --label <label>       GitHub label filter (default: ralph-task)
+    --label <label>       GitHub label filter (default: hank-task)
     --project-name <name> Override detected project name
     --project-type <type> Override detected type (typescript, python, etc.)
-    --force               Overwrite existing .ralph/ configuration
+    --force               Overwrite existing .hank/ configuration
     --json                Output result as JSON
     --quiet               Suppress non-error output
     -h, --help            Show this help message
     -v, --version         Show version
 
 Exit Codes:
-    0 - Success: Ralph enabled
+    0 - Success: Hank enabled
     1 - Error: General error
     2 - Already enabled: Use --force to override
     3 - Invalid arguments
@@ -91,31 +91,31 @@ Exit Codes:
 
 Examples:
     # Auto-detect and enable with defaults
-    ralph enable-ci
+    hank enable-ci
 
     # Enable with beads tasks
-    ralph enable-ci --from beads
+    hank enable-ci --from beads
 
     # Enable with GitHub issues
-    ralph enable-ci --from github --label "sprint-1"
+    hank enable-ci --from github --label "sprint-1"
 
     # Enable with PRD conversion
-    ralph enable-ci --from prd --prd docs/requirements.md
+    hank enable-ci --from prd --prd docs/requirements.md
 
     # Force overwrite and output JSON
-    ralph enable-ci --force --json
+    hank enable-ci --force --json
 
     # Override project detection
-    ralph enable-ci --project-name my-app --project-type typescript
+    hank enable-ci --project-name my-app --project-type typescript
 
 JSON Output Format:
     {
         "success": true,
         "project_name": "my-project",
         "project_type": "typescript",
-        "files_created": [".ralph/PROMPT.md", ...],
+        "files_created": [".hank/PROMPT.md", ...],
         "tasks_imported": 15,
-        "message": "Ralph enabled successfully"
+        "message": "Hank enabled successfully"
     }
 
 EOF
@@ -197,7 +197,7 @@ parse_arguments() {
                 if [[ "$OUTPUT_JSON" == "true" ]]; then
                     echo "{\"version\": \"$VERSION\"}"
                 else
-                    echo "ralph enable-ci version $VERSION"
+                    echo "hank enable-ci version $VERSION"
                 fi
                 exit 0
                 ;;
@@ -246,11 +246,11 @@ output_success() {
     "project_type": "$project_type",
     "files_created": $files_json,
     "tasks_imported": $TASKS_IMPORTED,
-    "message": "Ralph enabled successfully"
+    "message": "Hank enabled successfully"
 }
 EOF
     else
-        echo "Ralph enabled successfully for: $project_name ($project_type)"
+        echo "Hank enabled successfully for: $project_name ($project_type)"
         echo "Files created: ${#CREATED_FILES[@]}"
         echo "Tasks imported: $TASKS_IMPORTED"
     fi
@@ -258,9 +258,9 @@ EOF
 
 output_already_enabled() {
     if [[ "$OUTPUT_JSON" == "true" ]]; then
-        echo '{"success": false, "code": 2, "message": "Ralph already enabled. Use --force to override."}'
+        echo '{"success": false, "code": 2, "message": "Hank already enabled. Use --force to override."}'
     else
-        echo "Ralph is already enabled in this project. Use --force to override."
+        echo "Hank is already enabled in this project. Use --force to override."
     fi
 }
 
@@ -278,12 +278,12 @@ main() {
         exit 0
     fi
 
-    output_message "Ralph Enable CI - Non-Interactive Mode"
+    output_message "Hank Enable CI - Non-Interactive Mode"
     output_message ""
 
     # Check existing state (use || true to prevent set -e from exiting)
-    check_existing_ralph || true
-    if [[ "$RALPH_STATE" == "complete" && "$FORCE_OVERWRITE" != "true" ]]; then
+    check_existing_hank || true
+    if [[ "$HANK_STATE" == "complete" && "$FORCE_OVERWRITE" != "true" ]]; then
         output_already_enabled
         exit $ENABLE_ALREADY_ENABLED
     fi
@@ -367,34 +367,34 @@ main() {
 
     # Run core enable logic
     output_message ""
-    output_message "Creating Ralph configuration..."
+    output_message "Creating Hank configuration..."
 
-    # Suppress enable_ralph_in_directory output when in JSON mode
+    # Suppress enable_hank_in_directory output when in JSON mode
     if [[ "$OUTPUT_JSON" == "true" ]]; then
-        if ! enable_ralph_in_directory >/dev/null 2>&1; then
-            output_error "Failed to enable Ralph"
+        if ! enable_hank_in_directory >/dev/null 2>&1; then
+            output_error "Failed to enable Hank"
             exit $ENABLE_ERROR
         fi
     else
-        if ! enable_ralph_in_directory; then
-            output_error "Failed to enable Ralph"
+        if ! enable_hank_in_directory; then
+            output_error "Failed to enable Hank"
             exit $ENABLE_ERROR
         fi
     fi
 
     # Track created files
-    [[ -f ".ralph/PROMPT.md" ]] && CREATED_FILES+=(".ralph/PROMPT.md")
-    [[ -f ".ralph/IMPLEMENTATION_PLAN.md" ]] && CREATED_FILES+=(".ralph/IMPLEMENTATION_PLAN.md")
-    [[ -f ".ralph/fix_plan.md" ]] && CREATED_FILES+=(".ralph/fix_plan.md")
-    [[ -f ".ralph/AGENT.md" ]] && CREATED_FILES+=(".ralph/AGENT.md")
-    [[ -f ".ralph/PROMPT_plan.md" ]] && CREATED_FILES+=(".ralph/PROMPT_plan.md")
-    [[ -f ".ralphrc" ]] && CREATED_FILES+=(".ralphrc")
+    [[ -f ".hank/PROMPT.md" ]] && CREATED_FILES+=(".hank/PROMPT.md")
+    [[ -f ".hank/IMPLEMENTATION_PLAN.md" ]] && CREATED_FILES+=(".hank/IMPLEMENTATION_PLAN.md")
+    [[ -f ".hank/fix_plan.md" ]] && CREATED_FILES+=(".hank/fix_plan.md")
+    [[ -f ".hank/AGENT.md" ]] && CREATED_FILES+=(".hank/AGENT.md")
+    [[ -f ".hank/PROMPT_plan.md" ]] && CREATED_FILES+=(".hank/PROMPT_plan.md")
+    [[ -f ".hankrc" ]] && CREATED_FILES+=(".hankrc")
 
     # Verify required files exist (accept either IMPLEMENTATION_PLAN.md or fix_plan.md)
     local has_plan=false
-    [[ -f ".ralph/IMPLEMENTATION_PLAN.md" ]] && has_plan=true
-    [[ -f ".ralph/fix_plan.md" ]] && has_plan=true
-    if [[ ! -f ".ralph/PROMPT.md" ]] || [[ "$has_plan" == "false" ]]; then
+    [[ -f ".hank/IMPLEMENTATION_PLAN.md" ]] && has_plan=true
+    [[ -f ".hank/fix_plan.md" ]] && has_plan=true
+    if [[ ! -f ".hank/PROMPT.md" ]] || [[ "$has_plan" == "false" ]]; then
         output_error "Required files were not created"
         exit $ENABLE_ERROR
     fi

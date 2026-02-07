@@ -1,5 +1,5 @@
 #!/bin/bash
-# Circuit Breaker Component for Ralph
+# Circuit Breaker Component for Hank
 # Prevents runaway token consumption by detecting stagnation
 # Based on Michael Nygard's "Release It!" pattern
 
@@ -12,12 +12,12 @@ CB_STATE_HALF_OPEN="HALF_OPEN"  # Monitoring mode, checking for recovery
 CB_STATE_OPEN="OPEN"            # Failure detected, execution halted
 
 # Circuit Breaker Configuration
-# Use RALPH_DIR if set by main script, otherwise default to .ralph
-RALPH_DIR="${RALPH_DIR:-.ralph}"
-CB_STATE_FILE="$RALPH_DIR/.circuit_breaker_state"
-CB_HISTORY_FILE="$RALPH_DIR/.circuit_breaker_history"
+# Use HANK_DIR if set by main script, otherwise default to .hank
+HANK_DIR="${HANK_DIR:-.hank}"
+CB_STATE_FILE="$HANK_DIR/.circuit_breaker_state"
+CB_HISTORY_FILE="$HANK_DIR/.circuit_breaker_history"
 # Configurable thresholds - override via environment variables:
-# Example: CB_NO_PROGRESS_THRESHOLD=10 ralph --monitor
+# Example: CB_NO_PROGRESS_THRESHOLD=10 hank --monitor
 CB_NO_PROGRESS_THRESHOLD=${CB_NO_PROGRESS_THRESHOLD:-3}        # Open circuit after N loops with no progress
 CB_SAME_ERROR_THRESHOLD=${CB_SAME_ERROR_THRESHOLD:-5}          # Open circuit after N loops with same error
 CB_OUTPUT_DECLINE_THRESHOLD=${CB_OUTPUT_DECLINE_THRESHOLD:-70} # Open circuit if output declines by >70%
@@ -114,13 +114,13 @@ record_loop_result() {
     # Detect progress from multiple sources:
     # 1. Files changed (git diff)
     # 2. Completion signal in response analysis (STATUS: COMPLETE or has_completion_signal)
-    # 3. Claude explicitly reported files modified in RALPH_STATUS block
+    # 3. Claude explicitly reported files modified in HANK_STATUS block
     local has_progress=false
     local has_completion_signal=false
-    local ralph_files_modified=0
+    local hank_files_modified=0
 
     # Check response analysis file for completion signals and reported file changes
-    local response_analysis_file="$RALPH_DIR/.response_analysis"
+    local response_analysis_file="$HANK_DIR/.response_analysis"
     if [[ -f "$response_analysis_file" ]]; then
         # Read completion signal - STATUS: COMPLETE counts as progress even without git changes
         has_completion_signal=$(jq -r '.analysis.has_completion_signal // false' "$response_analysis_file" 2>/dev/null || echo "false")
@@ -133,8 +133,8 @@ record_loop_result() {
         fi
 
         # Check if Claude reported files modified (may differ from git diff if already committed)
-        ralph_files_modified=$(jq -r '.analysis.files_modified // 0' "$response_analysis_file" 2>/dev/null || echo "0")
-        ralph_files_modified=$((ralph_files_modified + 0))
+        hank_files_modified=$(jq -r '.analysis.files_modified // 0' "$response_analysis_file" 2>/dev/null || echo "0")
+        hank_files_modified=$((hank_files_modified + 0))
     fi
 
     # Track permission denials (Issue #101)
@@ -161,7 +161,7 @@ record_loop_result() {
         has_progress=true
         consecutive_no_progress=0
         last_progress_loop=$loop_number
-    elif [[ $ralph_files_modified -gt 0 ]]; then
+    elif [[ $hank_files_modified -gt 0 ]]; then
         # Claude reported modifying files (may be committed already)
         has_progress=true
         consecutive_no_progress=0
@@ -188,7 +188,7 @@ record_loop_result() {
             # Permission denials take highest priority (Issue #101)
             if [[ $consecutive_permission_denials -ge $CB_PERMISSION_DENIAL_THRESHOLD ]]; then
                 new_state="$CB_STATE_OPEN"
-                reason="Permission denied in $consecutive_permission_denials consecutive loops - update ALLOWED_TOOLS in .ralphrc"
+                reason="Permission denied in $consecutive_permission_denials consecutive loops - update ALLOWED_TOOLS in .hankrc"
             elif [[ $consecutive_no_progress -ge $CB_NO_PROGRESS_THRESHOLD ]]; then
                 new_state="$CB_STATE_OPEN"
                 reason="No progress detected in $consecutive_no_progress consecutive loops"
@@ -206,7 +206,7 @@ record_loop_result() {
             # Permission denials take highest priority (Issue #101)
             if [[ $consecutive_permission_denials -ge $CB_PERMISSION_DENIAL_THRESHOLD ]]; then
                 new_state="$CB_STATE_OPEN"
-                reason="Permission denied in $consecutive_permission_denials consecutive loops - update ALLOWED_TOOLS in .ralphrc"
+                reason="Permission denied in $consecutive_permission_denials consecutive loops - update ALLOWED_TOOLS in .hankrc"
             elif [[ "$has_progress" == "true" ]]; then
                 new_state="$CB_STATE_CLOSED"
                 reason="Progress detected, circuit recovered"
@@ -365,19 +365,19 @@ should_halt_execution() {
         echo -e "${RED}║  EXECUTION HALTED: Circuit Breaker Opened                 ║${NC}"
         echo -e "${RED}╚════════════════════════════════════════════════════════════╝${NC}"
         echo ""
-        echo -e "${YELLOW}Ralph has detected that no progress is being made.${NC}"
+        echo -e "${YELLOW}Hank has detected that no progress is being made.${NC}"
         echo ""
         echo -e "${YELLOW}Possible reasons:${NC}"
-        echo "  • Project may be complete (check .ralph/fix_plan.md)"
+        echo "  • Project may be complete (check .hank/fix_plan.md)"
         echo "  • Claude may be stuck on an error"
-        echo "  • .ralph/PROMPT.md may need clarification"
+        echo "  • .hank/PROMPT.md may need clarification"
         echo "  • Manual intervention may be required"
         echo ""
         echo -e "${YELLOW}To continue:${NC}"
-        echo "  1. Review recent logs: tail -20 .ralph/logs/ralph.log"
-        echo "  2. Check Claude output: ls -lt .ralph/logs/claude_output_*.log | head -1"
-        echo "  3. Update .ralph/fix_plan.md if needed"
-        echo "  4. Reset circuit breaker: ralph --reset-circuit"
+        echo "  1. Review recent logs: tail -20 .hank/logs/hank.log"
+        echo "  2. Check Claude output: ls -lt .hank/logs/claude_output_*.log | head -1"
+        echo "  3. Update .hank/fix_plan.md if needed"
+        echo "  4. Reset circuit breaker: hank --reset-circuit"
         echo ""
         return 0  # Signal to halt
     else

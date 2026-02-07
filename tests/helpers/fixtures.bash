@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Fixture Data for Ralph Test Suite
+# Fixture Data for Hank Test Suite
 
 # Sample PRD Document (Markdown)
 create_sample_prd_md() {
@@ -116,10 +116,10 @@ EOF
 create_sample_prompt() {
     local file=${1:-"PROMPT.md"}
     cat > "$file" << 'EOF'
-# Ralph Development Instructions
+# Hank Development Instructions
 
 ## Context
-You are Ralph, an autonomous AI development agent working on a Task Management App project.
+You are Hank, an autonomous AI development agent working on a Task Management App project.
 
 ## Current Objectives
 1. Study specs/* to learn about the project specifications
@@ -156,7 +156,7 @@ create_sample_fix_plan() {
     local completed=${3:-3}
 
     cat > "$file" << 'EOF'
-# Ralph Fix Plan
+# Hank Fix Plan
 
 ## High Priority
 EOF
@@ -353,25 +353,25 @@ EOF
 }
 
 # Create complete test project structure
-# Creates .ralph/ subfolder structure for Ralph-specific files
+# Creates .hank/ subfolder structure for Hank-specific files
 create_test_project() {
     local project_dir=${1:-"test_project"}
 
-    # Create project with .ralph/ subfolder structure
+    # Create project with .hank/ subfolder structure
     mkdir -p "$project_dir"/src
-    mkdir -p "$project_dir"/.ralph/{specs/stdlib,examples,logs,docs/generated}
+    mkdir -p "$project_dir"/.hank/{specs/stdlib,examples,logs,docs/generated}
 
     cd "$project_dir" || return 1
 
-    # Create Ralph files in .ralph/ subdirectory
-    create_sample_prompt ".ralph/PROMPT.md"
-    create_sample_fix_plan ".ralph/fix_plan.md" 10 3
-    create_sample_agent_md ".ralph/AGENT.md"
+    # Create Hank files in .hank/ subdirectory
+    create_sample_prompt ".hank/PROMPT.md"
+    create_sample_fix_plan ".hank/fix_plan.md" 10 3
+    create_sample_agent_md ".hank/AGENT.md"
 
-    # Create state files in .ralph/
-    echo "0" > .ralph/.call_count
-    echo "$(date +%Y%m%d%H)" > .ralph/.last_reset
-    echo '{"test_only_loops": [], "done_signals": [], "completion_indicators": []}' > .ralph/.exit_signals
+    # Create state files in .hank/
+    echo "0" > .hank/.call_count
+    echo "$(date +%Y%m%d%H)" > .hank/.last_reset
+    echo '{"test_only_loops": [], "done_signals": [], "completion_indicators": []}' > .hank/.exit_signals
 
     cd - > /dev/null || return 1
 }

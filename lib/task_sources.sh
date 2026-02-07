@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# task_sources.sh - Task import utilities for Ralph enable
+# task_sources.sh - Task import utilities for Hank enable
 # Supports importing tasks from beads, GitHub Issues, and PRD files
 
 # =============================================================================
@@ -163,7 +163,7 @@ check_github_available() {
 # fetch_github_tasks - Fetch issues from GitHub
 #
 # Parameters:
-#   $1 (label) - Label to filter by (optional, default: "ralph-task")
+#   $1 (label) - Label to filter by (optional, default: "hank-task")
 #   $2 (limit) - Maximum number of issues (optional, default: 50)
 #
 # Outputs:
@@ -273,7 +273,7 @@ get_github_labels() {
 #   0 - Success
 #   1 - Error
 #
-# Note: For full PRD conversion with Claude, use ralph-import
+# Note: For full PRD conversion with Claude, use hank-import
 # This function does basic extraction without AI assistance
 #
 extract_prd_tasks() {
@@ -329,11 +329,11 @@ extract_prd_tasks() {
     return 0  # Empty is not an error
 }
 
-# convert_prd_with_claude - Full PRD conversion using Claude (calls ralph-import logic)
+# convert_prd_with_claude - Full PRD conversion using Claude (calls hank-import logic)
 #
 # Parameters:
 #   $1 (prd_file) - Path to the PRD file
-#   $2 (output_dir) - Directory to output converted files (optional, defaults to .ralph/)
+#   $2 (output_dir) - Directory to output converted files (optional, defaults to .hank/)
 #
 # Outputs:
 #   Sets CONVERTED_PROMPT_FILE, CONVERTED_FIX_PLAN_FILE, CONVERTED_SPECS_FILE
@@ -344,9 +344,9 @@ extract_prd_tasks() {
 #
 convert_prd_with_claude() {
     local prd_file=$1
-    local output_dir="${2:-.ralph}"
+    local output_dir="${2:-.hank}"
 
-    # This would call into ralph_import.sh's convert_prd function
+    # This would call into hank_import.sh's convert_prd function
     # For now, we do basic extraction
     # Full Claude-based conversion requires the import script
 
@@ -354,11 +354,11 @@ convert_prd_with_claude() {
         return 1
     fi
 
-    # Check if ralph-import is available for full conversion
-    if command -v ralph-import &>/dev/null; then
-        # Use ralph-import for full conversion
-        # Note: ralph-import creates a new project, so we need to adapt
-        echo "Full PRD conversion available via: ralph-import $prd_file"
+    # Check if hank-import is available for full conversion
+    if command -v hank-import &>/dev/null; then
+        # Use hank-import for full conversion
+        # Note: hank-import creates a new project, so we need to adapt
+        echo "Full PRD conversion available via: hank-import $prd_file"
         return 1  # Return error to indicate basic extraction should be used
     fi
 

@@ -1,4 +1,4 @@
-# Ralph for Claude Code - Implementation Plan
+# Hank for Claude Code - Implementation Plan
 
 **Version**: v0.9.8 | **Tests**: 276 passing (100% pass rate) | **CI/CD**: GitHub Actions
 
@@ -8,7 +8,7 @@
 
 ### Phase 1: CLI Modernization (In Progress)
 
-Phase 1 focuses on modernizing Ralph's CLI integration with Claude Code, including JSON output parsing, session management, and documentation.
+Phase 1 focuses on modernizing Hank's CLI integration with Claude Code, including JSON output parsing, session management, and documentation.
 
 **Status**: Core features complete (1.1-1.4), remaining items are documentation and bug fixes.
 
@@ -20,7 +20,7 @@ Phase 1 focuses on modernizing Ralph's CLI integration with Claude Code, includi
 | #26 | Phase 1.11: Update README with testing instructions | P3 | Open |
 | #27 | Phase 1.12: Add badges to README | P3 | Open |
 
-**Completed Phase 1 Issues**: #28 (CLI commands), #29 (JSON parsing), #30 (session management), #31 (ralph-import), #48 (security), #50 (input validation)
+**Completed Phase 1 Issues**: #28 (CLI commands), #29 (JSON parsing), #30 (session management), #31 (hank-import), #48 (security), #50 (input validation)
 
 ---
 
@@ -49,7 +49,7 @@ Add configuration file support, infrastructure features, and advanced functional
 | #37 | Phase 3.2: Update installation for SDK support | P2 | Open |
 | #18 | Phase 3.4: Implement log rotation feature | P2 | Open |
 | #19 | Phase 3.5: Implement dry-run mode feature | P2 | Open |
-| #20 | Phase 3.6: Implement config file support (.ralphrc) | P2 | Open |
+| #20 | Phase 3.6: Implement config file support (.hankrc) | P2 | Open |
 | #38 | Phase 3.3: Create CLI and SDK documentation | P3 | Open |
 | #21 | Phase 3.7: Implement metrics and analytics | P3 | Open |
 | #22 | Phase 3.8: Implement notification system | P3 | Open |
@@ -75,7 +75,7 @@ Comprehensive testing for all new features and integration scenarios.
 
 ### Phase 5: GitHub Issue Integration (P4)
 
-Enable Ralph to import development plans directly from GitHub issues.
+Enable Hank to import development plans directly from GitHub issues.
 
 | Issue | Title | Priority | Status |
 |-------|-------|----------|--------|
@@ -91,7 +91,7 @@ Enable Ralph to import development plans directly from GitHub issues.
 
 ### Phase 6: Sandbox Execution Environments (P4)
 
-Run Ralph in isolated sandbox environments for security and reproducibility.
+Run Hank in isolated sandbox environments for security and reproducibility.
 
 | Issue | Title | Priority | Status |
 |-------|-------|----------|--------|
@@ -168,7 +168,7 @@ Run Ralph in isolated sandbox environments for security and reproducibility.
 | #28 | Phase 1.1: Update CLI commands with modern options | Closed |
 | #29 | Phase 1.2: Enhance response parsing for JSON output | Closed |
 | #30 | Phase 1.3: Add session management for continuity | Closed |
-| #31 | Phase 1.4: Update ralph-import with CLI enhancements | Closed |
+| #31 | Phase 1.4: Update hank-import with CLI enhancements | Closed |
 | #48 | MAJOR-01: Enhance shell escaping to prevent command injection | Closed |
 | #50 | MAJOR-02: Add input validation for --allowed-tools flag | Closed |
 
@@ -185,11 +185,11 @@ Run Ralph in isolated sandbox environments for security and reproducibility.
 
 | Issue | Title | Status |
 |-------|-------|--------|
-| #1 | Cannot find file ~/.ralph/lib/response_analyzer.sh | Closed |
+| #1 | Cannot find file ~/.hank/lib/response_analyzer.sh | Closed |
 | #2 | is_error: false triggers "error" circuit breaker incorrectly | Closed |
 | #5 | Bug: date: illegal option -- d on macOS | Closed |
 | #7 | Review codebase for updated Anthropic CLI | Closed |
-| #42 | Windows: Git Bash windows spawn when running Ralph loop | Closed |
+| #42 | Windows: Git Bash windows spawn when running Hank loop | Closed |
 | #55 | --prompt-file flag does not exist in Claude Code CLI | Closed |
 
 ### Other Completed
