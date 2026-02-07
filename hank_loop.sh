@@ -18,6 +18,7 @@ source "$SCRIPT_DIR/lib/response_analyzer.sh"
 source "$SCRIPT_DIR/lib/circuit_breaker.sh"
 source "$SCRIPT_DIR/lib/task_sources.sh"
 source "$SCRIPT_DIR/lib/cost_tracker.sh"
+source "$SCRIPT_DIR/lib/banner.sh"
 
 # Configuration
 # Hank-specific files live in .hank/ subfolder
@@ -25,6 +26,8 @@ HANK_DIR=".hank"
 HANK_MODE="build"  # plan or build
 HANK_TASK_SOURCE="plan"  # plan or github
 HANK_DRY_RUN=false
+HANK_CLEAN=false
+HANK_CLEAN_LOGS=false
 PROMPT_FILE="$HANK_DIR/PROMPT.md"
 PROMPT_PLAN_FILE="$HANK_DIR/PROMPT_plan.md"
 PLAN_FILE="$HANK_DIR/IMPLEMENTATION_PLAN.md"
@@ -1467,6 +1470,61 @@ cleanup() {
     exit 0
 }
 
+# Clean transient/session state files from .hank/
+# Preserves persistent project files (prompts, plans, specs, cost history, docs, logs)
+clean_hank_dir() {
+    local clean_logs="${1:-false}"
+    local removed=0
+
+    # Session state files
+    local transient_files=(
+        "$HANK_DIR/.hank_session"
+        "$HANK_DIR/.hank_session_history"
+        "$HANK_DIR/.claude_session_id"
+        "$HANK_DIR/.exit_signals"
+        "$HANK_DIR/.response_analysis"
+        "$HANK_DIR/.cost_session"
+        "$HANK_DIR/.circuit_breaker_state"
+        "$HANK_DIR/.circuit_breaker_history"
+        "$HANK_DIR/.call_count"
+        "$HANK_DIR/.last_reset"
+        "$HANK_DIR/status.json"
+        "$HANK_DIR/progress.json"
+        "$HANK_DIR/live.log"
+        "$HANK_DIR/.json_parse_result"
+        "$HANK_DIR/.last_output_length"
+        "$HANK_DIR/.loop_start_sha"
+    )
+
+    echo -e "${BLUE}Cleaning transient files from $HANK_DIR/...${NC}"
+
+    for f in "${transient_files[@]}"; do
+        if [[ -f "$f" ]]; then
+            rm -f "$f"
+            echo "  removed $f"
+            ((removed++))
+        fi
+    done
+
+    if [[ "$clean_logs" == "true" ]]; then
+        if [[ -d "$HANK_DIR/logs" ]]; then
+            local log_count
+            log_count=$(find "$HANK_DIR/logs" -type f 2>/dev/null | wc -l | tr -d ' ')
+            if [[ "$log_count" -gt 0 ]]; then
+                rm -f "$HANK_DIR/logs/"*
+                echo "  removed $log_count file(s) from $HANK_DIR/logs/"
+                ((removed += log_count))
+            fi
+        fi
+    fi
+
+    if [[ $removed -eq 0 ]]; then
+        echo -e "${GREEN}Already clean — no transient files found.${NC}"
+    else
+        echo -e "${GREEN}Removed $removed transient file(s). Persistent files preserved.${NC}"
+    fi
+}
+
 # Set up signal handlers
 trap cleanup SIGINT SIGTERM
 
@@ -1482,6 +1540,7 @@ main() {
         fi
     fi
 
+    print_banner
     log_status "SUCCESS" "🚀 Hank loop starting with Claude Code"
     log_status "INFO" "Max calls per hour: $MAX_CALLS_PER_HOUR"
     log_status "INFO" "Logs: $LOG_DIR/ | Docs: $DOCS_DIR/ | Status: $STATUS_FILE"
@@ -1737,6 +1796,9 @@ Options:
     --circuit-status        Show circuit breaker status and exit
     --reset-session         Reset session state and exit (clears session continuity)
     --cost-summary          Show cost report from all sessions and exit
+    --clean                 Remove transient/session state files from .hank/ and exit
+                            Preserves prompts, plans, specs, cost_log.jsonl, docs, logs
+    --clean-logs            Also remove .hank/logs/* (use with --clean)
 
 Execution Modes:
     --mode MODE             Set execution mode: plan or build (default: build)
@@ -1796,6 +1858,8 @@ Examples:
     $0 --output-format text     # Use legacy text output format
     $0 --no-continue            # Disable session continuity
     $0 --session-expiry 48      # 48-hour session expiration
+    $0 --clean                  # Remove stale session/state files
+    $0 --clean --clean-logs     # Also remove log files
 
 HELPEOF
 }
@@ -1924,6 +1988,14 @@ while [[ $# -gt 0 ]]; do
             show_cost_report
             exit 0
             ;;
+        --clean)
+            HANK_CLEAN=true
+            shift
+            ;;
+        --clean-logs)
+            HANK_CLEAN_LOGS=true
+            shift
+            ;;
         *)
             echo "Unknown option: $1"
             show_help
@@ -1934,6 +2006,16 @@ done
 
 # Only execute when run directly, not when sourced
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    # Handle --clean before anything else (no project validation needed)
+    if [[ "$HANK_CLEAN" == "true" ]]; then
+        if [[ ! -d "$HANK_DIR" ]]; then
+            echo "No $HANK_DIR/ directory found — nothing to clean."
+            exit 0
+        fi
+        clean_hank_dir "$HANK_CLEAN_LOGS"
+        exit 0
+    fi
+
     # If tmux mode requested, set it up
     if [[ "$USE_TMUX" == "true" ]]; then
         check_tmux_available

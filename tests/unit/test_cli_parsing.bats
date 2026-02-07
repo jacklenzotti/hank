@@ -464,3 +464,136 @@ build_hank_cmd_for_test() {
     # Should only be "hank" with no extra flags
     [[ "$result" == "hank" ]]
 }
+
+# =============================================================================
+# CLEAN FLAG TESTS
+# =============================================================================
+
+@test "--clean removes transient session files" {
+    # Create transient files that --clean should remove
+    echo "session-data" > "$HANK_DIR/.hank_session"
+    echo "[]" > "$HANK_DIR/.hank_session_history"
+    echo "abc123" > "$HANK_DIR/.claude_session_id"
+    echo '{}' > "$HANK_DIR/.exit_signals"
+    echo '{}' > "$HANK_DIR/.response_analysis"
+    echo '{}' > "$HANK_DIR/.cost_session"
+    echo '{"state":"CLOSED"}' > "$HANK_DIR/.circuit_breaker_state"
+    echo '[]' > "$HANK_DIR/.circuit_breaker_history"
+    echo "5" > "$HANK_DIR/.call_count"
+    echo "2025010112" > "$HANK_DIR/.last_reset"
+    echo '{}' > "$HANK_DIR/status.json"
+    echo '{}' > "$HANK_DIR/progress.json"
+    echo "log data" > "$HANK_DIR/live.log"
+    echo '{}' > "$HANK_DIR/.json_parse_result"
+    echo "1234" > "$HANK_DIR/.last_output_length"
+    echo "abc123" > "$HANK_DIR/.loop_start_sha"
+
+    run bash "$HANK_SCRIPT" --clean
+
+    assert_success
+
+    # Verify all transient files were removed
+    [[ ! -f "$HANK_DIR/.hank_session" ]]
+    [[ ! -f "$HANK_DIR/.hank_session_history" ]]
+    [[ ! -f "$HANK_DIR/.claude_session_id" ]]
+    [[ ! -f "$HANK_DIR/.exit_signals" ]]
+    [[ ! -f "$HANK_DIR/.response_analysis" ]]
+    [[ ! -f "$HANK_DIR/.cost_session" ]]
+    [[ ! -f "$HANK_DIR/.circuit_breaker_state" ]]
+    [[ ! -f "$HANK_DIR/.circuit_breaker_history" ]]
+    [[ ! -f "$HANK_DIR/.call_count" ]]
+    [[ ! -f "$HANK_DIR/.last_reset" ]]
+    [[ ! -f "$HANK_DIR/status.json" ]]
+    [[ ! -f "$HANK_DIR/progress.json" ]]
+    [[ ! -f "$HANK_DIR/live.log" ]]
+    [[ ! -f "$HANK_DIR/.json_parse_result" ]]
+    [[ ! -f "$HANK_DIR/.last_output_length" ]]
+    [[ ! -f "$HANK_DIR/.loop_start_sha" ]]
+}
+
+@test "--clean preserves persistent project files" {
+    # Create persistent files that --clean should NOT remove
+    echo "# Prompt" > "$HANK_DIR/PROMPT.md"
+    echo "# Plan Prompt" > "$HANK_DIR/PROMPT_plan.md"
+    echo "# Plan" > "$HANK_DIR/IMPLEMENTATION_PLAN.md"
+    echo "# Agent" > "$HANK_DIR/AGENT.md"
+    echo '{"cost":1.23}' > "$HANK_DIR/cost_log.jsonl"
+    mkdir -p "$HANK_DIR/specs"
+    echo "spec" > "$HANK_DIR/specs/spec1.md"
+    mkdir -p "$HANK_DIR/docs"
+    echo "doc" > "$HANK_DIR/docs/readme.md"
+
+    # Also create a transient file so --clean actually runs
+    echo "session" > "$HANK_DIR/.hank_session"
+
+    run bash "$HANK_SCRIPT" --clean
+
+    assert_success
+
+    # Verify persistent files are preserved
+    [[ -f "$HANK_DIR/PROMPT.md" ]]
+    [[ -f "$HANK_DIR/PROMPT_plan.md" ]]
+    [[ -f "$HANK_DIR/IMPLEMENTATION_PLAN.md" ]]
+    [[ -f "$HANK_DIR/AGENT.md" ]]
+    [[ -f "$HANK_DIR/cost_log.jsonl" ]]
+    [[ -f "$HANK_DIR/specs/spec1.md" ]]
+    [[ -f "$HANK_DIR/docs/readme.md" ]]
+
+    # Verify transient file was removed
+    [[ ! -f "$HANK_DIR/.hank_session" ]]
+}
+
+@test "--clean preserves logs by default" {
+    mkdir -p "$HANK_DIR/logs"
+    echo "log1" > "$HANK_DIR/logs/hank.log"
+    echo "log2" > "$HANK_DIR/logs/claude_output_2025.log"
+    echo "session" > "$HANK_DIR/.hank_session"
+
+    run bash "$HANK_SCRIPT" --clean
+
+    assert_success
+    [[ -f "$HANK_DIR/logs/hank.log" ]]
+    [[ -f "$HANK_DIR/logs/claude_output_2025.log" ]]
+}
+
+@test "--clean --clean-logs also removes log files" {
+    mkdir -p "$HANK_DIR/logs"
+    echo "log1" > "$HANK_DIR/logs/hank.log"
+    echo "log2" > "$HANK_DIR/logs/claude_output_2025.log"
+    echo "session" > "$HANK_DIR/.hank_session"
+
+    run bash "$HANK_SCRIPT" --clean --clean-logs
+
+    assert_success
+    [[ ! -f "$HANK_DIR/logs/hank.log" ]]
+    [[ ! -f "$HANK_DIR/logs/claude_output_2025.log" ]]
+}
+
+@test "--clean with no transient files reports already clean" {
+    # Only persistent files exist (PROMPT.md created in setup)
+    # Remove the transient files created in setup
+    rm -f "$HANK_DIR/.call_count" "$HANK_DIR/.last_reset" "$HANK_DIR/.exit_signals"
+
+    run bash "$HANK_SCRIPT" --clean
+
+    assert_success
+    [[ "$output" == *"Already clean"* ]]
+}
+
+@test "--clean with missing .hank dir still succeeds" {
+    rm -rf "$HANK_DIR"
+
+    run bash "$HANK_SCRIPT" --clean
+
+    assert_success
+    # Script creates .hank/ at startup, so clean runs but finds nothing
+    [[ "$output" == *"Already clean"* ]] || [[ "$output" == *"nothing to clean"* ]]
+}
+
+@test "--clean flag appears in help text" {
+    run bash "$HANK_SCRIPT" --help
+
+    assert_success
+    [[ "$output" == *"--clean"* ]]
+    [[ "$output" == *"--clean-logs"* ]]
+}
