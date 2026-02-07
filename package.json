@@ -9,10 +9,10 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "bats tests/unit/ tests/integration/",
-    "test:unit": "bats tests/unit/",
-    "test:integration": "bats tests/integration/",
-    "test:e2e": "bats tests/e2e/"
+    "test": "bats --jobs 4 tests/unit/ tests/integration/",
+    "test:unit": "bats --jobs 4 tests/unit/",
+    "test:integration": "bats --jobs 4 tests/integration/",
+    "test:e2e": "bats --jobs 4 tests/e2e/"
   },
   "repository": {
     "type": "git",
