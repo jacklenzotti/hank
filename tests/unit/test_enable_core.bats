@@ -274,16 +274,18 @@ EOF
 # TEMPLATE GENERATION (4 tests)
 # =============================================================================
 
-@test "generate_prompt_md includes project name" {
+@test "generate_prompt_md includes Playbook-style build instructions" {
     output=$(generate_prompt_md "my-project" "typescript")
 
-    [[ "$output" =~ "my-project" ]]
+    [[ "$output" =~ "IMPLEMENTATION_PLAN.md" ]]
+    [[ "$output" =~ "RALPH_STATUS" ]]
 }
 
-@test "generate_prompt_md includes project type" {
+@test "generate_prompt_md includes subagent instructions" {
     output=$(generate_prompt_md "my-project" "python")
 
-    [[ "$output" =~ "python" ]]
+    [[ "$output" =~ "Sonnet subagents" ]]
+    [[ "$output" =~ "Opus subagents" ]]
 }
 
 @test "generate_agent_md includes build command" {
@@ -349,9 +351,9 @@ EOF
     local prompt_content
     prompt_content=$(cat .ralph/PROMPT.md)
 
-    # Should contain new project name, not "old content"
+    # Should contain Playbook prompt content, not "old content"
     [[ "$prompt_content" != "old content" ]]
-    [[ "$prompt_content" == *"new-project"* ]]
+    [[ "$prompt_content" == *"IMPLEMENTATION_PLAN.md"* ]]
 }
 
 @test "safe_create_file overwrites existing file when ENABLE_FORCE is true" {

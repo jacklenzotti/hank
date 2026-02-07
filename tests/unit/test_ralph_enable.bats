@@ -72,7 +72,8 @@ teardown() {
     assert_success
     [[ -d ".ralph" ]]
     [[ -f ".ralph/PROMPT.md" ]]
-    [[ -f ".ralph/fix_plan.md" ]]
+    [[ -f ".ralph/IMPLEMENTATION_PLAN.md" ]]
+    [[ -f ".ralph/PROMPT_plan.md" ]]
     [[ -f ".ralph/AGENT.md" ]]
 }
 
@@ -197,7 +198,7 @@ EOF
 
     assert_success
     # Check that tasks were imported
-    grep -q "authentication\|API\|database" .ralph/fix_plan.md
+    grep -q "authentication\|API\|database" .ralph/IMPLEMENTATION_PLAN.md
 }
 
 @test "ralph enable-ci fails gracefully with missing PRD file" {

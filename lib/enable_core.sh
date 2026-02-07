@@ -81,11 +81,15 @@ check_existing_ralph() {
     fi
 
     # Check for required files
+    # Accept either IMPLEMENTATION_PLAN.md (new) or fix_plan.md (legacy)
     local required_files=(
         ".ralph/PROMPT.md"
-        ".ralph/fix_plan.md"
         ".ralph/AGENT.md"
     )
+    local has_plan=false
+    if [[ -f ".ralph/IMPLEMENTATION_PLAN.md" ]] || [[ -f ".ralph/fix_plan.md" ]]; then
+        has_plan=true
+    fi
 
     local missing=()
     local found=0
@@ -97,6 +101,13 @@ check_existing_ralph() {
             missing+=("$file")
         fi
     done
+
+    # Add plan file to missing if neither variant exists
+    if [[ "$has_plan" == "false" ]]; then
+        missing+=(".ralph/IMPLEMENTATION_PLAN.md")
+    else
+        found=$((found + 1))
+    fi
 
     RALPH_MISSING_FILES=("${missing[@]}")
 
@@ -498,54 +509,34 @@ generate_prompt_md() {
     local framework="${3:-}"
     local objectives="${4:-}"
 
-    local framework_line=""
-    if [[ -n "$framework" ]]; then
-        framework_line="**Framework:** $framework"
-    fi
+    cat << 'PROMPTEOF'
+# Ralph Build Instructions
 
-    local objectives_section=""
-    if [[ -n "$objectives" ]]; then
-        objectives_section="$objectives"
-    else
-        objectives_section="- Review the codebase and understand the current state
-- Follow tasks in fix_plan.md
-- Implement one task per loop
-- Write tests for new functionality
-- Update documentation as needed"
-    fi
+0a. Study .ralph/specs/* with up to 500 parallel Sonnet subagents to learn the application specifications.
+0b. Study @IMPLEMENTATION_PLAN.md.
+0c. For reference, the application source code is in `src/*`.
 
-    cat << PROMPTEOF
-# Ralph Development Instructions
+1. Your task is to implement functionality per the specifications using parallel subagents. Follow @IMPLEMENTATION_PLAN.md and choose the most important item to address. Before making changes, search the codebase (don't assume not implemented) using Sonnet subagents. You may use up to 500 parallel Sonnet subagents for searches/reads and only 1 Sonnet subagent for build/tests. Use Opus subagents when complex reasoning is needed (debugging, architectural decisions).
+2. After implementing functionality or resolving problems, run the tests for that unit of code that was improved. If functionality is missing then it's your job to add it as per the application specifications. Ultrathink.
+3. When you discover issues, immediately update @IMPLEMENTATION_PLAN.md with your findings using a subagent. When resolved, update and remove the item.
+4. When the tests pass, update @IMPLEMENTATION_PLAN.md, then `git add -A` then `git commit` with a message describing the changes.
 
-## Context
-You are Ralph, an autonomous AI development agent working on the **${project_name}** project.
+5. Important: When authoring documentation, capture the why -- tests and implementation importance.
+6. Important: Single sources of truth, no migrations/adapters. If tests unrelated to your work fail, resolve them as part of the increment.
+7. You may add extra logging if required to debug issues.
+8. Keep @IMPLEMENTATION_PLAN.md current with learnings using a subagent -- future work depends on this to avoid duplicating efforts. Update especially after finishing your turn.
+9. When you learn something new about how to run the application, update @AGENTS.md using a subagent but keep it brief.
+10. For any bugs you notice, resolve them or document them in @IMPLEMENTATION_PLAN.md using a subagent even if it is unrelated to the current piece of work.
+11. Implement functionality completely. Placeholders and stubs waste efforts and time redoing the same work.
+12. When @IMPLEMENTATION_PLAN.md becomes large periodically clean out the items that are completed from the file using a subagent.
+13. If you find inconsistencies in the specs/* then use an Opus subagent with 'ultrathink' requested to update the specs.
+14. IMPORTANT: Keep @AGENTS.md operational only -- status updates and progress notes belong in IMPLEMENTATION_PLAN.md. A bloated AGENTS.md pollutes every future loop's context.
 
-**Project Type:** ${project_type}
-${framework_line}
-
-## Current Objectives
-${objectives_section}
-
-## Key Principles
-- ONE task per loop - focus on the most important thing
-- Search the codebase before assuming something isn't implemented
-- Write comprehensive tests with clear documentation
-- Update fix_plan.md with your learnings
-- Commit working changes with descriptive messages
-
-## Testing Guidelines
-- LIMIT testing to ~20% of your total effort per loop
-- PRIORITIZE: Implementation > Documentation > Tests
-- Only write tests for NEW functionality you implement
-
-## Build & Run
-See AGENT.md for build and run instructions.
-
-## Status Reporting (CRITICAL)
+## Status Reporting (CRITICAL - Ralph needs this!)
 
 At the end of your response, ALWAYS include this status block:
 
-\`\`\`
+```
 ---RALPH_STATUS---
 STATUS: IN_PROGRESS | COMPLETE | BLOCKED
 TASKS_COMPLETED_THIS_LOOP: <number>
@@ -555,11 +546,47 @@ WORK_TYPE: IMPLEMENTATION | TESTING | DOCUMENTATION | REFACTORING
 EXIT_SIGNAL: false | true
 RECOMMENDATION: <one line summary of what to do next>
 ---END_RALPH_STATUS---
-\`\`\`
+```
 
-## Current Task
-Follow fix_plan.md and choose the most important item to implement next.
+Set EXIT_SIGNAL to true when ALL items in IMPLEMENTATION_PLAN.md are resolved, all tests pass, and all specs are implemented. Do NOT continue with busy work when EXIT_SIGNAL should be true. Do NOT run tests repeatedly without implementing new features.
 PROMPTEOF
+}
+
+# generate_prompt_plan_md - Generate PROMPT_plan.md for planning mode
+#
+# Outputs to stdout
+#
+generate_prompt_plan_md() {
+    cat << 'PLANEOF'
+# Ralph Planning Instructions
+
+0a. Study .ralph/specs/* with up to 250 parallel Sonnet subagents to learn the application specifications.
+0b. Study @IMPLEMENTATION_PLAN.md (if present) to understand the plan so far.
+0c. Study `src/lib/*` with up to 250 parallel Sonnet subagents to understand shared utilities & components.
+0d. For reference, the application source code is in `src/*`.
+
+1. Study @IMPLEMENTATION_PLAN.md (if present; it may be incorrect) and use up to 500 Sonnet subagents to study existing source code in `src/*` and compare it against `specs/*`. Use an Opus subagent to analyze findings, prioritize tasks, and create/update @IMPLEMENTATION_PLAN.md as a bullet point list sorted in priority of items yet to be implemented. Ultrathink. Consider searching for TODO, minimal implementations, placeholders, skipped/flaky tests, and inconsistent patterns. Study @IMPLEMENTATION_PLAN.md to determine starting point for research and keep it up to date with items considered complete/incomplete using subagents.
+
+IMPORTANT: Plan only. Do NOT implement anything. Do NOT assume functionality is missing; confirm with code search first. Treat `src/lib` as the project's standard library for shared utilities and components. Prefer consolidated, idiomatic implementations there over ad-hoc copies.
+
+## Status Reporting (CRITICAL - Ralph needs this!)
+
+At the end of your response, ALWAYS include this status block:
+
+```
+---RALPH_STATUS---
+STATUS: IN_PROGRESS | COMPLETE | BLOCKED
+TASKS_COMPLETED_THIS_LOOP: <number>
+FILES_MODIFIED: <number>
+TESTS_STATUS: NOT_RUN
+WORK_TYPE: DOCUMENTATION
+EXIT_SIGNAL: true
+RECOMMENDATION: <one line summary of planning results>
+---END_RALPH_STATUS---
+```
+
+Planning mode always sets EXIT_SIGNAL: true (single iteration).
+PLANEOF
 }
 
 # generate_agent_md - Generate AGENT.md with detected build commands
@@ -577,33 +604,21 @@ generate_agent_md() {
     local run_cmd="${3:-echo 'No run command configured'}"
 
     cat << AGENTEOF
-# Ralph Agent Configuration
+## Build & Run
 
-## Build Instructions
+Install: \`${build_cmd}\`
+Build: \`${build_cmd}\`
+Run: \`${run_cmd}\`
 
-\`\`\`bash
-# Build the project
-${build_cmd}
-\`\`\`
+## Validation
 
-## Test Instructions
+Run these after implementing to get immediate feedback:
 
-\`\`\`bash
-# Run tests
-${test_cmd}
-\`\`\`
+- Tests: \`${test_cmd}\`
 
-## Run Instructions
+## Operational Notes
 
-\`\`\`bash
-# Start/run the project
-${run_cmd}
-\`\`\`
-
-## Notes
-- Update this file when build process changes
-- Add environment setup instructions as needed
-- Include any pre-requisites or dependencies
+<!-- Ralph updates this section automatically with learnings -->
 AGENTEOF
 }
 
@@ -615,45 +630,32 @@ AGENTEOF
 # Outputs to stdout
 #
 generate_fix_plan_md() {
+    # Legacy wrapper - calls generate_implementation_plan_md
+    generate_implementation_plan_md "$@"
+}
+
+# generate_implementation_plan_md - Generate IMPLEMENTATION_PLAN.md
+#
+# Parameters:
+#   $1 (tasks) - Tasks to include (newline-separated, bullet format)
+#
+# Outputs to stdout
+#
+generate_implementation_plan_md() {
     local tasks="${1:-}"
 
-    local high_priority=""
-    local medium_priority=""
-    local low_priority=""
-
     if [[ -n "$tasks" ]]; then
-        high_priority="$tasks"
+        cat << IMPLPLANEOF
+# Implementation Plan
+
+${tasks}
+IMPLPLANEOF
     else
-        high_priority="- [ ] Review codebase and understand architecture
-- [ ] Identify and document key components
-- [ ] Set up development environment"
-        medium_priority="- [ ] Implement core features
-- [ ] Add test coverage
-- [ ] Update documentation"
-        low_priority="- [ ] Performance optimization
-- [ ] Code cleanup and refactoring"
+        cat << 'IMPLPLANEOF'
+<!-- Generated by LLM with content and structure it deems most appropriate -->
+<!-- Run: ralph --mode plan to populate this file -->
+IMPLPLANEOF
     fi
-
-    cat << FIXPLANEOF
-# Ralph Fix Plan
-
-## High Priority
-${high_priority}
-
-## Medium Priority
-${medium_priority}
-
-## Low Priority
-${low_priority}
-
-## Completed
-- [x] Project enabled for Ralph
-
-## Notes
-- Focus on MVP functionality first
-- Ensure each feature is properly tested
-- Update this file after each major milestone
-FIXPLANEOF
 }
 
 # generate_ralphrc - Generate .ralphrc configuration file
@@ -773,9 +775,15 @@ enable_ralph_in_directory() {
     agent_content=$(generate_agent_md "$DETECTED_BUILD_CMD" "$DETECTED_TEST_CMD" "$DETECTED_RUN_CMD")
     safe_create_file ".ralph/AGENT.md" "$agent_content"
 
-    local fix_plan_content
-    fix_plan_content=$(generate_fix_plan_md "$task_content")
-    safe_create_file ".ralph/fix_plan.md" "$fix_plan_content"
+    # Create IMPLEMENTATION_PLAN.md (Playbook-style task state)
+    local impl_plan_content
+    impl_plan_content=$(generate_implementation_plan_md "$task_content")
+    safe_create_file ".ralph/IMPLEMENTATION_PLAN.md" "$impl_plan_content"
+
+    # Create PROMPT_plan.md for planning mode
+    local plan_prompt_content
+    plan_prompt_content=$(generate_prompt_plan_md)
+    safe_create_file ".ralph/PROMPT_plan.md" "$plan_prompt_content"
 
     # Detect task sources for .ralphrc
     detect_task_sources
@@ -809,7 +817,9 @@ export -f detect_git_info
 export -f detect_task_sources
 export -f get_templates_dir
 export -f generate_prompt_md
+export -f generate_prompt_plan_md
 export -f generate_agent_md
 export -f generate_fix_plan_md
+export -f generate_implementation_plan_md
 export -f generate_ralphrc
 export -f enable_ralph_in_directory

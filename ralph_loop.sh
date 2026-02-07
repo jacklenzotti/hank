@@ -20,7 +20,10 @@ source "$SCRIPT_DIR/lib/circuit_breaker.sh"
 # Configuration
 # Ralph-specific files live in .ralph/ subfolder
 RALPH_DIR=".ralph"
+RALPH_MODE="build"  # plan or build
 PROMPT_FILE="$RALPH_DIR/PROMPT.md"
+PROMPT_PLAN_FILE="$RALPH_DIR/PROMPT_plan.md"
+PLAN_FILE="$RALPH_DIR/IMPLEMENTATION_PLAN.md"
 LOG_DIR="$RALPH_DIR/logs"
 DOCS_DIR="$RALPH_DIR/docs/generated"
 STATUS_FILE="$RALPH_DIR/status.json"
@@ -491,9 +494,23 @@ should_exit_gracefully() {
         return 0
     fi
     
-    # 5. Check fix_plan.md for completion
+    # 5. Check IMPLEMENTATION_PLAN.md (Playbook-style) for completion
+    if [[ -f "$PLAN_FILE" ]]; then
+        local plan_total=$(grep -cE "^[[:space:]]*-[[:space:]]" "$PLAN_FILE" 2>/dev/null || true)
+        local plan_done=$(grep -ciE "\[DONE\]|\[COMPLETE\]" "$PLAN_FILE" 2>/dev/null || true)
+        [[ -z "$plan_total" ]] && plan_total=0
+        [[ -z "$plan_done" ]] && plan_done=0
+        local plan_remaining=$((plan_total - plan_done))
+
+        if [[ $plan_total -gt 0 ]] && [[ $plan_remaining -le 0 ]]; then
+            log_status "WARN" "Exit condition: All IMPLEMENTATION_PLAN.md items completed ($plan_done/$plan_total)" >&2
+            echo "plan_complete"
+            return 0
+        fi
+    fi
+
+    # 5b. Legacy fallback: Check fix_plan.md for completion
     # Fix #144: Only match valid markdown checkboxes, not date entries like [2026-01-29]
-    # Valid patterns: "- [ ]" (uncompleted) and "- [x]" or "- [X]" (completed)
     if [[ -f "$RALPH_DIR/fix_plan.md" ]]; then
         local uncompleted_items=$(grep -cE "^[[:space:]]*- \[ \]" "$RALPH_DIR/fix_plan.md" 2>/dev/null || true)
         [[ -z "$uncompleted_items" ]] && uncompleted_items=0
@@ -601,9 +618,17 @@ build_loop_context() {
     # Add loop number
     context="Loop #${loop_count}. "
 
-    # Extract incomplete tasks from fix_plan.md
-    # Bug #3 Fix: Support indented markdown checkboxes with [[:space:]]* pattern
-    if [[ -f "$RALPH_DIR/fix_plan.md" ]]; then
+    # Extract incomplete tasks from IMPLEMENTATION_PLAN.md (Playbook-style) or fix_plan.md (legacy)
+    if [[ -f "$PLAN_FILE" ]]; then
+        local total_items=$(grep -cE "^[[:space:]]*-[[:space:]]" "$PLAN_FILE" 2>/dev/null || true)
+        local done_items=$(grep -ciE "\[DONE\]|\[COMPLETE\]" "$PLAN_FILE" 2>/dev/null || true)
+        [[ -z "$total_items" ]] && total_items=0
+        [[ -z "$done_items" ]] && done_items=0
+        local incomplete_tasks=$((total_items - done_items))
+        [[ $incomplete_tasks -lt 0 ]] && incomplete_tasks=0
+        context+="Remaining tasks: ${incomplete_tasks}. "
+    elif [[ -f "$RALPH_DIR/fix_plan.md" ]]; then
+        # Legacy fallback: checkbox-style fix_plan.md
         local incomplete_tasks=$(grep -cE "^[[:space:]]*- \[ \]" "$RALPH_DIR/fix_plan.md" 2>/dev/null || true)
         [[ -z "$incomplete_tasks" ]] && incomplete_tasks=0
         context+="Remaining tasks: ${incomplete_tasks}. "
@@ -1040,6 +1065,12 @@ execute_claude_code() {
         session_id=$(init_claude_session)
     fi
 
+    # Select prompt file based on mode
+    local effective_prompt="$PROMPT_FILE"
+    if [[ "$RALPH_MODE" == "plan" ]]; then
+        effective_prompt="$PROMPT_PLAN_FILE"
+    fi
+
     # Build the Claude CLI command with modern flags
     # Note: We use the modern CLI with -p flag when CLAUDE_OUTPUT_FORMAT is "json"
     # For backward compatibility, fall back to stdin piping for text mode
@@ -1047,7 +1078,7 @@ execute_claude_code() {
 
     if [[ "$CLAUDE_OUTPUT_FORMAT" == "json" ]]; then
         # Modern approach: use CLI flags (builds CLAUDE_CMD_ARGS array)
-        if build_claude_command "$PROMPT_FILE" "$loop_context" "$session_id"; then
+        if build_claude_command "$effective_prompt" "$loop_context" "$session_id"; then
             use_modern_cli=true
             log_status "INFO" "Using modern CLI mode (JSON output)"
         else
@@ -1202,7 +1233,7 @@ execute_claude_code() {
         # Note: Legacy mode doesn't use --allowedTools, so tool permissions
         # will be handled by Claude Code's default permission system
         if [[ "$use_modern_cli" == "false" ]]; then
-            if portable_timeout ${timeout_seconds}s $CLAUDE_CODE_CMD < "$PROMPT_FILE" > "$output_file" 2>&1 &
+            if portable_timeout ${timeout_seconds}s $CLAUDE_CODE_CMD < "$effective_prompt" > "$output_file" 2>&1 &
             then
                 :  # Continue to wait loop
             else
@@ -1433,8 +1464,23 @@ main() {
         echo "  4. Navigate to an existing Ralph project directory"
         echo "  5. Or create .ralph/PROMPT.md manually in this directory"
         echo ""
-        echo "Ralph projects should contain: .ralph/PROMPT.md, .ralph/fix_plan.md, .ralph/specs/, src/, etc."
+        echo "Ralph projects should contain: .ralph/PROMPT.md, .ralph/IMPLEMENTATION_PLAN.md, .ralph/specs/, src/, etc."
         exit 1
+    fi
+
+    # Plan mode: check for PROMPT_plan.md and run single iteration
+    if [[ "$RALPH_MODE" == "plan" ]]; then
+        if [[ ! -f "$PROMPT_PLAN_FILE" ]]; then
+            log_status "ERROR" "Plan mode requires $PROMPT_PLAN_FILE"
+            echo "Run 'ralph-enable --force' to generate planning prompt."
+            exit 1
+        fi
+        log_status "INFO" "📋 Planning mode: single iteration to generate IMPLEMENTATION_PLAN.md"
+        init_session_tracking
+        init_call_tracking
+        execute_claude_code 1
+        log_status "SUCCESS" "Planning complete. Review $PLAN_FILE"
+        exit 0
     fi
 
     # Initialize session tracking before entering the loop
@@ -1611,6 +1657,11 @@ Options:
     --circuit-status        Show circuit breaker status and exit
     --reset-session         Reset session state and exit (clears session continuity)
 
+Execution Modes:
+    --mode MODE             Set execution mode: plan or build (default: build)
+                            plan: single iteration to generate IMPLEMENTATION_PLAN.md
+                            build: continuous loop implementing tasks (default)
+
 Modern CLI Options (Phase 1.1):
     --output-format FORMAT  Set Claude output format: json or text (default: $CLAUDE_OUTPUT_FORMAT)
     --allowed-tools TOOLS   Comma-separated list of allowed tools (default: $CLAUDE_ALLOWED_TOOLS)
@@ -1632,6 +1683,8 @@ Example workflow:
     $0 --monitor             # Start Ralph with monitoring
 
 Examples:
+    $0 --mode plan              # Generate/update IMPLEMENTATION_PLAN.md (single iteration)
+    $0 --mode build             # Build mode (default, continuous loop)
     $0 --calls 50 --prompt my_prompt.md
     $0 --monitor             # Start with integrated tmux monitoring
     $0 --live                # Show Claude Code output in real-time (streaming)
@@ -1740,6 +1793,15 @@ while [[ $# -gt 0 ]]; do
                 exit 1
             fi
             CLAUDE_SESSION_EXPIRY_HOURS="$2"
+            shift 2
+            ;;
+        --mode)
+            if [[ "$2" == "plan" || "$2" == "build" ]]; then
+                RALPH_MODE="$2"
+            else
+                echo "Error: --mode must be 'plan' or 'build'"
+                exit 1
+            fi
             shift 2
             ;;
         *)

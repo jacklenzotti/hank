@@ -384,12 +384,17 @@ main() {
 
     # Track created files
     [[ -f ".ralph/PROMPT.md" ]] && CREATED_FILES+=(".ralph/PROMPT.md")
+    [[ -f ".ralph/IMPLEMENTATION_PLAN.md" ]] && CREATED_FILES+=(".ralph/IMPLEMENTATION_PLAN.md")
     [[ -f ".ralph/fix_plan.md" ]] && CREATED_FILES+=(".ralph/fix_plan.md")
     [[ -f ".ralph/AGENT.md" ]] && CREATED_FILES+=(".ralph/AGENT.md")
+    [[ -f ".ralph/PROMPT_plan.md" ]] && CREATED_FILES+=(".ralph/PROMPT_plan.md")
     [[ -f ".ralphrc" ]] && CREATED_FILES+=(".ralphrc")
 
-    # Verify required files exist
-    if [[ ! -f ".ralph/PROMPT.md" ]] || [[ ! -f ".ralph/fix_plan.md" ]]; then
+    # Verify required files exist (accept either IMPLEMENTATION_PLAN.md or fix_plan.md)
+    local has_plan=false
+    [[ -f ".ralph/IMPLEMENTATION_PLAN.md" ]] && has_plan=true
+    [[ -f ".ralph/fix_plan.md" ]] && has_plan=true
+    if [[ ! -f ".ralph/PROMPT.md" ]] || [[ "$has_plan" == "false" ]]; then
         output_error "Required files were not created"
         exit $ENABLE_ERROR
     fi
