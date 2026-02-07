@@ -119,6 +119,21 @@ Automatically detects and halts:
 - 5-hour API limit detection with wait/exit prompt
 - Configurable via `--calls` flag or `.hankrc`
 
+### Cost Tracking
+
+Hank tracks API costs and token usage for every loop iteration:
+
+- **Per-loop logging** — Each iteration records cost, tokens (input/output/cache), duration, and session ID to `.hank/cost_log.jsonl`
+- **Session summaries** — Running totals displayed at the end of each session (plan, build, or dry-run)
+- **Per-issue breakdown** — When using `--source github`, costs are attributed to individual issues
+- **Historical reports** — Run `hank --cost-summary` to see a full cost report across all sessions
+
+```bash
+hank --cost-summary   # Show cost report from all sessions
+```
+
+The cost log persists across sessions (only session totals are reset between runs), giving you a complete spend history for the project.
+
 ## Configuration
 
 ### Project Config (.hankrc)
@@ -142,6 +157,7 @@ my-project/
 │   ├── PROMPT.md              # Instructions for Claude Code
 │   ├── IMPLEMENTATION_PLAN.md # Task state (or synced from GitHub Issues)
 │   ├── AGENTS.md              # Build/test commands (auto-maintained)
+│   ├── cost_log.jsonl         # Per-loop cost/token data (persistent)
 │   ├── specs/                 # Detailed requirements
 │   └── logs/                  # Execution logs
 ├── .hankrc                    # Project settings
@@ -188,6 +204,7 @@ hank [OPTIONS]
   --no-continue                 # Disable session continuity
   --reset-session               # Clear session state
   --reset-circuit               # Reset circuit breaker
+  --cost-summary                # Show cost report from all sessions
   --status                      # Show current status
   --help                        # Show help
 
