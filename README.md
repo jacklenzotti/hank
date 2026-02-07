@@ -5,13 +5,13 @@
 
 > **Autonomous AI development loop for Claude Code with intelligent orchestration**
 
-Hank wraps Claude Code in a persistent outer loop that runs autonomously until your project is done. It manages rate limits, detects stalls, preserves session context, and coordinates work across planning and building phases — so you can walk away and come back to committed code.
+[Hank]([url](https://kingofthehill.fandom.com/wiki/Hank_Hill)) (Based on [Ralph]([url](https://github.com/frankbria/ralph-claude-code))) wraps Claude Code in a persistent outer loop that runs autonomously until your project is done. It manages rate limits, detects stalls, preserves session context, and coordinates work across planning and building phases — so you can walk away and come back to committed code.
 
 Based on [Geoffrey Huntley's technique](https://ghuntley.com/specs-hierarchical-task-network/) for continuous Claude Code execution.
 
 ## What Makes This Fork Different
 
-This fork adds three major capabilities on top of the core Hank engine:
+This fork adds some capabilities on top of the core Hank engine:
 
 ### Playbook-Style Prompts
 
@@ -39,6 +39,18 @@ Run `hank --source github` to use GitHub Issues as your task manager instead of 
 - Hank comments on issues with progress and closes them on completion
 - Labels track state: `hank:in-progress`, `hank:blocked`
 - Create issues from your phone, Hank picks them up on the next iteration
+
+
+### Cost Tracking
+
+Hank tracks API costs and token usage for every loop iteration:
+
+- **Per-loop logging** — Each iteration records cost, tokens (input/output/cache), duration, and session ID to `.hank/cost_log.jsonl`
+- **Session summaries** — Running totals displayed at the end of each session (plan, build, or dry-run)
+- **Per-issue breakdown** — When using `--source github`, costs are attributed to individual issues
+- **Historical reports** — Run `hank --cost-summary` to see a full cost report across all sessions
+
+
 
 ## Quick Start
 
@@ -119,14 +131,7 @@ Automatically detects and halts:
 - 5-hour API limit detection with wait/exit prompt
 - Configurable via `--calls` flag or `.hankrc`
 
-### Cost Tracking
 
-Hank tracks API costs and token usage for every loop iteration:
-
-- **Per-loop logging** — Each iteration records cost, tokens (input/output/cache), duration, and session ID to `.hank/cost_log.jsonl`
-- **Session summaries** — Running totals displayed at the end of each session (plan, build, or dry-run)
-- **Per-issue breakdown** — When using `--source github`, costs are attributed to individual issues
-- **Historical reports** — Run `hank --cost-summary` to see a full cost report across all sessions
 
 ```bash
 hank --cost-summary   # Show cost report from all sessions
