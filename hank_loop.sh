@@ -1186,7 +1186,7 @@ execute_claude_code() {
         # Note: `cat` before jq is required — jq 1.8+ hangs reading directly from
         # Claude CLI's pipe due to Node.js stdout buffering. `cat` normalizes this.
         set -o pipefail
-        portable_timeout ${timeout_seconds}s "${LIVE_CMD_ARGS[@]}" \
+        portable_timeout ${timeout_seconds}s "${LIVE_CMD_ARGS[@]}" < /dev/null \
             2>&1 | stdbuf -oL tee "$output_file" | cat | jq --unbuffered -j "$jq_filter" 2>/dev/null | stdbuf -oL tee "$LIVE_LOG_FILE"
 
         # Capture exit codes from pipeline
