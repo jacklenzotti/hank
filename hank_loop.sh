@@ -1181,12 +1181,13 @@ execute_claude_code() {
             end'
 
         # Execute with streaming, preserving all flags from build_claude_command()
-        # Use stdbuf to disable buffering for real-time output
         # Use portable_timeout for consistent timeout protection (Issue: missing timeout)
         # Capture all pipeline exit codes for proper error handling
+        # Note: `cat` before jq is required — jq 1.8+ hangs reading directly from
+        # Claude CLI's pipe due to Node.js stdout buffering. `cat` normalizes this.
         set -o pipefail
-        portable_timeout ${timeout_seconds}s stdbuf -oL "${LIVE_CMD_ARGS[@]}" \
-            2>&1 | stdbuf -oL tee "$output_file" | stdbuf -oL jq --unbuffered -j "$jq_filter" 2>/dev/null | tee "$LIVE_LOG_FILE"
+        portable_timeout ${timeout_seconds}s "${LIVE_CMD_ARGS[@]}" \
+            2>&1 | stdbuf -oL tee "$output_file" | cat | jq --unbuffered -j "$jq_filter" 2>/dev/null | stdbuf -oL tee "$LIVE_LOG_FILE"
 
         # Capture exit codes from pipeline
         local -a pipe_status=("${PIPESTATUS[@]}")
