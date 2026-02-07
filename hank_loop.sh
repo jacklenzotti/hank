@@ -28,6 +28,7 @@ HANK_TASK_SOURCE="plan"  # plan or github
 HANK_DRY_RUN=false
 HANK_CLEAN=false
 HANK_CLEAN_LOGS=false
+HANK_STOP=false
 PROMPT_FILE="$HANK_DIR/PROMPT.md"
 PROMPT_PLAN_FILE="$HANK_DIR/PROMPT_plan.md"
 PLAN_FILE="$HANK_DIR/IMPLEMENTATION_PLAN.md"
@@ -1471,6 +1472,23 @@ cleanup() {
     exit 0
 }
 
+# Stop all running Hank tmux sessions
+stop_hank() {
+    local found=false
+    local sessions
+    sessions=$(tmux list-sessions 2>/dev/null | grep '^hank-' | cut -d: -f1)
+    if [[ -n "$sessions" ]]; then
+        while IFS= read -r session; do
+            tmux kill-session -t "$session" 2>/dev/null
+            echo -e "${GREEN}Stopped tmux session: $session${NC}"
+            found=true
+        done <<< "$sessions"
+    fi
+    if [[ "$found" == "false" ]]; then
+        echo "No running Hank sessions found."
+    fi
+}
+
 # Clean transient/session state files from .hank/
 # Preserves persistent project files (prompts, plans, specs, cost history, docs, logs)
 clean_hank_dir() {
@@ -1797,6 +1815,7 @@ Options:
     --circuit-status        Show circuit breaker status and exit
     --reset-session         Reset session state and exit (clears session continuity)
     --cost-summary          Show cost report from all sessions and exit
+    --stop                  Stop all running Hank tmux sessions and exit
     --clean                 Remove transient/session state files from .hank/ and exit
                             Preserves prompts, plans, specs, cost_log.jsonl, docs, logs
     --clean-logs            Also remove .hank/logs/* (use with --clean)
@@ -1859,6 +1878,7 @@ Examples:
     $0 --output-format text     # Use legacy text output format
     $0 --no-continue            # Disable session continuity
     $0 --session-expiry 48      # 48-hour session expiration
+    $0 --stop                   # Stop all running Hank sessions
     $0 --clean                  # Remove stale session/state files
     $0 --clean --clean-logs     # Also remove log files
 
@@ -1989,6 +2009,10 @@ while [[ $# -gt 0 ]]; do
             show_cost_report
             exit 0
             ;;
+        --stop)
+            HANK_STOP=true
+            shift
+            ;;
         --clean)
             HANK_CLEAN=true
             shift
@@ -2007,6 +2031,12 @@ done
 
 # Only execute when run directly, not when sourced
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    # Handle --stop before anything else (no project validation needed)
+    if [[ "$HANK_STOP" == "true" ]]; then
+        stop_hank
+        exit 0
+    fi
+
     # Handle --clean before anything else (no project validation needed)
     if [[ "$HANK_CLEAN" == "true" ]]; then
         if [[ ! -d "$HANK_DIR" ]]; then

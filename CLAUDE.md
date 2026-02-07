@@ -82,6 +82,7 @@ hank --live                         # Stream Claude output in real-time
 hank --calls 50 --timeout 30        # Custom rate limit and timeout
 
 # Session management
+hank --stop                         # Stop all running Hank sessions
 hank --reset-session                # Clear session state
 hank --no-continue                  # Fresh context each loop
 hank --reset-circuit                # Reset circuit breaker
