@@ -32,6 +32,7 @@ Fork of [frankbria/ralph-claude-code](https://github.com/frankbria/ralph-claude-
 | `wizard_utils.sh`      | Interactive prompt utilities for the enable wizard                                                                |
 | `date_utils.sh`        | Cross-platform date/timestamp utilities                                                                           |
 | `timeout_utils.sh`     | Cross-platform timeout command (Linux `timeout` / macOS `gtimeout`)                                               |
+| `cost_tracker.sh`      | Cost logging (JSONL), session totals, summary display, per-issue cost tracking                                    |
 
 ### Templates (templates/)
 
@@ -84,6 +85,7 @@ hank --calls 50 --timeout 30        # Custom rate limit and timeout
 hank --reset-session                # Clear session state
 hank --no-continue                  # Fresh context each loop
 hank --reset-circuit                # Reset circuit breaker
+hank --cost-summary                 # Show cost report from all sessions
 
 # Testing
 npm test                            # All tests
@@ -100,6 +102,7 @@ my-project/
 │   ├── PROMPT_plan.md         # Plan mode instructions
 │   ├── IMPLEMENTATION_PLAN.md # Task state (or synced from GitHub Issues)
 │   ├── AGENTS.md              # Build/test commands (auto-maintained)
+│   ├── cost_log.jsonl         # Per-loop cost/token data (persistent)
 │   ├── specs/                 # Detailed requirements
 │   └── logs/                  # Execution logs
 ├── .hankrc                    # Project config (tools, timeouts, format)

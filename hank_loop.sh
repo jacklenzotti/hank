@@ -17,6 +17,7 @@ source "$SCRIPT_DIR/lib/timeout_utils.sh"
 source "$SCRIPT_DIR/lib/response_analyzer.sh"
 source "$SCRIPT_DIR/lib/circuit_breaker.sh"
 source "$SCRIPT_DIR/lib/task_sources.sh"
+source "$SCRIPT_DIR/lib/cost_tracker.sh"
 
 # Configuration
 # Hank-specific files live in .hank/ subfolder
@@ -828,6 +829,9 @@ reset_session() {
     # Clear response analysis to prevent stale EXIT_SIGNAL from previous session
     rm -f "$RESPONSE_ANALYSIS_FILE" 2>/dev/null
 
+    # Clear cost session totals (preserve JSONL log for historical data)
+    reset_cost_session 2>/dev/null || true
+
     # Log the session transition (non-fatal to prevent script exit under set -e)
     log_session_transition "active" "reset" "$reason" "${loop_count:-0}" || true
 
@@ -1335,6 +1339,13 @@ EOF
         # Log analysis summary
         log_analysis_summary
 
+        # Record cost data for this loop
+        local current_issue_num=""
+        if [[ "$HANK_TASK_SOURCE" == "github" && -f "$PLAN_FILE" ]]; then
+            current_issue_num=$(grep -oE '#[0-9]+' "$PLAN_FILE" 2>/dev/null | head -1 | tr -d '#')
+        fi
+        record_loop_cost "$loop_count" "$RESPONSE_ANALYSIS_FILE" "$current_issue_num"
+
         # Report back to GitHub Issues if --source github
         if [[ "$HANK_TASK_SOURCE" == "github" ]]; then
             # Extract recommendation from output (contains issue number)
@@ -1525,6 +1536,7 @@ main() {
         init_session_tracking
         init_call_tracking
         execute_claude_code 1
+        show_cost_summary "false"
         log_status "SUCCESS" "Planning complete. Review $PLAN_FILE"
         exit 0
     fi
@@ -1533,6 +1545,7 @@ main() {
     if [[ "$HANK_DRY_RUN" == "true" ]]; then
         log_status "LOOP" "=== [DRY RUN] Starting single read-only iteration ==="
         execute_claude_code 1
+        show_cost_summary "false"
         log_status "SUCCESS" "[DRY RUN] Analysis complete. No files were modified."
         exit 0
     fi
@@ -1618,6 +1631,8 @@ main() {
             log_status "INFO" "  - API calls used: $(cat "$CALL_COUNT_FILE")"
             log_status "INFO" "  - Exit reason: $exit_reason"
 
+            show_cost_summary "$([[ "$HANK_TASK_SOURCE" == "github" ]] && echo "true" || echo "false")"
+
             break
         fi
         
@@ -1650,6 +1665,7 @@ main() {
             update_status "$loop_count" "$(cat "$CALL_COUNT_FILE")" "circuit_breaker_open" "halted" "stagnation_detected"
             log_status "ERROR" "🛑 Circuit breaker has opened - halting loop"
             log_status "INFO" "Run 'hank --reset-circuit' to reset the circuit breaker after addressing issues"
+            show_cost_summary "false"
             break
         elif [ $exec_result -eq 2 ]; then
             # API 5-hour limit reached - handle specially
@@ -1720,6 +1736,7 @@ Options:
     --reset-circuit         Reset circuit breaker to CLOSED state
     --circuit-status        Show circuit breaker status and exit
     --reset-session         Reset session state and exit (clears session continuity)
+    --cost-summary          Show cost report from all sessions and exit
 
 Execution Modes:
     --mode MODE             Set execution mode: plan or build (default: build)
@@ -1751,6 +1768,8 @@ Files created:
     - .hank/.hank_session_history: Session transition history (last 50)
     - .hank/.call_count: API call counter for rate limiting
     - .hank/.last_reset: Timestamp of last rate limit reset
+    - .hank/cost_log.jsonl: Per-loop cost/token data (persistent across sessions)
+    - .hank/.cost_session: Running session cost totals
 
 Example workflow:
     hank-setup my-project     # Create project
@@ -1839,6 +1858,7 @@ while [[ $# -gt 0 ]]; do
             # Reset session state only
             SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
             source "$SCRIPT_DIR/lib/date_utils.sh"
+            source "$SCRIPT_DIR/lib/cost_tracker.sh"
             reset_session "manual_reset_flag"
             echo -e "\033[0;32m✅ Session state reset successfully\033[0m"
             exit 0
@@ -1899,6 +1919,10 @@ while [[ $# -gt 0 ]]; do
         --dry-run)
             HANK_DRY_RUN=true
             shift
+            ;;
+        --cost-summary)
+            show_cost_report
+            exit 0
             ;;
         *)
             echo "Unknown option: $1"

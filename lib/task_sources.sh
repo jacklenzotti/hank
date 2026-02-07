@@ -634,10 +634,23 @@ report_to_github() {
         return 1
     fi
 
-    # Add progress comment
-    gh issue comment "$issue_number" --body "**Hank update** (loop $loop_count)
+    # Get cost line if cost tracker is available
+    local cost_line=""
+    if type get_issue_cost_summary &>/dev/null; then
+        cost_line=$(get_issue_cost_summary "$issue_number")
+    fi
+
+    # Build comment body
+    local comment_body="**Hank update** (loop $loop_count)
 Status: $status
-$summary" 2>/dev/null || true
+$summary"
+    if [[ -n "$cost_line" ]]; then
+        comment_body="${comment_body}
+${cost_line}"
+    fi
+
+    # Add progress comment
+    gh issue comment "$issue_number" --body "$comment_body" 2>/dev/null || true
 
     # Update labels based on status
     case "$status" in

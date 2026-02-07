@@ -209,6 +209,26 @@ parse_json_response() {
         denied_commands_json=$(jq -r '[.permission_denials[] | if .tool_name == "Bash" then "Bash(\(.tool_input.command // "?" | split("\n")[0] | .[0:60]))" else .tool_name // "unknown" end]' "$output_file" 2>/dev/null || echo "[]")
     fi
 
+    # Cost and usage fields (Claude CLI includes these at the top level)
+    local cost_usd=$(jq -r '.cost_usd // .metadata.usage.cost_usd // 0' "$output_file" 2>/dev/null)
+    local total_cost_usd=$(jq -r '.total_cost_usd // 0' "$output_file" 2>/dev/null)
+    local duration_ms=$(jq -r '.duration_ms // 0' "$output_file" 2>/dev/null)
+    local num_turns=$(jq -r '.num_turns // 0' "$output_file" 2>/dev/null)
+    local input_tokens=$(jq -r '.usage.input_tokens // .metadata.usage.input_tokens // 0' "$output_file" 2>/dev/null)
+    local output_tokens=$(jq -r '.usage.output_tokens // .metadata.usage.output_tokens // 0' "$output_file" 2>/dev/null)
+    local cache_creation_input_tokens=$(jq -r '.usage.cache_creation_input_tokens // 0' "$output_file" 2>/dev/null)
+    local cache_read_input_tokens=$(jq -r '.usage.cache_read_input_tokens // 0' "$output_file" 2>/dev/null)
+
+    # Sanitize cost/usage values
+    cost_usd=$(echo "$cost_usd" | awk '{printf "%.6f", $1+0}')
+    total_cost_usd=$(echo "$total_cost_usd" | awk '{printf "%.6f", $1+0}')
+    duration_ms=$(echo "$duration_ms" | awk '{printf "%d", $1+0}')
+    num_turns=$(echo "$num_turns" | awk '{printf "%d", $1+0}')
+    input_tokens=$(echo "$input_tokens" | awk '{printf "%d", $1+0}')
+    output_tokens=$(echo "$output_tokens" | awk '{printf "%d", $1+0}')
+    cache_creation_input_tokens=$(echo "$cache_creation_input_tokens" | awk '{printf "%d", $1+0}')
+    cache_read_input_tokens=$(echo "$cache_read_input_tokens" | awk '{printf "%d", $1+0}')
+
     # Normalize values
     # Convert exit_signal to boolean string
     # Only infer from status/completion_status if no explicit EXIT_SIGNAL was provided
@@ -271,6 +291,14 @@ parse_json_response() {
         --argjson has_permission_denials "$has_permission_denials" \
         --argjson permission_denial_count "$permission_denial_count" \
         --argjson denied_commands "$denied_commands_json" \
+        --arg cost_usd "$cost_usd" \
+        --arg total_cost_usd "$total_cost_usd" \
+        --argjson duration_ms "$duration_ms" \
+        --argjson num_turns "$num_turns" \
+        --argjson input_tokens "$input_tokens" \
+        --argjson output_tokens "$output_tokens" \
+        --argjson cache_creation_input_tokens "$cache_creation_input_tokens" \
+        --argjson cache_read_input_tokens "$cache_read_input_tokens" \
         '{
             status: $status,
             exit_signal: $exit_signal,
@@ -286,6 +314,16 @@ parse_json_response() {
             has_permission_denials: $has_permission_denials,
             permission_denial_count: $permission_denial_count,
             denied_commands: $denied_commands,
+            cost_usd: ($cost_usd | tonumber),
+            total_cost_usd: ($total_cost_usd | tonumber),
+            duration_ms: $duration_ms,
+            num_turns: $num_turns,
+            usage: {
+                input_tokens: $input_tokens,
+                output_tokens: $output_tokens,
+                cache_creation_input_tokens: $cache_creation_input_tokens,
+                cache_read_input_tokens: $cache_read_input_tokens
+            },
             metadata: {
                 loop_number: $loop_number,
                 session_id: $session_id
@@ -345,6 +383,13 @@ analyze_response() {
             local has_permission_denials=$(jq -r '.has_permission_denials' $HANK_DIR/.json_parse_result 2>/dev/null || echo "false")
             local permission_denial_count=$(jq -r '.permission_denial_count' $HANK_DIR/.json_parse_result 2>/dev/null || echo "0")
             local denied_commands_json=$(jq -r '.denied_commands' $HANK_DIR/.json_parse_result 2>/dev/null || echo "[]")
+
+            # Extract cost/usage fields
+            local cost_usd=$(jq -r '.cost_usd // 0' $HANK_DIR/.json_parse_result 2>/dev/null || echo "0")
+            local total_cost_usd=$(jq -r '.total_cost_usd // 0' $HANK_DIR/.json_parse_result 2>/dev/null || echo "0")
+            local duration_ms=$(jq -r '.duration_ms // 0' $HANK_DIR/.json_parse_result 2>/dev/null || echo "0")
+            local num_turns=$(jq -r '.num_turns // 0' $HANK_DIR/.json_parse_result 2>/dev/null || echo "0")
+            local usage_json=$(jq -r '.usage // {"input_tokens":0,"output_tokens":0,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}' $HANK_DIR/.json_parse_result 2>/dev/null || echo '{"input_tokens":0,"output_tokens":0,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}')
 
             # Persist session ID if present (for session continuity across loop iterations)
             if [[ -n "$session_id" && "$session_id" != "null" ]]; then
@@ -415,6 +460,12 @@ analyze_response() {
                 --argjson has_permission_denials "$has_permission_denials" \
                 --argjson permission_denial_count "$permission_denial_count" \
                 --argjson denied_commands "$denied_commands_json" \
+                --arg cost_usd "$cost_usd" \
+                --arg total_cost_usd "$total_cost_usd" \
+                --argjson duration_ms "$duration_ms" \
+                --argjson num_turns "$num_turns" \
+                --argjson usage "$usage_json" \
+                --arg session_id "$session_id" \
                 '{
                     loop_number: $loop_number,
                     timestamp: $timestamp,
@@ -432,7 +483,13 @@ analyze_response() {
                         output_length: $output_length,
                         has_permission_denials: $has_permission_denials,
                         permission_denial_count: $permission_denial_count,
-                        denied_commands: $denied_commands
+                        denied_commands: $denied_commands,
+                        cost_usd: ($cost_usd | tonumber),
+                        total_cost_usd: ($total_cost_usd | tonumber),
+                        duration_ms: $duration_ms,
+                        num_turns: $num_turns,
+                        usage: $usage,
+                        session_id: $session_id
                     }
                 }' > "$analysis_result_file"
             rm -f "$HANK_DIR/.json_parse_result"
@@ -598,7 +655,7 @@ analyze_response() {
     fi
 
     # Write analysis results to file (text parsing path) using jq for safe construction
-    # Note: Permission denial fields default to false/0 since text output doesn't include this data
+    # Note: Permission denial and cost fields default to zero since text output doesn't include this data
     jq -n \
         --argjson loop_number "$loop_number" \
         --arg timestamp "$(get_iso_timestamp)" \
@@ -630,7 +687,18 @@ analyze_response() {
                 output_length: $output_length,
                 has_permission_denials: false,
                 permission_denial_count: 0,
-                denied_commands: []
+                denied_commands: [],
+                cost_usd: 0,
+                total_cost_usd: 0,
+                duration_ms: 0,
+                num_turns: 0,
+                usage: {
+                    input_tokens: 0,
+                    output_tokens: 0,
+                    cache_creation_input_tokens: 0,
+                    cache_read_input_tokens: 0
+                },
+                session_id: ""
             }
         }' > "$analysis_result_file"
 
@@ -715,6 +783,18 @@ log_analysis_summary() {
     echo -e "${YELLOW}Confidence:${NC}       $confidence%"
     echo -e "${YELLOW}Test Only:${NC}        $test_only"
     echo -e "${YELLOW}Files Changed:${NC}    $files_changed"
+
+    # Cost and token display (only when non-zero)
+    local cost=$(jq -r '.analysis.cost_usd // 0' "$analysis_file" 2>/dev/null)
+    local in_tokens=$(jq -r '.analysis.usage.input_tokens // 0' "$analysis_file" 2>/dev/null)
+    local out_tokens=$(jq -r '.analysis.usage.output_tokens // 0' "$analysis_file" 2>/dev/null)
+    local cost_check
+    cost_check=$(echo "$cost" | awk '{printf "%d", $1 * 1000000}')
+    if [[ "$cost_check" != "0" || "$in_tokens" != "0" ]]; then
+        echo -e "${YELLOW}Cost:${NC}             \$${cost}"
+        echo -e "${YELLOW}Tokens:${NC}           ${in_tokens} in / ${out_tokens} out"
+    fi
+
     echo -e "${YELLOW}Summary:${NC}          $summary"
     echo ""
 }
