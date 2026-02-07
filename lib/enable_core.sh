@@ -518,6 +518,14 @@ generate_prompt_md() {
 
 1. Your task is to implement functionality per the specifications using parallel subagents. Follow @IMPLEMENTATION_PLAN.md and choose the most important item to address. Before making changes, search the codebase (don't assume not implemented) using Sonnet subagents. You may use up to 500 parallel Sonnet subagents for searches/reads and only 1 Sonnet subagent for build/tests. Use Opus subagents when complex reasoning is needed (debugging, architectural decisions).
 2. After implementing functionality or resolving problems, run the tests for that unit of code that was improved. If functionality is missing then it's your job to add it as per the application specifications. Ultrathink.
+
+### When to use Agent Teams (instead of subagents)
+Use a team ONLY when IMPLEMENTATION_PLAN.md has 2+ independent items that touch different files/layers (e.g., frontend + backend, or two unrelated modules). Spawn teammates for each item, coordinate as lead. Do NOT use teams when:
+- Items touch the same files (merge conflicts)
+- Work is sequential (item B depends on item A)
+- There is only one item to work on
+For everything else, subagents are faster and cheaper.
+
 3. When you discover issues, immediately update @IMPLEMENTATION_PLAN.md with your findings using a subagent. When resolved, update and remove the item.
 4. When the tests pass, update @IMPLEMENTATION_PLAN.md, then `git add -A` then `git commit` with a message describing the changes.
 
@@ -565,7 +573,11 @@ generate_prompt_plan_md() {
 0c. Study `src/lib/*` with up to 250 parallel Sonnet subagents to understand shared utilities & components.
 0d. For reference, the application source code is in `src/*`.
 
-1. Study @IMPLEMENTATION_PLAN.md (if present; it may be incorrect) and use up to 500 Sonnet subagents to study existing source code in `src/*` and compare it against `specs/*`. Use an Opus subagent to analyze findings, prioritize tasks, and create/update @IMPLEMENTATION_PLAN.md as a bullet point list sorted in priority of items yet to be implemented. Ultrathink. Consider searching for TODO, minimal implementations, placeholders, skipped/flaky tests, and inconsistent patterns. Study @IMPLEMENTATION_PLAN.md to determine starting point for research and keep it up to date with items considered complete/incomplete using subagents.
+1. Use an Agent Team for parallel research when the project has both specs and existing source code:
+   - Spawn a team with a "specs researcher" (reads all specs, extracts requirements) and a "code auditor" (reads all src/*, finds TODOs, placeholders, skipped tests, inconsistent patterns). Both report findings to the lead.
+   - The lead (you) synthesizes findings, prioritizes tasks, and creates/updates @IMPLEMENTATION_PLAN.md as a bullet point list sorted by priority.
+   - If the project is small (< 10 files), skip the team and use subagents directly instead.
+2. Ultrathink. Consider TODO, minimal implementations, placeholders, skipped/flaky tests, and inconsistent patterns. Study @IMPLEMENTATION_PLAN.md to determine starting point for research and keep it up to date with items considered complete/incomplete.
 
 IMPORTANT: Plan only. Do NOT implement anything. Do NOT assume functionality is missing; confirm with code search first. Treat `src/lib` as the project's standard library for shared utilities and components. Prefer consolidated, idiomatic implementations there over ad-hoc copies.
 

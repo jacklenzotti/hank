@@ -4,7 +4,11 @@
 0b. Study @IMPLEMENTATION_PLAN.md (if present) to understand the plan so far.
 0c. Study `src/lib/_`with up to 250 parallel Sonnet subagents to understand shared utilities & components. 0d. For reference, the application source code is in`src/\*`.
 
-1. Study @IMPLEMENTATION_PLAN.md (if present; it may be incorrect) and use up to 500 Sonnet subagents to study existing source code in `src/*` and compare it against `specs/*`. Use an Opus subagent to analyze findings, prioritize tasks, and create/update @IMPLEMENTATION_PLAN.md as a bullet point list sorted in priority of items yet to be implemented. Ultrathink. Consider searching for TODO, minimal implementations, placeholders, skipped/flaky tests, and inconsistent patterns. Study @IMPLEMENTATION_PLAN.md to determine starting point for research and keep it up to date with items considered complete/incomplete using subagents.
+1. Use an Agent Team for parallel research when the project has both specs and existing source code:
+   - Spawn a team with a "specs researcher" (reads all specs, extracts requirements) and a "code auditor" (reads all src/\*, finds TODOs, placeholders, skipped tests, inconsistent patterns). Both report findings to the lead.
+   - The lead (you) synthesizes findings, prioritizes tasks, and creates/updates @IMPLEMENTATION_PLAN.md as a bullet point list sorted by priority.
+   - If the project is small (< 10 files), skip the team and use subagents directly instead.
+2. Ultrathink. Consider TODO, minimal implementations, placeholders, skipped/flaky tests, and inconsistent patterns. Study @IMPLEMENTATION_PLAN.md to determine starting point for research and keep it up to date with items considered complete/incomplete.
 
 IMPORTANT: Plan only. Do NOT implement anything. Do NOT assume functionality is missing; confirm with code search first. Treat `src/lib` as the project's standard library for shared utilities and components. Prefer consolidated, idiomatic implementations there over ad-hoc copies.
 
