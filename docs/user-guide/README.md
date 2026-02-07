@@ -34,4 +34,4 @@ Check out the [examples/](../../examples/) directory for complete, realistic pro
 
 - **[Main README](../../README.md)** - Full documentation and configuration options
 - **[CONTRIBUTING.md](../../CONTRIBUTING.md)** - How to contribute to Hank
-- **[GitHub Issues](https://github.com/frankbria/hank/issues)** - Report bugs or request features
+- **[GitHub Issues](https://github.com/jacklenzotti/hank/issues)** - Report bugs or request features

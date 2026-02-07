@@ -23,6 +23,7 @@ source "$SCRIPT_DIR/lib/task_sources.sh"
 HANK_DIR=".hank"
 HANK_MODE="build"  # plan or build
 HANK_TASK_SOURCE="plan"  # plan or github
+HANK_DRY_RUN=false
 PROMPT_FILE="$HANK_DIR/PROMPT.md"
 PROMPT_PLAN_FILE="$HANK_DIR/PROMPT_plan.md"
 PLAN_FILE="$HANK_DIR/IMPLEMENTATION_PLAN.md"
@@ -993,12 +994,18 @@ build_claude_command() {
         CLAUDE_CMD_ARGS+=("--output-format" "json")
     fi
 
+    # In dry-run mode, restrict to read-only tools
+    local effective_tools="$CLAUDE_ALLOWED_TOOLS"
+    if [[ "$HANK_DRY_RUN" == "true" ]]; then
+        effective_tools="Read,Glob,Grep,Bash(git status),Bash(git log),Bash(git diff)"
+    fi
+
     # Add allowed tools (each tool as separate array element)
-    if [[ -n "$CLAUDE_ALLOWED_TOOLS" ]]; then
+    if [[ -n "$effective_tools" ]]; then
         CLAUDE_CMD_ARGS+=("--allowedTools")
         # Split by comma and add each tool
         local IFS=','
-        read -ra tools_array <<< "$CLAUDE_ALLOWED_TOOLS"
+        read -ra tools_array <<< "$effective_tools"
         for tool in "${tools_array[@]}"; do
             # Trim whitespace
             tool=$(echo "$tool" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
@@ -1029,6 +1036,15 @@ build_claude_command() {
     # Array-based approach maintains shell injection safety
     local prompt_content
     prompt_content=$(cat "$prompt_file")
+
+    # In dry-run mode, append instruction to analyze without modifying
+    if [[ "$HANK_DRY_RUN" == "true" ]]; then
+        prompt_content="$prompt_content
+
+## DRY RUN MODE
+This is a DRY RUN. Do NOT create, modify, or delete any files. Only read and analyze the codebase. Produce a summary of what you WOULD do, including which files you would change and what the changes would be. End with the HANK_STATUS block as usual."
+    fi
+
     CLAUDE_CMD_ARGS+=("-p" "$prompt_content")
 }
 
@@ -1513,6 +1529,14 @@ main() {
         exit 0
     fi
 
+    # Dry-run mode: single iteration with read-only tools
+    if [[ "$HANK_DRY_RUN" == "true" ]]; then
+        log_status "LOOP" "=== [DRY RUN] Starting single read-only iteration ==="
+        execute_claude_code 1
+        log_status "SUCCESS" "[DRY RUN] Analysis complete. No files were modified."
+        exit 0
+    fi
+
     # Initialize session tracking before entering the loop
     init_session_tracking
 
@@ -1708,6 +1732,11 @@ Task Sources:
                             github: sync GitHub Issues (label: hank) each iteration,
                                     report progress back as comments, close on completion
 
+Dry Run:
+    --dry-run               Run a single read-only iteration (no file modifications)
+                            Restricts tools to Read, Glob, Grep, and read-only git commands.
+                            Claude analyzes the codebase and reports what it WOULD do.
+
 Modern CLI Options (Phase 1.1):
     --output-format FORMAT  Set Claude output format: json or text (default: $CLAUDE_OUTPUT_FORMAT)
     --allowed-tools TOOLS   Comma-separated list of allowed tools (default: $CLAUDE_ALLOWED_TOOLS)
@@ -1731,6 +1760,10 @@ Example workflow:
 GitHub Issues workflow:
     $0 --source github        # Pull issues with 'hank' label, work through them
     $0 --mode plan --source github  # Plan from GitHub Issues, don't implement
+
+Dry run:
+    $0 --dry-run              # Preview what Hank would do without modifying files
+    $0 --dry-run --source github  # Dry run using GitHub Issues as task source
 
 Examples:
     $0 --mode plan              # Generate/update IMPLEMENTATION_PLAN.md (single iteration)
@@ -1862,6 +1895,10 @@ while [[ $# -gt 0 ]]; do
                 exit 1
             fi
             shift 2
+            ;;
+        --dry-run)
+            HANK_DRY_RUN=true
+            shift
             ;;
         *)
             echo "Unknown option: $1"

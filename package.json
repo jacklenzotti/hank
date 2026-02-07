@@ -16,15 +16,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/frankbria/hank.git"
+    "url": "git+https://github.com/jacklenzotti/hank.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/frankbria/hank/issues"
+    "url": "https://github.com/jacklenzotti/hank/issues"
   },
-  "homepage": "https://github.com/frankbria/hank#readme",
+  "homepage": "https://github.com/jacklenzotti/hank#readme",
   "devDependencies": {
     "bats": "^1.12.0",
     "bats-assert": "^2.2.0",

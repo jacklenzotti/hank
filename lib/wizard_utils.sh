@@ -36,7 +36,7 @@ confirm() {
     local response
 
     local yn_hint="[y/N]"
-    if [[ "${default,,}" == "y" ]]; then
+    if [[ "$default" == "y" || "$default" == "Y" ]]; then
         yn_hint="[Y/n]"
     fi
 
@@ -50,11 +50,11 @@ confirm() {
             response="$default"
         fi
 
-        case "${response,,}" in
-            y|yes)
+        case "$response" in
+            y|Y|yes|Yes|YES)
                 return 0
                 ;;
-            n|no)
+            n|N|no|No|NO)
                 return 1
                 ;;
             *)

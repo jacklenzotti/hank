@@ -11,6 +11,9 @@
 .hank/.circuit_breaker_history
 .hank/.json_parse_result
 .hank/.last_output_length
+.hank/.loop_start_sha
+.hank/live.log
+.hank/progress.json
 
 # Hank logs and generated docs
 .hank/logs/*
