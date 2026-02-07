@@ -9,12 +9,23 @@
 
 ### When to use Agent Teams (instead of subagents)
 
-Use a team ONLY when IMPLEMENTATION_PLAN.md has 2+ independent items that touch different files/layers (e.g., frontend + backend, or two unrelated modules). Spawn teammates for each item, coordinate as lead. Do NOT use teams when:
+Use a team ONLY when IMPLEMENTATION_PLAN.md has 2+ independent items that touch different files/layers (e.g., frontend + backend, or two unrelated modules). Do NOT use teams when:
 
 - Items touch the same files (merge conflicts)
 - Work is sequential (item B depends on item A)
 - There is only one item to work on
-  For everything else, subagents are faster and cheaper.
+
+For everything else, subagents are faster and cheaper.
+
+**How to use teams** (requires `--teams` flag):
+
+1. `TeamCreate` — create a team for the current work session
+2. `TaskCreate` / `TaskUpdate` / `TaskList` — define and track tasks in the shared task list
+3. Spawn teammates via `Task` tool with `team_name` and assign tasks with `TaskUpdate`
+4. `SendMessage` — coordinate with teammates (DMs or broadcast)
+5. When done, send `shutdown_request` via `SendMessage` and clean up with `TeamDelete`
+
+### General workflow
 
 3. When you discover issues, immediately update @IMPLEMENTATION_PLAN.md with your findings using a subagent. When resolved, update and remove the item.
 4. When the tests pass, update @IMPLEMENTATION_PLAN.md, then `git add -A` then `git commit` with a message describing the changes.

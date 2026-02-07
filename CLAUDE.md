@@ -163,7 +163,12 @@ SESSION_EXPIRY_HOURS=24
 
 ## Agent Teams
 
-When `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` is set:
+Enabled via `hank --teams` flag (off by default). When active, Hank:
+
+- Exports `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` to the Claude process
+- Adds team tools (`TeamCreate`, `TeamDelete`, `SendMessage`, `TaskCreate`, `TaskUpdate`, `TaskList`, `TaskGet`) to `--allowedTools`
+
+Behavior when teams are enabled:
 
 - **Plan mode**: Spawns specs researcher + code auditor team for parallel analysis
 - **Build mode**: Uses teams for 2+ independent items touching different files/layers

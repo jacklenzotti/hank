@@ -24,11 +24,12 @@ Two-mode prompt system (`--mode plan` and `--mode build`) with specialized instr
 
 ### Agent Teams Support
 
-When `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` is set, the prompts guide Claude Code to use Agent Teams for genuinely parallel work:
+Run `hank --teams` to enable Agent Teams for genuinely parallel multi-agent work (experimental, off by default):
 
 - **Plan mode**: Spawns a specs researcher + code auditor team for parallel analysis
 - **Build mode**: Uses teams when 2+ independent items touch different files/layers (e.g., frontend + backend)
 - Falls back to subagents when items touch the same files or work is sequential
+- Adds team tools (`TeamCreate`, `SendMessage`, `TaskCreate`, etc.) and exports `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`
 
 ### GitHub Issues as Task Source
 
@@ -224,6 +225,7 @@ hank [OPTIONS]
   --prompt FILE                 # Custom prompt file
   --verbose                     # Detailed progress output
   --output-format json|text     # Response format
+  --teams                       # Enable Agent Teams (experimental)
   --no-continue                 # Disable session continuity
   --stop                        # Stop all running Hank sessions
   --reset-session               # Clear session state

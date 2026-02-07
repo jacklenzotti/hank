@@ -26,6 +26,7 @@ HANK_DIR=".hank"
 HANK_MODE="build"  # plan or build
 HANK_TASK_SOURCE="plan"  # plan or github
 HANK_DRY_RUN=false
+HANK_USE_TEAMS="${HANK_USE_TEAMS:-false}"
 HANK_CLEAN=false
 HANK_CLEAN_LOGS=false
 HANK_STOP=false
@@ -53,6 +54,7 @@ _env_CLAUDE_ALLOWED_TOOLS="${CLAUDE_ALLOWED_TOOLS:-}"
 _env_CLAUDE_USE_CONTINUE="${CLAUDE_USE_CONTINUE:-}"
 _env_CLAUDE_SESSION_EXPIRY_HOURS="${CLAUDE_SESSION_EXPIRY_HOURS:-}"
 _env_VERBOSE_PROGRESS="${VERBOSE_PROGRESS:-}"
+_env_HANK_USE_TEAMS="${HANK_USE_TEAMS:-}"
 
 # Now set defaults (only if not already set by environment)
 MAX_CALLS_PER_HOUR="${MAX_CALLS_PER_HOUR:-100}"
@@ -94,6 +96,13 @@ VALID_TOOL_PATTERNS=(
     "Bash(python *)"
     "Bash(node *)"
     "NotebookEdit"
+    "TeamCreate"
+    "TeamDelete"
+    "SendMessage"
+    "TaskCreate"
+    "TaskUpdate"
+    "TaskList"
+    "TaskGet"
 )
 
 # Exit detection configuration
@@ -157,6 +166,7 @@ load_hankrc() {
     [[ -n "$_env_CLAUDE_USE_CONTINUE" ]] && CLAUDE_USE_CONTINUE="$_env_CLAUDE_USE_CONTINUE"
     [[ -n "$_env_CLAUDE_SESSION_EXPIRY_HOURS" ]] && CLAUDE_SESSION_EXPIRY_HOURS="$_env_CLAUDE_SESSION_EXPIRY_HOURS"
     [[ -n "$_env_VERBOSE_PROGRESS" ]] && VERBOSE_PROGRESS="$_env_VERBOSE_PROGRESS"
+    [[ -n "$_env_HANK_USE_TEAMS" ]] && HANK_USE_TEAMS="$_env_HANK_USE_TEAMS"
 
     HANKRC_LOADED=true
     return 0
@@ -273,6 +283,10 @@ setup_tmux_session() {
     # Forward --dry-run if enabled
     if [[ "$HANK_DRY_RUN" == "true" ]]; then
         hank_cmd="$hank_cmd --dry-run"
+    fi
+    # Forward --teams if enabled
+    if [[ "$HANK_USE_TEAMS" == "true" ]]; then
+        hank_cmd="$hank_cmd --teams"
     fi
 
     tmux send-keys -t "$session_name:${base_win}.0" "$hank_cmd" Enter
@@ -1006,6 +1020,12 @@ build_claude_command() {
     local effective_tools="$CLAUDE_ALLOWED_TOOLS"
     if [[ "$HANK_DRY_RUN" == "true" ]]; then
         effective_tools="Read,Glob,Grep,Bash(git status),Bash(git log),Bash(git diff)"
+    fi
+
+    # When teams enabled, add team tools and set environment variable
+    if [[ "$HANK_USE_TEAMS" == "true" ]]; then
+        effective_tools="$effective_tools,TeamCreate,TeamDelete,SendMessage,TaskCreate,TaskUpdate,TaskList,TaskGet"
+        export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
     fi
 
     # Add allowed tools (each tool as separate array element)
@@ -1882,6 +1902,11 @@ Dry Run:
                             Restricts tools to Read, Glob, Grep, and read-only git commands.
                             Claude analyzes the codebase and reports what it WOULD do.
 
+Agent Teams:
+    --teams                 Enable Agent Teams for parallel multi-agent work (experimental)
+                            Exports CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 and adds team
+                            tools (TeamCreate, SendMessage, TaskCreate, etc.) to allowed tools.
+
 Modern CLI Options (Phase 1.1):
     --output-format FORMAT  Set Claude output format: json or text (default: $CLAUDE_OUTPUT_FORMAT)
     --allowed-tools TOOLS   Comma-separated list of allowed tools (default: $CLAUDE_ALLOWED_TOOLS)
@@ -2049,6 +2074,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --dry-run)
             HANK_DRY_RUN=true
+            shift
+            ;;
+        --teams)
+            HANK_USE_TEAMS=true
             shift
             ;;
         --cost-summary)
