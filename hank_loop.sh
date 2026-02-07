@@ -1328,6 +1328,13 @@ EOF
         # Wait for the process to finish and get exit code
         wait $claude_pid
         exit_code=$?
+
+        # Issue #2: Copy final output to live.log after Claude finishes
+        # The progress loop only copies while Claude is running; this ensures
+        # the complete output is available in the tmux monitor pane
+        if [[ -f "$output_file" && -s "$output_file" ]]; then
+            cp "$output_file" "$LIVE_LOG_FILE" 2>/dev/null
+        fi
     fi
 
     if [ $exit_code -eq 0 ]; then
@@ -1386,14 +1393,16 @@ EOF
                     done <<< "$all_issues"
                 fi
             else
-                # In progress: report on first (current) issue only
-                local issue_num=""
+                # In progress: report to ALL issues (Issue #6)
+                local all_in_progress_issues
                 if [[ -f "$PLAN_FILE" ]]; then
-                    issue_num=$(grep -oE '#[0-9]+' "$PLAN_FILE" 2>/dev/null | head -1 | tr -d '#')
+                    all_in_progress_issues=$(grep -oE '#[0-9]+' "$PLAN_FILE" 2>/dev/null | tr -d '#' | sort -u)
                 fi
-                if [[ -n "$issue_num" ]]; then
-                    report_to_github "$issue_num" "$report_status" "$summary" "$loop_count"
-                    log_status "INFO" "Reported to GitHub Issue #$issue_num: $report_status"
+                if [[ -n "$all_in_progress_issues" ]]; then
+                    while IFS= read -r issue_num; do
+                        report_to_github "$issue_num" "$report_status" "$summary" "$loop_count"
+                        log_status "INFO" "Reported to GitHub Issue #$issue_num: $report_status"
+                    done <<< "$all_in_progress_issues"
                 fi
             fi
         fi
@@ -1650,6 +1659,9 @@ main() {
     # Initialize session tracking before entering the loop
     init_session_tracking
 
+    # Issue #3: Record session start in history
+    log_session_transition "none" "active" "session_start" "0" || true
+
     log_status "INFO" "Starting main loop..."
     
     while true; do
@@ -1727,6 +1739,18 @@ main() {
             log_status "INFO" "  - Total loops: $loop_count"
             log_status "INFO" "  - API calls used: $(cat "$CALL_COUNT_FILE")"
             log_status "INFO" "  - Exit reason: $exit_reason"
+
+            # Issue #4: Display accumulated exit signal data
+            local exit_signals_file="$HANK_DIR/.exit_signals"
+            if [[ -f "$exit_signals_file" ]]; then
+                local ci_count di_count tol_count
+                ci_count=$(jq -r '.completion_indicators | length' "$exit_signals_file" 2>/dev/null || echo "0")
+                di_count=$(jq -r '.done_signals | length' "$exit_signals_file" 2>/dev/null || echo "0")
+                tol_count=$(jq -r '.test_only_loops | length' "$exit_signals_file" 2>/dev/null || echo "0")
+                log_status "INFO" "  - Completion indicators: $ci_count"
+                log_status "INFO" "  - Done signals: $di_count"
+                log_status "INFO" "  - Test-only loops: $tol_count"
+            fi
 
             show_cost_summary "$([[ "$HANK_TASK_SOURCE" == "github" ]] && echo "true" || echo "false")"
 
@@ -1807,6 +1831,9 @@ main() {
             sleep 30
         fi
         
+        # Issue #3: Record loop completion in session history
+        log_session_transition "active" "active" "loop_completed" "$loop_count" || true
+
         log_status "LOOP" "=== Completed Loop #$loop_count ==="
     done
 }

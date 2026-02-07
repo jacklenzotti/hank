@@ -175,8 +175,28 @@ parse_json_response() {
         error_count=1  # At least one error if has_errors is true
     fi
 
-    # Summary: from flat format OR from result field (Claude CLI format)
-    local summary=$(jq -r '.result // .summary // ""' "$output_file" 2>/dev/null)
+    # Summary: prefer RECOMMENDATION from HANK_STATUS block, then result field, then flat summary
+    local summary=""
+    if [[ "$has_result_field" == "true" ]]; then
+        local result_text_for_summary
+        result_text_for_summary=$(jq -r '.result // ""' "$output_file" 2>/dev/null)
+        if [[ -n "$result_text_for_summary" ]] && echo "$result_text_for_summary" | grep -q -- "---HANK_STATUS---"; then
+            # Extract RECOMMENDATION from HANK_STATUS block (preferred summary source)
+            summary=$(echo "$result_text_for_summary" | grep "RECOMMENDATION:" | head -1 | sed 's/^.*RECOMMENDATION:[[:space:]]*//')
+            # Fallback to TASKS_COMPLETED if RECOMMENDATION is empty
+            if [[ -z "$summary" ]]; then
+                summary=$(echo "$result_text_for_summary" | grep "TASKS_COMPLETED" | head -1 | sed 's/^.*TASKS_COMPLETED[^:]*:[[:space:]]*//')
+            fi
+        fi
+        # Fallback: use truncated result text when no HANK_STATUS block present
+        if [[ -z "$summary" && -n "$result_text_for_summary" ]]; then
+            summary=$(echo "$result_text_for_summary" | head -1 | cut -c 1-200)
+        fi
+    fi
+    # Fallback to flat format summary field
+    if [[ -z "$summary" ]]; then
+        summary=$(jq -r '.summary // ""' "$output_file" 2>/dev/null)
+    fi
 
     # Session ID: from Claude CLI format (sessionId) OR from metadata.session_id
     local session_id=$(jq -r '.sessionId // .metadata.session_id // ""' "$output_file" 2>/dev/null)
@@ -208,6 +228,9 @@ parse_json_response() {
     if [[ $permission_denial_count -gt 0 ]]; then
         denied_commands_json=$(jq -r '[.permission_denials[] | if .tool_name == "Bash" then "Bash(\(.tool_input.command // "?" | split("\n")[0] | .[0:60]))" else .tool_name // "unknown" end]' "$output_file" 2>/dev/null || echo "[]")
     fi
+
+    # Model name: from Claude CLI output (top-level or metadata)
+    local model=$(jq -r '.model // .metadata.model // ""' "$output_file" 2>/dev/null)
 
     # Cost and usage fields (Claude CLI includes these at the top level)
     local cost_usd=$(jq -r '.cost_usd // .metadata.usage.cost_usd // 0' "$output_file" 2>/dev/null)
@@ -299,6 +322,7 @@ parse_json_response() {
         --argjson output_tokens "$output_tokens" \
         --argjson cache_creation_input_tokens "$cache_creation_input_tokens" \
         --argjson cache_read_input_tokens "$cache_read_input_tokens" \
+        --arg model "$model" \
         '{
             status: $status,
             exit_signal: $exit_signal,
@@ -324,6 +348,7 @@ parse_json_response() {
                 cache_creation_input_tokens: $cache_creation_input_tokens,
                 cache_read_input_tokens: $cache_read_input_tokens
             },
+            model: $model,
             metadata: {
                 loop_number: $loop_number,
                 session_id: $session_id
@@ -378,6 +403,9 @@ analyze_response() {
             files_modified=$(jq -r '.files_modified' $HANK_DIR/.json_parse_result 2>/dev/null || echo "0")
             local json_confidence=$(jq -r '.confidence' $HANK_DIR/.json_parse_result 2>/dev/null || echo "0")
             local session_id=$(jq -r '.session_id' $HANK_DIR/.json_parse_result 2>/dev/null || echo "")
+
+            # Extract model name (Issue #5)
+            local model=$(jq -r '.model // ""' $HANK_DIR/.json_parse_result 2>/dev/null || echo "")
 
             # Extract permission denial fields (Issue #101)
             local has_permission_denials=$(jq -r '.has_permission_denials' $HANK_DIR/.json_parse_result 2>/dev/null || echo "false")
@@ -466,6 +494,7 @@ analyze_response() {
                 --argjson num_turns "$num_turns" \
                 --argjson usage "$usage_json" \
                 --arg session_id "$session_id" \
+                --arg model "$model" \
                 '{
                     loop_number: $loop_number,
                     timestamp: $timestamp,
@@ -489,7 +518,8 @@ analyze_response() {
                         duration_ms: $duration_ms,
                         num_turns: $num_turns,
                         usage: $usage,
-                        session_id: $session_id
+                        session_id: $session_id,
+                        model: $model
                     }
                 }' > "$analysis_result_file"
             rm -f "$HANK_DIR/.json_parse_result"
@@ -636,10 +666,19 @@ analyze_response() {
     fi
     echo "$output_length" > "$HANK_DIR/.last_output_length"
 
-    # 8. Extract work summary from output
+    # 8. Extract work summary from HANK_STATUS block or output
     if [[ -z "$work_summary" ]]; then
-        # Try to find summary in output
-        work_summary=$(grep -i "summary\|completed\|implemented" "$output_file" | head -1 | cut -c 1-100)
+        # Prefer structured RECOMMENDATION from HANK_STATUS block
+        if grep -q -- "---HANK_STATUS---" "$output_file"; then
+            work_summary=$(grep "RECOMMENDATION:" "$output_file" | head -1 | sed 's/^.*RECOMMENDATION:[[:space:]]*//')
+            if [[ -z "$work_summary" ]]; then
+                work_summary=$(grep "TASKS_COMPLETED" "$output_file" | head -1 | sed 's/^.*TASKS_COMPLETED[^:]*:[[:space:]]*//')
+            fi
+        fi
+        # Fallback to keyword grep
+        if [[ -z "$work_summary" ]]; then
+            work_summary=$(grep -i "summary\|completed\|implemented" "$output_file" | head -1 | cut -c 1-100)
+        fi
         if [[ -z "$work_summary" ]]; then
             work_summary="Output analyzed, no explicit summary found"
         fi
@@ -698,7 +737,8 @@ analyze_response() {
                     cache_creation_input_tokens: 0,
                     cache_read_input_tokens: 0
                 },
-                session_id: ""
+                session_id: "",
+                model: ""
             }
         }' > "$analysis_result_file"
 
@@ -776,9 +816,15 @@ log_analysis_summary() {
     local files_changed=$(jq -r '.analysis.files_modified' "$analysis_file")
     local summary=$(jq -r '.analysis.work_summary' "$analysis_file")
 
+    # Model display (Issue #5)
+    local model=$(jq -r '.analysis.model // ""' "$analysis_file" 2>/dev/null)
+
     echo -e "${BLUE}╔════════════════════════════════════════════════════════════╗${NC}"
     echo -e "${BLUE}║           Response Analysis - Loop #$loop                 ║${NC}"
     echo -e "${BLUE}╚════════════════════════════════════════════════════════════╝${NC}"
+    if [[ -n "$model" && "$model" != "null" ]]; then
+        echo -e "${YELLOW}Model:${NC}            $model"
+    fi
     echo -e "${YELLOW}Exit Signal:${NC}      $exit_sig"
     echo -e "${YELLOW}Confidence:${NC}       $confidence%"
     echo -e "${YELLOW}Test Only:${NC}        $test_only"

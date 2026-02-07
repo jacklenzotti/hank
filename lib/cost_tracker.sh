@@ -107,6 +107,8 @@ record_loop_cost() {
     cache_read=$(jq -r '.analysis.usage.cache_read_input_tokens // 0' "$analysis_file" 2>/dev/null)
     local session_id
     session_id=$(jq -r '.analysis.session_id // ""' "$analysis_file" 2>/dev/null)
+    local model
+    model=$(jq -r '.analysis.model // ""' "$analysis_file" 2>/dev/null)
 
     # Sanitize: coerce to numbers, handle null/empty
     cost_usd=$(echo "$cost_usd" | awk '{printf "%.6f", $1+0}')
@@ -137,6 +139,7 @@ record_loop_cost() {
         --argjson cache_read_input_tokens "$cache_read" \
         --arg session_id "$session_id" \
         --arg issue_number "$issue_number" \
+        --arg model "$model" \
         '{
             timestamp: $timestamp,
             loop: $loop,
@@ -149,7 +152,8 @@ record_loop_cost() {
             cache_creation_input_tokens: $cache_creation_input_tokens,
             cache_read_input_tokens: $cache_read_input_tokens,
             session_id: $session_id,
-            issue_number: $issue_number
+            issue_number: $issue_number,
+            model: $model
         }' >> "$COST_LOG_FILE"
 
     # Update session totals

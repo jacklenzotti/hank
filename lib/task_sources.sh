@@ -677,7 +677,8 @@ ${cost_line}"
         IN_PROGRESS)
             gh issue edit "$issue_number" \
                 --add-label "hank:in-progress" \
-                --remove-label "hank:next" 2>/dev/null || true
+                --remove-label "hank:next" \
+                --add-assignee "@me" 2>/dev/null || true
             ;;
     esac
 
