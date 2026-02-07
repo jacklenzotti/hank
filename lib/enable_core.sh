@@ -552,7 +552,7 @@ FILES_MODIFIED: <number>
 TESTS_STATUS: PASSING | FAILING | NOT_RUN
 WORK_TYPE: IMPLEMENTATION | TESTING | DOCUMENTATION | REFACTORING
 EXIT_SIGNAL: false | true
-RECOMMENDATION: <one line summary of what to do next>
+RECOMMENDATION: <one line summary; include issue number e.g. #42 if working on a GitHub issue>
 ---END_HANK_STATUS---
 ```
 
@@ -805,6 +805,11 @@ enable_hank_in_directory() {
     fi
     if [[ "$DETECTED_GITHUB_AVAILABLE" == "true" ]]; then
         task_sources="github,$task_sources"
+        # Create hank labels on GitHub repo for --source github mode
+        if command -v gh &>/dev/null; then
+            setup_github_labels 2>/dev/null || true
+            enable_log "INFO" "Created hank labels on GitHub repo"
+        fi
     fi
 
     # Generate .hankrc

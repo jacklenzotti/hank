@@ -16,11 +16,13 @@ source "$SCRIPT_DIR/lib/date_utils.sh"
 source "$SCRIPT_DIR/lib/timeout_utils.sh"
 source "$SCRIPT_DIR/lib/response_analyzer.sh"
 source "$SCRIPT_DIR/lib/circuit_breaker.sh"
+source "$SCRIPT_DIR/lib/task_sources.sh"
 
 # Configuration
 # Hank-specific files live in .hank/ subfolder
 HANK_DIR=".hank"
 HANK_MODE="build"  # plan or build
+HANK_TASK_SOURCE="plan"  # plan or github
 PROMPT_FILE="$HANK_DIR/PROMPT.md"
 PROMPT_PLAN_FILE="$HANK_DIR/PROMPT_plan.md"
 PLAN_FILE="$HANK_DIR/IMPLEMENTATION_PLAN.md"
@@ -1317,6 +1319,34 @@ EOF
         # Log analysis summary
         log_analysis_summary
 
+        # Report back to GitHub Issues if --source github
+        if [[ "$HANK_TASK_SOURCE" == "github" ]]; then
+            # Extract recommendation from output (contains issue number)
+            local recommendation=""
+            local output_file="$HANK_DIR/logs/output_loop_${loop_count}.txt"
+            if [[ -f "$output_file" ]]; then
+                recommendation=$(grep "RECOMMENDATION:" "$output_file" 2>/dev/null | tail -1 | sed 's/.*RECOMMENDATION:[[:space:]]*//')
+            fi
+            # Extract issue number from recommendation or plan file
+            local issue_num=""
+            issue_num=$(extract_issue_number "$recommendation")
+            if [[ -z "$issue_num" && -f "$PLAN_FILE" ]]; then
+                # Fall back to first issue in plan
+                issue_num=$(grep -oE '#[0-9]+' "$PLAN_FILE" 2>/dev/null | head -1 | tr -d '#')
+            fi
+            if [[ -n "$issue_num" ]]; then
+                local analysis_status
+                analysis_status=$(jq -r '.analysis.exit_signal' "$RESPONSE_ANALYSIS_FILE" 2>/dev/null || echo "false")
+                local report_status="IN_PROGRESS"
+                if [[ "$analysis_status" == "true" ]]; then
+                    report_status="COMPLETE"
+                fi
+                local summary="${recommendation:-Loop $loop_count completed}"
+                report_to_github "$issue_num" "$report_status" "$summary" "$loop_count"
+                log_status "INFO" "Reported to GitHub Issue #$issue_num: $report_status"
+            fi
+        fi
+
         # Get file change count for circuit breaker
         # Fix #141: Detect both uncommitted changes AND committed changes
         local files_changed=0
@@ -1570,7 +1600,17 @@ main() {
         # Update status
         local calls_made=$(cat "$CALL_COUNT_FILE" 2>/dev/null || echo "0")
         update_status "$loop_count" "$calls_made" "executing" "running"
-        
+
+        # Sync tasks from GitHub Issues if --source github
+        if [[ "$HANK_TASK_SOURCE" == "github" ]]; then
+            log_status "INFO" "Syncing tasks from GitHub Issues..."
+            if sync_github_issues "hank" "$PLAN_FILE"; then
+                log_status "SUCCESS" "GitHub Issues synced to $PLAN_FILE"
+            else
+                log_status "WARN" "No GitHub Issues found with 'hank' label"
+            fi
+        fi
+
         # Execute Claude Code
         execute_claude_code "$loop_count"
         local exec_result=$?
@@ -1662,6 +1702,12 @@ Execution Modes:
                             plan: single iteration to generate IMPLEMENTATION_PLAN.md
                             build: continuous loop implementing tasks (default)
 
+Task Sources:
+    --source SOURCE         Set task source: plan or github (default: plan)
+                            plan: use IMPLEMENTATION_PLAN.md as task source
+                            github: sync GitHub Issues (label: hank) each iteration,
+                                    report progress back as comments, close on completion
+
 Modern CLI Options (Phase 1.1):
     --output-format FORMAT  Set Claude output format: json or text (default: $CLAUDE_OUTPUT_FORMAT)
     --allowed-tools TOOLS   Comma-separated list of allowed tools (default: $CLAUDE_ALLOWED_TOOLS)
@@ -1681,6 +1727,10 @@ Example workflow:
     hank-setup my-project     # Create project
     cd my-project             # Enter project directory
     $0 --monitor             # Start Hank with monitoring
+
+GitHub Issues workflow:
+    $0 --source github        # Pull issues with 'hank' label, work through them
+    $0 --mode plan --source github  # Plan from GitHub Issues, don't implement
 
 Examples:
     $0 --mode plan              # Generate/update IMPLEMENTATION_PLAN.md (single iteration)
@@ -1800,6 +1850,15 @@ while [[ $# -gt 0 ]]; do
                 HANK_MODE="$2"
             else
                 echo "Error: --mode must be 'plan' or 'build'"
+                exit 1
+            fi
+            shift 2
+            ;;
+        --source)
+            if [[ "$2" == "plan" || "$2" == "github" ]]; then
+                HANK_TASK_SOURCE="$2"
+            else
+                echo "Error: --source must be 'plan' or 'github'"
                 exit 1
             fi
             shift 2
