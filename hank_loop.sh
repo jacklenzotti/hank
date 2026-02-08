@@ -2042,6 +2042,8 @@ Options:
     -t, --timeout MIN       Set Claude Code execution timeout in minutes (default: $CLAUDE_TIMEOUT_MINUTES)
     --reset-circuit         Reset circuit breaker to CLOSED state
     --circuit-status        Show circuit breaker status and exit
+    --repos                 Show orchestration status (multi-repo mode) and exit
+    --orchestrate           Enable multi-repo orchestration mode
     --reset-session         Reset session state and exit (clears session continuity)
     --cost-summary          Show cost report from all sessions and exit
     --audit [OPTIONS]       Show audit log with optional filters and exit
@@ -2191,6 +2193,18 @@ while [[ $# -gt 0 ]]; do
             source "$SCRIPT_DIR/lib/circuit_breaker.sh"
             show_circuit_status
             exit 0
+            ;;
+        --repos)
+            # Show orchestration status
+            SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
+            source "$SCRIPT_DIR/lib/orchestrator.sh"
+            show_orchestration_status
+            exit 0
+            ;;
+        --orchestrate)
+            # Enable orchestration mode (will be handled in main loop)
+            HANK_ORCHESTRATE=true
+            shift
             ;;
         --output-format)
             if [[ "$2" == "json" || "$2" == "text" ]]; then
