@@ -413,8 +413,20 @@ increment_call_counter() {
 # Wait for rate limit reset with countdown
 wait_for_reset() {
     local calls_made=$(cat "$CALL_COUNT_FILE" 2>/dev/null || echo "0")
+
+    # Log retry to audit log
+    audit_event "retry_triggered" "$(jq -n \
+        --arg reason "rate_limit" \
+        --argjson calls_made "$calls_made" \
+        --argjson max_calls "$MAX_CALLS_PER_HOUR" \
+        '{
+            reason: $reason,
+            calls_made: $calls_made,
+            max_calls_per_hour: $max_calls
+        }')"
+
     log_status "WARN" "Rate limit reached ($calls_made/$MAX_CALLS_PER_HOUR). Waiting for reset..."
-    
+
     # Calculate time until next hour
     local current_minute=$(date +%M)
     local current_second=$(date +%S)
@@ -1383,6 +1395,30 @@ EOF
         # Log analysis summary
         log_analysis_summary
 
+        # Log loop complete to audit log
+        if [[ -f "$RESPONSE_ANALYSIS_FILE" ]]; then
+            local files_changed=$(jq -r '.analysis.files_modified // 0' "$RESPONSE_ANALYSIS_FILE" 2>/dev/null || echo "0")
+            local cost_usd=$(jq -r '.analysis.cost_usd // 0' "$RESPONSE_ANALYSIS_FILE" 2>/dev/null || echo "0")
+            local exit_signal=$(jq -r '.analysis.exit_signal // false' "$RESPONSE_ANALYSIS_FILE" 2>/dev/null || echo "false")
+            local has_errors=$(jq -r '.analysis.error_count > 0' "$RESPONSE_ANALYSIS_FILE" 2>/dev/null || echo "false")
+            local work_summary=$(jq -r '.analysis.work_summary // ""' "$RESPONSE_ANALYSIS_FILE" 2>/dev/null || echo "")
+            local issue_num=$(echo "$work_summary" | grep -oE '#[0-9]+' | head -1 | tr -d '#' || echo "")
+
+            audit_event "loop_complete" "$(jq -n \
+                --argjson files_changed "$files_changed" \
+                --arg cost_usd "$cost_usd" \
+                --argjson exit_signal "$exit_signal" \
+                --argjson has_errors "$has_errors" \
+                --arg issue_number "${issue_num:-}" \
+                '{
+                    files_changed: $files_changed,
+                    cost_usd: ($cost_usd | tonumber),
+                    exit_signal: $exit_signal,
+                    has_errors: $has_errors,
+                    issue_number: $issue_number
+                }')"
+        fi
+
         # Record cost data for this loop
         local current_issue_num=""
         if [[ "$HANK_TASK_SOURCE" == "github" && -f "$PLAN_FILE" ]]; then
@@ -1683,17 +1719,38 @@ main() {
     # Issue #3: Record session start in history
     log_session_transition "none" "active" "session_start" "0" || true
 
+    # Initialize audit log and record session start
+    init_audit_log
+    audit_event "session_start" "$(jq -n \
+        --arg mode "$HANK_MODE" \
+        --arg source "$HANK_TASK_SOURCE" \
+        --argjson dry_run "$HANK_DRY_RUN" \
+        --argjson use_teams "$HANK_USE_TEAMS" \
+        --argjson max_calls "$MAX_CALLS_PER_HOUR" \
+        '{
+            mode: $mode,
+            source: $source,
+            dry_run: $dry_run,
+            use_teams: $use_teams,
+            max_calls_per_hour: $max_calls
+        }')"
+
     log_status "INFO" "Starting main loop..."
-    
+
     while true; do
         loop_count=$((loop_count + 1))
+
+        # Log loop start
+        audit_event "loop_start" "$(jq -n \
+            --argjson loop "$loop_count" \
+            '{loop: $loop}')"
 
         # Update session last_used timestamp
         update_session_last_used
 
         log_status "INFO" "Loop #$loop_count - calling init_call_tracking..."
         init_call_tracking
-        
+
         log_status "LOOP" "=== Starting Loop #$loop_count ==="
         
         # Check circuit breaker before attempting execution
@@ -1713,6 +1770,15 @@ main() {
         # Check for graceful exit conditions
         local exit_reason=$(should_exit_gracefully)
         if [[ "$exit_reason" != "" ]]; then
+            # Log exit signal to audit log
+            audit_event "exit_signal" "$(jq -n \
+                --arg reason "$exit_reason" \
+                --argjson loop "$loop_count" \
+                '{
+                    reason: $reason,
+                    loop: $loop
+                }')"
+
             # Handle permission_denied specially (Issue #101)
             if [[ "$exit_reason" == "permission_denied" ]]; then
                 log_status "ERROR" "🚫 Permission denied - halting loop"
@@ -1882,6 +1948,8 @@ Options:
     --circuit-status        Show circuit breaker status and exit
     --reset-session         Reset session state and exit (clears session continuity)
     --cost-summary          Show cost report from all sessions and exit
+    --audit [OPTIONS]       Show audit log with optional filters and exit
+                            Options: --type <type>, --session <id>, --since <time>, --limit <N>
     --error-catalog [CAT]   Show error catalog and exit (optional filter by category)
     --stop                  Stop all running Hank tmux sessions and exit
     --clean                 Remove transient/session state files from .hank/ and exit
@@ -2084,6 +2152,13 @@ while [[ $# -gt 0 ]]; do
             ;;
         --cost-summary)
             show_cost_report
+            exit 0
+            ;;
+        --audit)
+            # Display audit log with optional filters
+            shift
+            source "$SCRIPT_DIR/lib/audit_log.sh"
+            display_audit_log "$@"
             exit 0
             ;;
         --error-catalog)
