@@ -1881,6 +1881,7 @@ Options:
     --circuit-status        Show circuit breaker status and exit
     --reset-session         Reset session state and exit (clears session continuity)
     --cost-summary          Show cost report from all sessions and exit
+    --error-catalog [CAT]   Show error catalog and exit (optional filter by category)
     --stop                  Stop all running Hank tmux sessions and exit
     --clean                 Remove transient/session state files from .hank/ and exit
                             Preserves prompts, plans, specs, cost_log.jsonl, docs, logs
@@ -2082,6 +2083,17 @@ while [[ $# -gt 0 ]]; do
             ;;
         --cost-summary)
             show_cost_report
+            exit 0
+            ;;
+        --error-catalog)
+            # Check if next arg is a category name (doesn't start with --)
+            if [[ -n "${2:-}" && ! "$2" =~ ^-- ]]; then
+                display_error_catalog "$2"
+                shift 2
+            else
+                display_error_catalog
+                shift
+            fi
             exit 0
             ;;
         --stop)

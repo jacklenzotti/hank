@@ -432,6 +432,11 @@ analyze_response() {
                 confidence_score=$((json_confidence + 50))
             fi
 
+            # Classify and record errors (JSON path)
+            local classified_errors=$(extract_and_classify_errors "$output_file" "$loop_number")
+            local error_categories_summary=$(echo "$classified_errors" | jq -r '[.[].category] | unique | join(", ")' 2>/dev/null || echo "")
+            local error_count=$(echo "$classified_errors" | jq 'length' 2>/dev/null || echo "0")
+
             # Check for file changes via git (supplements JSON data)
             # Fix #141: Detect both uncommitted changes AND committed changes
             if command -v git &>/dev/null && git rev-parse --git-dir >/dev/null 2>&1; then
@@ -485,6 +490,9 @@ analyze_response() {
                 --argjson exit_signal "$exit_signal" \
                 --arg work_summary "$work_summary" \
                 --argjson output_length "$output_length" \
+                --argjson error_count "$error_count" \
+                --argjson classified_errors "$classified_errors" \
+                --arg error_categories "$error_categories_summary" \
                 --argjson has_permission_denials "$has_permission_denials" \
                 --argjson permission_denial_count "$permission_denial_count" \
                 --argjson denied_commands "$denied_commands_json" \
@@ -510,6 +518,9 @@ analyze_response() {
                         exit_signal: $exit_signal,
                         work_summary: $work_summary,
                         output_length: $output_length,
+                        error_count: $error_count,
+                        classified_errors: $classified_errors,
+                        error_categories: $error_categories,
                         has_permission_denials: $has_permission_denials,
                         permission_denial_count: $permission_denial_count,
                         denied_commands: $denied_commands,
@@ -605,6 +616,15 @@ analyze_response() {
 
     if [[ $error_count -gt 5 ]]; then
         is_stuck=true
+    fi
+
+    # 4b. Classify and record errors (if any detected)
+    local classified_errors="[]"
+    local error_categories_summary=""
+    if [[ $error_count -gt 0 ]]; then
+        classified_errors=$(extract_and_classify_errors "$output_file" "$loop_number")
+        # Generate category summary for reporting
+        error_categories_summary=$(echo "$classified_errors" | jq -r '[.[].category] | unique | join(", ")' 2>/dev/null || echo "")
     fi
 
     # 5. Detect "nothing to do" patterns
@@ -709,6 +729,9 @@ analyze_response() {
         --argjson exit_signal "$exit_signal" \
         --arg work_summary "$work_summary" \
         --argjson output_length "$output_length" \
+        --argjson error_count "$error_count" \
+        --argjson classified_errors "$classified_errors" \
+        --arg error_categories "$error_categories_summary" \
         '{
             loop_number: $loop_number,
             timestamp: $timestamp,
@@ -724,6 +747,9 @@ analyze_response() {
                 exit_signal: $exit_signal,
                 work_summary: $work_summary,
                 output_length: $output_length,
+                error_count: $error_count,
+                classified_errors: $classified_errors,
+                error_categories: $error_categories,
                 has_permission_denials: false,
                 permission_denial_count: 0,
                 denied_commands: [],
@@ -998,6 +1024,254 @@ should_resume_session() {
     fi
 }
 
+# =============================================================================
+# ERROR CLASSIFICATION SYSTEM
+# =============================================================================
+
+# Error catalog file location
+ERROR_CATALOG_FILE="$HANK_DIR/.error_catalog"
+
+# Error categories and patterns (bash 3.x compatible - no associative arrays)
+# Checked in priority order (most specific first)
+
+# Generate error signature (hash) for deduplication
+# Args: $1 = error message
+# Returns: SHA256 hash (first 16 chars)
+generate_error_signature() {
+    local error_message=$1
+
+    # Normalize the error message:
+    # 1. Remove timestamps (e.g., 2026-02-07 14:30:00)
+    # 2. Remove line numbers (e.g., :123, line 45)
+    # 3. Remove file paths (keep only filename)
+    # 4. Remove loop numbers
+    # 5. Convert to lowercase
+    local normalized=$(echo "$error_message" | \
+        sed 's/[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}[T ][0-9]\{2\}:[0-9]\{2\}:[0-9]\{2\}//g' | \
+        sed 's/:[0-9][0-9]*//g' | \
+        sed 's/line [0-9][0-9]*//g' | \
+        sed 's/loop [0-9][0-9]*//g' | \
+        sed 's|/[^[:space:]]*\(/[^[:space:]]*\)|\1|g' | \
+        tr '[:upper:]' '[:lower:]' | \
+        tr -s '[:space:]' ' ')
+
+    # Generate SHA256 hash and take first 16 chars
+    echo "$normalized" | shasum -a 256 | cut -c1-16
+}
+
+# Classify error message into a category
+# Args: $1 = error message
+# Returns: error category string
+classify_error() {
+    local error_message=$1
+
+    # Check patterns in priority order (most specific first)
+    # rate_limit
+    if echo "$error_message" | grep -qiE "rate limit|usage limit|quota exceeded|too many requests|429|limit reached.*try.*back|5.*hour.*limit"; then
+        echo "rate_limit"
+        return 0
+    fi
+
+    # permission_denied
+    if echo "$error_message" | grep -qiE "permission denied|access denied|not allowed|forbidden|403|--allowedTools|tool.*not.*allowed|blocked.*tool"; then
+        echo "permission_denied"
+        return 0
+    fi
+
+    # context_overflow
+    if echo "$error_message" | grep -qiE "context.*too.*large|context.*window.*exceeded|input.*too.*long|maximum context|prompt.*too.*long"; then
+        echo "context_overflow"
+        return 0
+    fi
+
+    # api_error
+    if echo "$error_message" | grep -qiE "API error|connection.*timeout|connection.*refused|network.*error|502|503|504|gateway.*timeout|service.*unavailable"; then
+        echo "api_error"
+        return 0
+    fi
+
+    # dependency_error
+    if echo "$error_message" | grep -qiE "module.*not.*found|package.*not.*found|cannot.*find.*module|command.*not.*found|No such file.*package|dependency.*missing"; then
+        echo "dependency_error"
+        return 0
+    fi
+
+    # build_error
+    if echo "$error_message" | grep -qiE "build.*failed|compilation.*error|syntax.*error|parse.*error|SyntaxError|ParseError|compilation failed"; then
+        echo "build_error"
+        return 0
+    fi
+
+    # test_failure
+    if echo "$error_message" | grep -qiE "test.*failed|assertion.*failed|expected.*but.*got|FAIL:|FAILED:|tests.*failing|AssertionError"; then
+        echo "test_failure"
+        return 0
+    fi
+
+    # Default to unknown if no pattern matches
+    echo "unknown"
+    return 0
+}
+
+# Initialize error catalog file
+init_error_catalog() {
+    if [[ ! -f "$ERROR_CATALOG_FILE" ]]; then
+        jq -n '{errors: {}}' > "$ERROR_CATALOG_FILE"
+    fi
+}
+
+# Record error in the catalog
+# Args: $1 = error message, $2 = loop number
+# Updates: .hank/.error_catalog (JSONL)
+record_error() {
+    local error_message=$1
+    local loop_number=${2:-0}
+
+    init_error_catalog
+
+    # Generate signature and classify
+    local signature=$(generate_error_signature "$error_message")
+    local category=$(classify_error "$error_message")
+    local timestamp=$(get_iso_timestamp)
+
+    # Load existing catalog
+    local catalog=$(cat "$ERROR_CATALOG_FILE")
+
+    # Check if this error signature already exists
+    local existing=$(echo "$catalog" | jq -r ".errors[\"$signature\"] // null")
+
+    if [[ "$existing" == "null" ]]; then
+        # New error - create entry
+        catalog=$(echo "$catalog" | jq \
+            --arg sig "$signature" \
+            --arg cat "$category" \
+            --arg ts "$timestamp" \
+            --arg msg "$(echo "$error_message" | head -c 200)" \
+            --argjson loop "$loop_number" \
+            '.errors[$sig] = {
+                category: $cat,
+                first_seen: $ts,
+                last_seen: $ts,
+                count: 1,
+                sample_message: $msg,
+                loops: [$loop]
+            }')
+    else
+        # Existing error - update count, last_seen, and append loop number
+        catalog=$(echo "$catalog" | jq \
+            --arg sig "$signature" \
+            --arg ts "$timestamp" \
+            --argjson loop "$loop_number" \
+            '.errors[$sig].count += 1 |
+             .errors[$sig].last_seen = $ts |
+             .errors[$sig].loops += [$loop]')
+    fi
+
+    # Write back to file
+    echo "$catalog" > "$ERROR_CATALOG_FILE"
+
+    return 0
+}
+
+# Extract and classify all errors from Claude output
+# Args: $1 = output file, $2 = loop number
+# Returns: JSON array of classified errors
+extract_and_classify_errors() {
+    local output_file=$1
+    local loop_number=${2:-0}
+
+    if [[ ! -f "$output_file" ]]; then
+        echo "[]"
+        return 1
+    fi
+
+    # Extract error lines using same two-stage filtering as detect_stuck_loop
+    local error_lines=$(grep -v '"[^"]*error[^"]*":' "$output_file" 2>/dev/null | \
+                       grep -E '(^Error:|^ERROR:|^error:|\]: error|Link: error|Error occurred|failed with error|[Ee]xception|Fatal|FATAL)' 2>/dev/null)
+
+    if [[ -z "$error_lines" ]]; then
+        echo "[]"
+        return 0
+    fi
+
+    # Classify each error and record it
+    local classified_errors="[]"
+    while IFS= read -r error_line; do
+        if [[ -z "$error_line" ]]; then
+            continue
+        fi
+
+        local signature=$(generate_error_signature "$error_line")
+        local category=$(classify_error "$error_line")
+
+        # Record in catalog
+        record_error "$error_line" "$loop_number"
+
+        # Add to classified errors array
+        classified_errors=$(echo "$classified_errors" | jq \
+            --arg sig "$signature" \
+            --arg cat "$category" \
+            --arg msg "$(echo "$error_line" | head -c 200)" \
+            '. += [{
+                signature: $sig,
+                category: $cat,
+                message: $msg
+            }]')
+    done <<< "$error_lines"
+
+    echo "$classified_errors"
+    return 0
+}
+
+# Display error catalog (for --error-catalog CLI flag)
+# Args: optional filter by category
+display_error_catalog() {
+    local filter_category=${1:-""}
+
+    if [[ ! -f "$ERROR_CATALOG_FILE" ]]; then
+        echo -e "${YELLOW}No error catalog found${NC}"
+        return 0
+    fi
+
+    local catalog=$(cat "$ERROR_CATALOG_FILE")
+    local error_count=$(echo "$catalog" | jq '.errors | length')
+
+    if [[ "$error_count" -eq 0 ]]; then
+        echo -e "${YELLOW}Error catalog is empty${NC}"
+        return 0
+    fi
+
+    echo -e "${BLUE}=== Error Catalog ===${NC}"
+    echo -e "${YELLOW}Total unique errors:${NC} $error_count"
+    echo ""
+
+    # Group errors by category
+    local categories=$(echo "$catalog" | jq -r '.errors | [.[].category] | unique | .[]')
+
+    while IFS= read -r category; do
+        # Skip if filter is set and doesn't match
+        if [[ -n "$filter_category" && "$category" != "$filter_category" ]]; then
+            continue
+        fi
+
+        local category_count=$(echo "$catalog" | jq "[.errors[] | select(.category == \"$category\")] | length")
+
+        echo -e "${GREEN}Category: $category${NC} ($category_count errors)"
+        echo ""
+
+        # Display each error in this category
+        echo "$catalog" | jq -r --arg cat "$category" '
+            .errors | to_entries |
+            map(select(.value.category == $cat)) |
+            .[] |
+            "  Signature: \(.key)\n  Count: \(.value.count)\n  First seen: \(.value.first_seen)\n  Last seen: \(.value.last_seen)\n  Loops: \(.value.loops | @json)\n  Sample: \(.value.sample_message)\n"'
+
+        echo ""
+    done <<< "$categories"
+
+    return 0
+}
+
 # Export functions for use in hank_loop.sh
 export -f detect_output_format
 export -f parse_json_response
@@ -1008,3 +1282,9 @@ export -f detect_stuck_loop
 export -f store_session_id
 export -f get_last_session_id
 export -f should_resume_session
+export -f generate_error_signature
+export -f classify_error
+export -f init_error_catalog
+export -f record_error
+export -f extract_and_classify_errors
+export -f display_error_catalog
