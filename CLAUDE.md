@@ -131,6 +131,12 @@ hank --cost-summary                 # Show cost report from all sessions
 hank --orchestrate                  # Run across multiple repos in dependency order
 hank --repos                        # Show orchestration status
 
+# Session replay
+hank --replay --list                # List all recorded sessions
+hank --replay <session_id>          # Replay session timeline
+hank --replay <id> --json           # JSON output format
+hank --replay <id> --issue 123      # Filter by issue number
+
 # Testing
 npm test                            # All tests
 npm run test:unit                   # Unit tests only

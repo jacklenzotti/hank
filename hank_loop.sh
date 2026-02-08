@@ -2136,6 +2136,10 @@ Options:
     --circuit-status        Show circuit breaker status and exit
     --repos                 Show orchestration status (multi-repo mode) and exit
     --orchestrate           Enable multi-repo orchestration mode
+    --replay --list         List all recorded sessions with summary stats and exit
+    --replay <session_id>   Replay a session showing full timeline and exit
+    --replay <id> --json    Output session replay in JSON format
+    --replay <id> --issue N Filter replay to specific issue number
     --reset-session         Reset session state and exit (clears session continuity)
     --cost-summary          Show cost report from all sessions and exit
     --audit [OPTIONS]       Show audit log with optional filters and exit
@@ -2297,6 +2301,56 @@ while [[ $# -gt 0 ]]; do
             # Enable orchestration mode (will be handled in main loop)
             HANK_ORCHESTRATE=true
             shift
+            ;;
+        --replay)
+            # Session replay mode
+            SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
+            source "$SCRIPT_DIR/lib/replay.sh"
+
+            # Parse replay arguments
+            shift
+            local replay_session_id=""
+            local replay_format="human"
+            local replay_issue=""
+            local replay_list=false
+
+            while [[ $# -gt 0 ]]; do
+                case "$1" in
+                    --list)
+                        replay_list=true
+                        shift
+                        ;;
+                    --json)
+                        replay_format="json"
+                        shift
+                        ;;
+                    --issue)
+                        replay_issue="$2"
+                        shift 2
+                        ;;
+                    *)
+                        # Assume it's the session ID
+                        replay_session_id="$1"
+                        shift
+                        ;;
+                esac
+            done
+
+            # Execute replay command
+            if [[ "$replay_list" == "true" ]]; then
+                list_sessions
+            elif [[ -n "$replay_session_id" ]]; then
+                replay_session "$replay_session_id" "$replay_format" "$replay_issue"
+            else
+                echo "Error: --replay requires a session ID or --list flag"
+                echo "Usage:"
+                echo "  hank --replay --list                    # List all sessions"
+                echo "  hank --replay <session_id>              # Replay a session"
+                echo "  hank --replay <session_id> --json       # JSON output"
+                echo "  hank --replay <session_id> --issue 123  # Filter by issue"
+                exit 1
+            fi
+            exit 0
             ;;
         --output-format)
             if [[ "$2" == "json" || "$2" == "text" ]]; then
