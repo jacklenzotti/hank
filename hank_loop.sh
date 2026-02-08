@@ -16,6 +16,7 @@ source "$SCRIPT_DIR/lib/date_utils.sh"
 source "$SCRIPT_DIR/lib/timeout_utils.sh"
 source "$SCRIPT_DIR/lib/response_analyzer.sh"
 source "$SCRIPT_DIR/lib/circuit_breaker.sh"
+source "$SCRIPT_DIR/lib/retry_strategy.sh"
 source "$SCRIPT_DIR/lib/task_sources.sh"
 source "$SCRIPT_DIR/lib/cost_tracker.sh"
 source "$SCRIPT_DIR/lib/banner.sh"
@@ -1089,6 +1090,36 @@ build_claude_command() {
 $plan_content"
     fi
 
+    # Check for retry hint and inject into prompt if present
+    if [[ -f "$HANK_DIR/.retry_hint" ]]; then
+        local retry_hint
+        retry_hint=$(cat "$HANK_DIR/.retry_hint" 2>/dev/null)
+        if [[ -n "$retry_hint" ]]; then
+            prompt_content="$prompt_content
+
+## RETRY GUIDANCE
+The previous attempt encountered an error. Please address this issue:
+
+$retry_hint"
+            # Clear the hint after using it
+            rm -f "$HANK_DIR/.retry_hint"
+            log_status "INFO" "Injected retry hint into prompt"
+        fi
+    fi
+
+    # Check for retry action (e.g., reset_session)
+    if [[ -f "$HANK_DIR/.retry_action" ]]; then
+        local retry_action
+        retry_action=$(cat "$HANK_DIR/.retry_action" 2>/dev/null)
+        if [[ "$retry_action" == "reset_session" ]]; then
+            log_status "INFO" "Retry action: Resetting session due to context overflow"
+            # Clear session to force fresh start
+            session_id=""
+            rm -f "$CLAUDE_SESSION_FILE"
+            rm -f "$HANK_DIR/.retry_action"
+        fi
+    fi
+
     # In dry-run mode, append instruction to analyze without modifying
     if [[ "$HANK_DRY_RUN" == "true" ]]; then
         prompt_content="$prompt_content
@@ -1524,7 +1555,67 @@ EOF
         fi
         local output_length=$(wc -c < "$output_file" 2>/dev/null || echo 0)
 
-        # Record result in circuit breaker
+        # RETRY LOGIC: Check if we should retry before triggering circuit breaker
+        if [[ "$has_errors" == "true" ]]; then
+            # Extract classified errors from response analysis (already run by analyze_response)
+            if [[ -f "$RESPONSE_ANALYSIS_FILE" ]]; then
+                local classified_errors=$(jq -r '.analysis.classified_errors // []' "$RESPONSE_ANALYSIS_FILE" 2>/dev/null)
+                local num_errors=$(echo "$classified_errors" | jq 'length' 2>/dev/null || echo "0")
+
+                if [[ "$num_errors" -gt 0 ]]; then
+                    log_status "INFO" "Found $num_errors classified error(s), checking retry eligibility..."
+
+                    # Check each error to see if we should retry
+                    local should_execute_retry=false
+                    local retry_error_category=""
+                    local retry_error_signature=""
+                    local retry_attempt_count=0
+
+                    for ((i = 0; i < num_errors; i++)); do
+                        local error_category=$(echo "$classified_errors" | jq -r ".[$i].category" 2>/dev/null)
+                        local error_signature=$(echo "$classified_errors" | jq -r ".[$i].signature" 2>/dev/null)
+
+                        # Get retry state for this error
+                        local retry_state=$(get_retry_state "$loop_count" "$error_signature")
+                        local attempt_count=$(echo "$retry_state" | jq -r '.attempt_count // 0' 2>/dev/null)
+                        attempt_count=$((attempt_count + 0))  # Convert to integer
+
+                        # Check if we should retry this error
+                        if should_retry "$error_category" "$attempt_count"; then
+                            should_execute_retry=true
+                            retry_error_category="$error_category"
+                            retry_error_signature="$error_signature"
+                            retry_attempt_count=$((attempt_count + 1))
+                            log_status "INFO" "Error '$error_category' is eligible for retry (attempt $retry_attempt_count/$RETRY_MAX_ATTEMPTS)"
+                            break
+                        else
+                            log_status "INFO" "Error '$error_category' not eligible for retry (attempt $attempt_count/$RETRY_MAX_ATTEMPTS)"
+                        fi
+                    done
+
+                    # Execute retry if eligible
+                    if [[ "$should_execute_retry" == "true" ]]; then
+                        local retry_strategy=$(get_retry_strategy "$retry_error_category")
+                        log_status "INFO" "Executing retry strategy: $retry_strategy"
+
+                        # Update retry state
+                        update_retry_state "$loop_count" "$retry_error_signature" "$retry_error_category" "pending"
+
+                        # Execute the retry
+                        if execute_retry "$retry_strategy" "$retry_attempt_count" "$retry_error_category" "$loop_count"; then
+                            log_status "INFO" "Retry initiated successfully - continuing loop"
+                            return 4  # Special code for "retry in progress"
+                        else
+                            log_status "WARN" "Retry strategy returned failure - proceeding to circuit breaker"
+                        fi
+                    else
+                        log_status "INFO" "No eligible retries found - proceeding to circuit breaker"
+                    fi
+                fi
+            fi
+        fi
+
+        # Record result in circuit breaker (only if no retry was executed)
         record_loop_result "$loop_count" "$files_changed" "$has_errors" "$output_length"
         local circuit_result=$?
 
@@ -1861,12 +1952,17 @@ main() {
         # Execute Claude Code
         execute_claude_code "$loop_count"
         local exec_result=$?
-        
+
         if [ $exec_result -eq 0 ]; then
             update_status "$loop_count" "$(cat "$CALL_COUNT_FILE")" "completed" "success"
 
             # Brief pause between successful executions
             sleep 5
+        elif [ $exec_result -eq 4 ]; then
+            # Retry in progress - continue to next iteration without recording error
+            log_status "INFO" "Retry strategy executed - continuing to next iteration"
+            update_status "$loop_count" "$(cat "$CALL_COUNT_FILE")" "retry" "retrying"
+            # No sleep - proceed immediately to retry
         elif [ $exec_result -eq 3 ]; then
             # Circuit breaker opened
             reset_session "circuit_breaker_trip"
