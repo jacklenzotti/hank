@@ -1320,7 +1320,7 @@ execute_claude_code() {
         if [[ "$use_modern_cli" == "true" ]]; then
             # Modern execution with command array (shell-injection safe)
             # Execute array directly without bash -c to prevent shell metacharacter interpretation
-            if portable_timeout ${timeout_seconds}s "${CLAUDE_CMD_ARGS[@]}" > "$output_file" 2>&1 &
+            if portable_timeout ${timeout_seconds}s "${CLAUDE_CMD_ARGS[@]}" < /dev/null > "$output_file" 2>&1 &
             then
                 :  # Continue to wait loop
             else
@@ -1861,13 +1861,15 @@ main() {
                 export MAX_CALLS_PER_HOUR="$MAX_CALLS_PER_HOUR"
 
                 # Execute the main loop (without orchestration to avoid recursion)
-                # Filter out --orchestrate flag from arguments
+                # Rebuild args from parsed variables since CLI parsing consumed $@
                 local filtered_args=()
-                for arg in "$@"; do
-                    if [[ "$arg" != "--orchestrate" ]]; then
-                        filtered_args+=("$arg")
-                    fi
-                done
+                [[ -n "$HANK_MODE" ]] && filtered_args+=(--mode "$HANK_MODE")
+                [[ "$HANK_TASK_SOURCE" != "plan" ]] && filtered_args+=(--source "$HANK_TASK_SOURCE")
+                [[ "$HANK_DRY_RUN" == "true" ]] && filtered_args+=(--dry-run)
+                [[ "$HANK_USE_TEAMS" == "true" ]] && filtered_args+=(--teams)
+                [[ "$LIVE_OUTPUT" == "true" ]] && filtered_args+=(--live)
+                [[ -n "$MAX_CALLS_PER_HOUR" ]] && filtered_args+=(--calls "$MAX_CALLS_PER_HOUR")
+                [[ -n "$CLAUDE_TIMEOUT_MINUTES" ]] && filtered_args+=(--timeout "$CLAUDE_TIMEOUT_MINUTES")
 
                 export HANK_ORCHESTRATE="false"
                 exec "$0" "${filtered_args[@]}"
