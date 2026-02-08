@@ -1,7 +1,7 @@
 {
   "total_cost_usd": 0.000000,
-  "total_input_tokens": 2374,
-  "total_output_tokens": 27570,
-  "total_duration_ms": 1981427,
-  "total_loops": 2
+  "total_input_tokens": 2827,
+  "total_output_tokens": 63726,
+  "total_duration_ms": 4776109,
+  "total_loops": 30
 }

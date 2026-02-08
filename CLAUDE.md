@@ -32,6 +32,9 @@ Fork of [frankbria/ralph-claude-code](https://github.com/frankbria/ralph-claude-
 | `date_utils.sh`        | Cross-platform date/timestamp utilities                                                                           |
 | `timeout_utils.sh`     | Cross-platform timeout command (Linux `timeout` / macOS `gtimeout`)                                               |
 | `cost_tracker.sh`      | Cost logging (JSONL), session totals, summary display, per-issue cost tracking                                    |
+| `retry_strategy.sh`    | Retry strategy engine with exponential backoff, error classification, state tracking                              |
+| `orchestrator.sh`      | Multi-repo orchestration, dependency resolution (topological sort), circular dependency detection                 |
+| `audit_log.sh`         | Structured JSONL event logging, automatic rotation, audit trail for all major operations                          |
 
 ### Templates (templates/)
 
@@ -58,6 +61,43 @@ Single read-only iteration. Tools restricted to `Read,Glob,Grep,Bash(git status)
 ### `--source github`
 
 Syncs GitHub Issues labeled `hank` into `IMPLEMENTATION_PLAN.md` before each iteration. Reports progress back as comments, closes issues on completion. Priority labels: `hank:next` > `hank:p1` > `hank:p2`.
+
+### `--orchestrate` (Orchestration Mode)
+
+Execute Hank across multiple repositories in dependency order. Requires `.hank/.repos.json` config file.
+
+**Features:**
+
+- Validates repo configuration and detects circular dependencies
+- Resolves execution order via topological sort (Kahn's algorithm)
+- Executes Hank loop in each repo sequentially based on dependencies
+- Tracks per-repo status, loops, and costs
+- Aggregates total cost across all repos
+- Skips blocked repos and unblocks dependents on completion
+
+**Configuration (`.hank/.repos.json`):**
+
+```json
+[
+  { "name": "core", "path": "/path/to/core", "deps": [], "priority": 1 },
+  { "name": "api", "path": "/path/to/api", "deps": ["core"], "priority": 2 },
+  { "name": "ui", "path": "/path/to/ui", "deps": ["api"], "priority": 3 }
+]
+```
+
+**State Tracking (`.hank/.orchestration_state`):**
+
+- Per-repo status: `pending`, `in_progress`, `completed`, `blocked`
+- Loop counts and cost accumulation
+- Dependency blocking/unblocking
+- Current repo in progress
+
+**Usage:**
+
+```bash
+hank --orchestrate              # Run orchestration mode
+hank --repos                    # Show orchestration status
+```
 
 ## Key Commands
 
@@ -86,6 +126,10 @@ hank --reset-session                # Clear session state
 hank --no-continue                  # Fresh context each loop
 hank --reset-circuit                # Reset circuit breaker
 hank --cost-summary                 # Show cost report from all sessions
+
+# Orchestration (multi-repo)
+hank --orchestrate                  # Run across multiple repos in dependency order
+hank --repos                        # Show orchestration status
 
 # Testing
 npm test                            # All tests

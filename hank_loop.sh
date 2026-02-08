@@ -1804,6 +1804,98 @@ main() {
         exit 0
     fi
 
+    # Orchestration mode: Execute loop across multiple repos
+    if [[ "$HANK_ORCHESTRATE" == "true" ]]; then
+        log_status "INFO" "🔀 Orchestration mode enabled"
+
+        # Source orchestrator library
+        source "$SCRIPT_DIR/lib/orchestrator.sh"
+
+        # Load and validate repo config
+        if ! load_repo_config; then
+            log_status "ERROR" "Failed to load repo configuration from $REPOS_CONFIG_FILE"
+            exit 1
+        fi
+
+        # Detect circular dependencies
+        if ! detect_circular_dependencies; then
+            log_status "ERROR" "Circular dependency detected. Fix .repos.json and try again."
+            exit 1
+        fi
+
+        # Resolve execution order
+        local execution_order=$(resolve_execution_order)
+        log_status "INFO" "Execution order: $execution_order"
+
+        # Initialize orchestration state
+        init_orchestration_state
+
+        # Execute hank loop for each repo in order
+        for repo_name in $execution_order; do
+            local repo_path=$(jq -r --arg name "$repo_name" '.[] | select(.name == $name) | .path' "$REPOS_CONFIG_FILE")
+
+            log_status "INFO" "=== Starting work on repo: $repo_name ==="
+            log_status "INFO" "Changing directory to: $repo_path"
+
+            # Check if repo is blocked
+            if is_repo_blocked "$repo_name"; then
+                log_status "WARN" "Repo $repo_name is blocked by dependencies. Skipping."
+                continue
+            fi
+
+            # Update state to in_progress
+            jq --arg repo "$repo_name" \
+                '.repos[$repo].status = "in_progress" | .current_repo = $repo' \
+                "$ORCHESTRATION_STATE_FILE" > "${ORCHESTRATION_STATE_FILE}.tmp" && \
+                mv "${ORCHESTRATION_STATE_FILE}.tmp" "$ORCHESTRATION_STATE_FILE"
+
+            # Run hank loop in the repo directory
+            (
+                cd "$repo_path" || exit 1
+
+                # Inherit environment variables
+                export HANK_MODE="$HANK_MODE"
+                export HANK_TASK_SOURCE="$HANK_TASK_SOURCE"
+                export HANK_DRY_RUN="$HANK_DRY_RUN"
+                export HANK_USE_TEAMS="$HANK_USE_TEAMS"
+                export MAX_CALLS_PER_HOUR="$MAX_CALLS_PER_HOUR"
+
+                # Execute the main loop (without orchestration to avoid recursion)
+                # Filter out --orchestrate flag from arguments
+                local filtered_args=()
+                for arg in "$@"; do
+                    if [[ "$arg" != "--orchestrate" ]]; then
+                        filtered_args+=("$arg")
+                    fi
+                done
+
+                export HANK_ORCHESTRATE="false"
+                exec "$0" "${filtered_args[@]}"
+            )
+
+            local repo_exit_code=$?
+
+            # Get cost and loop count from repo's session
+            local repo_cost=$(jq -r '.total_cost_usd // 0' "$repo_path/.hank/cost_session" 2>/dev/null || echo "0")
+            local repo_loops=$(jq -r '.loops // 0' "$repo_path/.hank/cost_session" 2>/dev/null || echo "0")
+
+            # Check if repo completed successfully
+            if [[ $repo_exit_code -eq 0 ]]; then
+                mark_repo_complete "$repo_name" "$repo_loops" "$repo_cost"
+            else
+                mark_repo_blocked "$repo_name" "Exit code: $repo_exit_code"
+            fi
+
+            log_status "INFO" "=== Finished work on repo: $repo_name (exit code: $repo_exit_code) ==="
+        done
+
+        # Show final orchestration status
+        log_status "SUCCESS" "🎉 Orchestration complete!"
+        show_orchestration_status
+
+        exit 0
+    fi
+
     # Initialize session tracking before entering the loop
     init_session_tracking
 
