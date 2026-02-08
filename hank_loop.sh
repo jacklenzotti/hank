@@ -19,6 +19,7 @@ source "$SCRIPT_DIR/lib/circuit_breaker.sh"
 source "$SCRIPT_DIR/lib/task_sources.sh"
 source "$SCRIPT_DIR/lib/cost_tracker.sh"
 source "$SCRIPT_DIR/lib/banner.sh"
+source "$SCRIPT_DIR/lib/audit_log.sh"
 
 # Configuration
 # Hank-specific files live in .hank/ subfolder
