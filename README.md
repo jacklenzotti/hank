@@ -157,6 +157,36 @@ hank --cost-summary   # Show cost report from all sessions
 
 The cost log persists across sessions (only session totals are reset between runs), giving you a complete spend history for the project.
 
+### Retry & Error Recovery
+
+Hank automatically classifies errors (rate limits, test failures, build errors, etc.) and applies the appropriate retry strategy with exponential backoff. Rate limit errors wait and retry, test/build failures retry with a context hint, and permission denials halt immediately. Configure via `.hankrc` (`RETRY_MAX_ATTEMPTS`, `RETRY_BACKOFF_INITIAL_SEC`, `RETRY_BACKOFF_MAX_SEC`, `RETRY_BACKOFF_MULTIPLIER`).
+
+```bash
+hank --error-catalog              # Show all classified errors
+hank --error-catalog rate_limit   # Filter by category
+```
+
+### Audit Log & Session Replay
+
+Every major operation (loop start/complete, errors, retries, circuit breaker changes) is recorded to `.hank/audit_log.jsonl`. Session replay reconstructs a timeline from these logs for debugging.
+
+```bash
+hank --audit                      # Show recent events (default: 20)
+hank --audit --type error_detected --since 2h
+hank --replay --list              # List all recorded sessions
+hank --replay <session_id>        # Replay session timeline
+hank --replay <id> --json         # JSON output format
+```
+
+### Multi-Repo Orchestration
+
+Execute Hank across multiple repositories in dependency order. Requires a `.hank/.repos.json` config file defining repos, paths, and dependencies. Hank resolves execution order via topological sort and tracks per-repo status and costs.
+
+```bash
+hank --orchestrate                # Run across repos in dependency order
+hank --repos                      # Show orchestration status
+```
+
 ## Configuration
 
 ### Project Config (.hankrc)
@@ -170,6 +200,10 @@ CLAUDE_OUTPUT_FORMAT="json"
 ALLOWED_TOOLS="Write,Read,Edit,Bash(git *),Bash(npm *),Bash(pytest)"
 SESSION_CONTINUITY=true
 SESSION_EXPIRY_HOURS=24
+RETRY_MAX_ATTEMPTS=3
+RETRY_BACKOFF_INITIAL_SEC=30
+RETRY_BACKOFF_MAX_SEC=300
+RETRY_BACKOFF_MULTIPLIER=2
 ```
 
 ### Project Structure
@@ -231,6 +265,14 @@ hank [OPTIONS]
   --reset-session               # Clear session state
   --reset-circuit               # Reset circuit breaker
   --cost-summary                # Show cost report from all sessions
+  --dry-run                     # Read-only analysis (no file changes)
+  --orchestrate                 # Multi-repo mode (requires .repos.json)
+  --repos                       # Show orchestration status
+  --replay --list               # List recorded sessions
+  --replay <id>                 # Replay a session timeline
+  --audit                       # Query audit log
+  --error-catalog               # Show classified errors
+  --clean                       # Remove transient session files
   --status                      # Show current status
   --help                        # Show help
 

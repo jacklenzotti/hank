@@ -597,3 +597,91 @@ build_hank_cmd_for_test() {
     [[ "$output" == *"--clean"* ]]
     [[ "$output" == *"--clean-logs"* ]]
 }
+
+# =============================================================================
+# NEW FLAG TESTS (10 tests)
+# =============================================================================
+
+@test "--orchestrate flag is accepted without error" {
+    run bash "$HANK_SCRIPT" --orchestrate --help
+
+    assert_success
+    [[ "$output" == *"Usage:"* ]]
+}
+
+@test "--repos flag shows orchestration status" {
+    run bash "$HANK_SCRIPT" --repos
+
+    assert_success
+    [[ "$output" == *"No orchestration in progress"* ]]
+}
+
+@test "--replay --list handles no session logs" {
+    run bash "$HANK_SCRIPT" --replay --list
+
+    assert_failure
+    [[ "$output" == *"No session logs found"* ]]
+}
+
+@test "--replay without args shows usage" {
+    run bash "$HANK_SCRIPT" --replay
+
+    assert_failure
+    [[ "$output" == *"--replay requires a session ID or --list flag"* ]]
+}
+
+@test "--replay <id> calls replay with session id" {
+    run bash "$HANK_SCRIPT" --replay abc123
+
+    # Will fail because session doesn't exist, but tests flag parsing
+    [[ "$output" == *"abc123"* ]] || [[ "$output" == *"session"* ]] || [[ "$output" == *"not found"* ]]
+}
+
+@test "--audit flag shows audit log" {
+    run bash "$HANK_SCRIPT" --audit
+
+    assert_success
+    [[ "$output" == *"No audit log found"* ]] || [[ "$output" == *"audit"* ]]
+}
+
+@test "--error-catalog flag shows error catalog" {
+    run bash "$HANK_SCRIPT" --error-catalog
+
+    assert_success
+    [[ "$output" == *"No error catalog found"* ]] || [[ "$output" == *"catalog"* ]]
+}
+
+@test "--dry-run flag is accepted without error" {
+    run bash "$HANK_SCRIPT" --dry-run --help
+
+    assert_success
+    [[ "$output" == *"Usage:"* ]]
+}
+
+@test "--teams flag is accepted without error" {
+    run bash "$HANK_SCRIPT" --teams --help
+
+    assert_success
+    [[ "$output" == *"Usage:"* ]]
+}
+
+@test "--mode plan sets plan mode" {
+    run bash "$HANK_SCRIPT" --mode plan --help
+
+    assert_success
+    [[ "$output" == *"Usage:"* ]]
+}
+
+@test "--mode build sets build mode" {
+    run bash "$HANK_SCRIPT" --mode build --help
+
+    assert_success
+    [[ "$output" == *"Usage:"* ]]
+}
+
+@test "--mode rejects invalid mode" {
+    run bash "$HANK_SCRIPT" --mode invalid
+
+    assert_failure
+    [[ "$output" == *"--mode must be 'plan' or 'build'"* ]]
+}

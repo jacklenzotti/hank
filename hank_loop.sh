@@ -2309,10 +2309,10 @@ while [[ $# -gt 0 ]]; do
 
             # Parse replay arguments
             shift
-            local replay_session_id=""
-            local replay_format="human"
-            local replay_issue=""
-            local replay_list=false
+            replay_session_id=""
+            replay_format="human"
+            replay_issue=""
+            replay_list=false
 
             while [[ $# -gt 0 ]]; do
                 case "$1" in

@@ -35,6 +35,7 @@ Fork of [frankbria/ralph-claude-code](https://github.com/frankbria/ralph-claude-
 | `retry_strategy.sh`    | Retry strategy engine with exponential backoff, error classification, state tracking                              |
 | `orchestrator.sh`      | Multi-repo orchestration, dependency resolution (topological sort), circular dependency detection                 |
 | `audit_log.sh`         | Structured JSONL event logging, automatic rotation, audit trail for all major operations                          |
+| `replay.sh`            | Session replay, timeline reconstruction from audit/cost logs                                                      |
 
 ### Templates (templates/)
 
@@ -198,6 +199,82 @@ Other exit conditions:
 | `CB_OUTPUT_DECLINE_THRESHOLD`    | 70%     | Output size decline        |
 | `CB_PERMISSION_DENIAL_THRESHOLD` | 2       | Permission denied loops    |
 
+## Retry Strategy
+
+Sits between error detection and the circuit breaker. When an error is classified, the retry engine determines whether to retry and how long to wait before the next attempt.
+
+### Configuration (.hankrc)
+
+| Variable                    | Default | Description                     |
+| --------------------------- | ------- | ------------------------------- |
+| `RETRY_MAX_ATTEMPTS`        | 3       | Max retries per error signature |
+| `RETRY_BACKOFF_INITIAL_SEC` | 30      | Initial backoff delay (seconds) |
+| `RETRY_BACKOFF_MAX_SEC`     | 300     | Maximum backoff delay (seconds) |
+| `RETRY_BACKOFF_MULTIPLIER`  | 2       | Exponential backoff multiplier  |
+
+### Strategy Mapping
+
+| Error Category      | Strategy          | Behavior                                  |
+| ------------------- | ----------------- | ----------------------------------------- |
+| `rate_limit`        | `wait_and_retry`  | Exponential backoff, then retry           |
+| `api_error`         | `wait_and_retry`  | Exponential backoff, then retry           |
+| `test_failure`      | `retry_with_hint` | Retry with context hint about the failure |
+| `build_error`       | `retry_with_hint` | Retry with context hint about the failure |
+| `dependency_error`  | `retry_with_hint` | Retry with context hint about the failure |
+| `context_overflow`  | `reset_session`   | Reset session context, then retry         |
+| `permission_denied` | `halt`            | Stop immediately (no retry)               |
+| `unknown`           | `no_retry`        | No automatic retry                        |
+
+State files: `.hank/.retry_state` (JSON), `.hank/.retry_log` (JSONL).
+
+## Error Classification
+
+Errors detected in Claude output are automatically classified into categories for retry strategy selection and catalog tracking.
+
+### Categories
+
+`rate_limit`, `permission_denied`, `context_overflow`, `api_error`, `dependency_error`, `build_error`, `test_failure`, `unknown`
+
+### Error Catalog
+
+Persistent record of all classified errors stored in `.hank/.error_catalog` (JSONL). Each entry tracks the error signature, category, occurrence count, and loop numbers where it appeared.
+
+```bash
+hank --error-catalog              # Show all classified errors
+hank --error-catalog rate_limit   # Filter by category
+```
+
+## Audit Log
+
+Structured JSONL event log for all major operations, stored at `.hank/audit_log.jsonl`. Automatically rotates at 10,000 events (archived to `audit_log.jsonl.1`).
+
+### Event Types
+
+`session_start`, `session_reset`, `loop_start`, `loop_complete`, `error_detected`, `retry_triggered`, `circuit_breaker_state_change`, `task_sync`, `issue_closed`, `exit_signal`
+
+### Querying
+
+```bash
+hank --audit                          # Show recent events (default: 20)
+hank --audit --type error_detected    # Filter by event type
+hank --audit --session <id>           # Filter by session ID
+hank --audit --since 2h               # Events from last 2 hours
+hank --audit --limit 50               # Show more events
+```
+
+## Session Replay
+
+Reconstructs a timeline from audit and cost logs for debugging and post-mortem analysis. Available via `lib/replay.sh`.
+
+```bash
+hank --replay --list               # List all recorded sessions
+hank --replay <session_id>         # Replay session timeline (human-readable)
+hank --replay <id> --json          # JSON output format
+hank --replay <id> --issue 123     # Filter by issue number
+```
+
+Merges events from `audit_log.jsonl` and `cost_log.jsonl` into a sorted timeline showing loops, errors, retries, circuit breaker transitions, and cost data.
+
 ## Configuration (.hankrc)
 
 ```bash
@@ -209,6 +286,10 @@ CLAUDE_OUTPUT_FORMAT="json"
 ALLOWED_TOOLS="Write,Read,Edit,Bash(git *),Bash(npm *),Bash(pytest)"
 SESSION_CONTINUITY=true
 SESSION_EXPIRY_HOURS=24
+RETRY_MAX_ATTEMPTS=3
+RETRY_BACKOFF_INITIAL_SEC=30
+RETRY_BACKOFF_MAX_SEC=300
+RETRY_BACKOFF_MULTIPLIER=2
 ```
 
 ## Agent Teams
