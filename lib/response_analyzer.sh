@@ -234,8 +234,10 @@ parse_json_response() {
         denied_commands_json=$(jq -r '[.permission_denials[] | if .tool_name == "Bash" then "Bash(\(.tool_input.command // "?" | split("\n")[0] | .[0:60]))" else .tool_name // "unknown" end]' "$output_file" 2>/dev/null || echo "[]")
     fi
 
-    # Model name: from Claude CLI output (top-level or metadata)
-    local model=$(jq -r '.model // .metadata.model // ""' "$output_file" 2>/dev/null)
+    # Model name: from Claude CLI output
+    # Claude CLI JSON puts model as a key in .modelUsage (e.g. {"modelUsage":{"claude-opus-4-6":{...}}})
+    # Fall back to .model or .metadata.model for other formats
+    local model=$(jq -r '(.modelUsage // {} | keys | first) // .model // .metadata.model // ""' "$output_file" 2>/dev/null)
 
     # Cost and usage fields (Claude CLI includes these at the top level)
     local cost_usd=$(jq -r '.cost_usd // .metadata.usage.cost_usd // 0' "$output_file" 2>/dev/null)
