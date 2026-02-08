@@ -5,6 +5,11 @@
 # Source date utilities for cross-platform compatibility
 source "$(dirname "${BASH_SOURCE[0]}")/date_utils.sh"
 
+# Source audit_log.sh if not already sourced (for audit_event)
+if ! declare -f audit_event >/dev/null 2>&1; then
+    source "$(dirname "${BASH_SOURCE[0]}")/audit_log.sh"
+fi
+
 # Response Analysis Functions
 # Based on expert recommendations from Martin Fowler, Michael Nygard, Sam Newman
 
@@ -1206,6 +1211,12 @@ extract_and_classify_errors() {
 
         # Record in catalog
         record_error "$error_line" "$loop_number"
+
+        # Record audit event for error detection
+        if declare -f audit_event >/dev/null 2>&1; then
+            local error_msg_short=$(echo "$error_line" | head -c 100 | tr '"' "'")
+            audit_event "error_detected" "{\"category\":\"$category\",\"signature\":\"$signature\",\"message\":\"$error_msg_short\",\"loop\":$loop_number}"
+        fi
 
         # Add to classified errors array
         classified_errors=$(echo "$classified_errors" | jq \

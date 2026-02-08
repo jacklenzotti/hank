@@ -6,6 +6,11 @@
 # Source date utilities for cross-platform compatibility
 source "$(dirname "${BASH_SOURCE[0]}")/date_utils.sh"
 
+# Source audit_log.sh if not already sourced (for audit_event)
+if ! declare -f audit_event >/dev/null 2>&1; then
+    source "$(dirname "${BASH_SOURCE[0]}")/audit_log.sh"
+fi
+
 # Circuit Breaker States
 CB_STATE_CLOSED="CLOSED"        # Normal operation, progress detected
 CB_STATE_HALF_OPEN="HALF_OPEN"  # Monitoring mode, checking for recovery
@@ -274,6 +279,11 @@ log_circuit_transition() {
 
     history=$(echo "$history" | jq ". += [$transition]")
     echo "$history" > "$CB_HISTORY_FILE"
+
+    # Record audit event
+    if declare -f audit_event >/dev/null 2>&1; then
+        audit_event "circuit_breaker_state_change" "{\"from_state\":\"$from_state\",\"to_state\":\"$to_state\",\"reason\":\"$reason\",\"loop\":$loop_number}"
+    fi
 
     # Console log with colors
     case $to_state in

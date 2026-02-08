@@ -3,6 +3,15 @@
 # task_sources.sh - Task import utilities for Hank enable
 # Supports importing tasks from beads, GitHub Issues, and PRD files
 
+# Source audit_log.sh if not already sourced (for audit_event)
+if ! declare -f audit_event >/dev/null 2>&1; then
+    # Get script directory
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    if [[ -f "$SCRIPT_DIR/audit_log.sh" ]]; then
+        source "$SCRIPT_DIR/audit_log.sh"
+    fi
+fi
+
 # =============================================================================
 # BEADS INTEGRATION
 # =============================================================================
@@ -614,6 +623,12 @@ EMPTYEOF
 $issues
 SYNCEOF
 
+    # Record audit event for task sync
+    local issue_count=$(echo "$issues" | wc -l | tr -d ' ')
+    if declare -f audit_event >/dev/null 2>&1; then
+        audit_event "task_sync" "{\"source\":\"github\",\"label\":\"$label_filter\",\"issue_count\":$issue_count}"
+    fi
+
     return 0
 }
 
@@ -668,6 +683,11 @@ ${cost_line}"
                 --comment "Completed by Hank (loop $loop_count)" 2>/dev/null || true
             gh issue edit "$issue_number" \
                 --remove-label "hank:in-progress" 2>/dev/null || true
+
+            # Record audit event for issue closed
+            if declare -f audit_event >/dev/null 2>&1; then
+                audit_event "issue_closed" "{\"issue_number\":\"$issue_number\",\"loop\":$loop_count,\"summary\":\"$(echo "$summary" | head -c 100 | tr '"' "'")\"}"
+            fi
             ;;
         BLOCKED)
             gh issue edit "$issue_number" \
